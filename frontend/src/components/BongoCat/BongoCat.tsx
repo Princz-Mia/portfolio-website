@@ -169,7 +169,11 @@ const BongoCat = () => {
 
   return (
     <div className="relative w-full h-full max-w-screen-xl mx-auto p-4">
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+        viewBox="0 0 800 400"
+      >
         <g id="bongo-cat">
           <g
             className="head"

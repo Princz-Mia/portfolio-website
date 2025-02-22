@@ -1,18 +1,12 @@
 .container {
-  width: 100%; /* 100% szélesség */
-  max-width: 300px; /* Maximum szélesség */
-  height: auto; /* Automatikus magasság */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 svg {
-  width: 100%;
-  height: auto; /* Arányos magasság */
   overflow: visible;
 }
-
   
   #bongo-cat {
     fill: var(--bg);
