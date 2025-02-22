@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -5,12 +7,18 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --bg: #1a1e2d;
+  --green: #a5ea9b;
+  --pink: #ff61d8;
+  --blue: #569cfa;
+  --orange: #ffcc81;
+  --cyan: #7ed1e2;
 }
 
 a {
@@ -23,11 +31,12 @@ a:hover {
 }
 
 body {
+  background: var(--bg);
+  place-content: center;
+  align-items: flex-start;
+  overflow-x: hidden; /* csak vízszintes overflow-t rejtünk el */
+  overflow-y: auto; /* függőleges overflow engedélyezett */
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -64,5 +73,23 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+}
+
+@keyframes neon-flicker {
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  24%,
+  55% {
+    opacity: 0.6;
   }
 }
