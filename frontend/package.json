@@ -12,8 +12,11 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.0.7",
+    "framer-motion": "^12.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-simple-typewriter": "^5.0.1",
+    "react-social-media-icons": "^10.0.4",
     "sass": "^1.85.0",
     "tailwindcss": "^4.0.7"
   },
