@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fluejs/noscroll": "^1.0.0",
     "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.0.7",
+    "flowbite": "^3.1.2",
     "framer-motion": "^12.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.2.0",
     "react-simple-typewriter": "^5.0.1",
     "react-social-media-icons": "^10.0.4",
     "sass": "^1.85.0",
