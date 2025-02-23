@@ -172,7 +172,7 @@ const BongoCat = () => {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
-        viewBox="0 0 800 400"
+        viewBox="0 0 783.55 354.9"
       >
         <g id="bongo-cat">
           <g
