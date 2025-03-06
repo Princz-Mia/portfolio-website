@@ -50,9 +50,12 @@ svg {
       stroke: var(--blue);
     }
     
-    .terminal-code,
     .headphone .speaker path:first-child {
       stroke: var(--cyan);
+    }
+
+    .terminal-code {
+      stroke: white;
     }
   }
   
