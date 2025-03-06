@@ -33,6 +33,12 @@
   --blue: #569cfa;
   --orange: #ffcc81;
   --cyan: #7ed1e2;
+
+  --dark100: #0a0a0a;
+  --dark200: #1a1a1a;
+  --dark300: #262626;
+  --dark400: #404040;
+  --dark700: #4d4d4d;
 }
 
 * {
