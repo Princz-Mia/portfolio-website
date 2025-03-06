@@ -131,21 +131,21 @@ export const technologyCards = [
 export const education = [
   {
     id: "0",
-    fromTo: "Sept 2015 - June 2020",
-    title: "Bláthy Ottó Titusz Informatics Technical College",
-    bulletPoints: [
-      "— Recipient of the Bláthy Award for sustained academic excellence and active participation in the school community",
-      "— Supported peers in preparing for their professional final exams through tutoring and guidance",
-    ],
-  },
-  {
-    id: "1",
     fromTo: "Sept 2021 - Feb 2026",
     title:
       "Budapest University of Technology and Economics | BS in Computer Engineering",
     bulletPoints: [
       "— Pursuing Software Engineering specialization as part of my university studies",
       "— Currently working on Project Laboratory with plans for further extension and refinement as a bachelor's thesis topic",
+    ],
+  },
+  {
+    id: "1",
+    fromTo: "Sept 2015 - June 2020",
+    title: "Bláthy Ottó Titusz Informatics Technical College",
+    bulletPoints: [
+      "— Recipient of the Bláthy Award for sustained academic excellence and active participation in the school community",
+      "— Supported peers in preparing for their professional final exams through tutoring and guidance",
     ],
   },
 ];
