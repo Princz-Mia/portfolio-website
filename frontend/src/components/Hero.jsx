@@ -1,9 +1,9 @@
 import BongoCat from './BongoCat/BongoCat';
-import { Typewriter } from 'react-simple-typewriter';
 import { motion } from 'framer-motion';
 import { ReactSocialMediaIcons } from 'react-social-media-icons';
 import DrawOutlineButton from './DrawOutlineButton';
 import { useState } from 'react';
+import MacTerminal from './MacTerminal';
 
 const Hero = () => {
   const codeText = `<h2>
@@ -46,14 +46,7 @@ const Hero = () => {
   return (
     <section className="w-full min-h-screen pt-8 sm:pt-20 md:pt-12 px-4 flex flex-col items-center justify-center">
       <div className="w-full max-w-2xl flex flex-col p-6 mx-4">
-        <div className="text-(--cyan) p-6 shadow-lg border-5 border-(--blue) flex flex-col items-start relative">
-          <h2 className="font-(--font-jetbrains) text-sm md:text-lg xl:text-2xl whitespace-pre-wrap select-none visibility-hidden text-(--bg)">
-            {codeText}
-          </h2>
-          <h2 className="font-(--font-jetbrains) text-sm md:text-lg xl:text-2xl whitespace-pre-wrap absolute">
-            <Typewriter words={[codeText]} loop={1} cursor cursorStyle="|" typeSpeed={50} deleteSpeed={0} delaySpeed={1000} />
-          </h2>
-        </div>
+        <MacTerminal />
 
         <div className="flex justify-around w-full mt-8">
           <div className="flex justify-evenly w-full">
@@ -111,7 +104,7 @@ const Hero = () => {
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <DrawOutlineButton>Download CV</DrawOutlineButton>
+              <DrawOutlineButton>View Resume</DrawOutlineButton>
             </motion.div>
           </div>
         </div>
