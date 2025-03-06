@@ -37,15 +37,15 @@ Welcome to [Software Engineer] Mia Princz's portfolio website.
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-10 rounded-lg shadow-lg overflow-hidden bg-black/20">
+    <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto mt-10 rounded-lg shadow-lg overflow-hidden bg-black/20">
       {/* MAC terminal buttons */}
       <div className="bg-gray-200 px-4 py-2 flex items-center space-x-2">
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#FF605C" }}></div>
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#FFBD44" }}></div>
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#00CA4E" }}></div>
+        <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full" style={{ backgroundColor: "#FF605C" }}></div>
+        <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full" style={{ backgroundColor: "#FFBD44" }}></div>
+        <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full" style={{ backgroundColor: "#00CA4E" }}></div>
       </div>
       {/* Terminal content */}
-      <div className="p-6 text-white/90 font-mono">
+      <div className="p-4 sm:p-6 md:p-8 text-white/90 font-mono text-sm sm:text-base md:text-lg">
         <pre className="whitespace-pre-wrap break-words">{staticText}</pre>
         <div>
           <span>Mia Princz$ </span>
@@ -53,7 +53,7 @@ Welcome to [Software Engineer] Mia Princz's portfolio website.
           <span className="blinking-cursor">|</span>
         </div>
       </div>
-      {/* Blinking cursor animation with inline CSS */}
+      {/* Blinking cursor animation */}
       <style>{`
         @keyframes blink {
           0%, 50% { opacity: 1; }

@@ -45,7 +45,7 @@ const Hero = () => {
 
   return (
     <section className="w-full min-h-screen pt-8 sm:pt-20 md:pt-12 px-4 flex flex-col items-center justify-center">
-      <div className="w-full max-w-2xl flex flex-col p-6 mx-4">
+      <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl flex flex-col p-6 mx-4">
         <MacTerminal />
 
         <div className="flex justify-around w-full mt-8">
