@@ -9,15 +9,16 @@ const Home = () => {
   return (
     <div className='w-screen'>
       <Hero />
-      <AppearAnimation>
+      <AppearAnimation id='about'>
         <About />
       </AppearAnimation>
-      <AppearAnimation>
+      <AppearAnimation id='technologies'>
         <Technologies />
       </AppearAnimation>
-      <AppearAnimation>
+      <AppearAnimation id='education'>
         <Education />
       </AppearAnimation>
+      <Projects />
     </div>
   )
 }
