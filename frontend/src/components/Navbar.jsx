@@ -43,22 +43,23 @@ const Navbar = () => {
   };
   return (
     <div
-      className={`fixed top-0 left-0 w-full z-50 bg-black/20 transition-transform duration-500 ${
+      className={`fixed top-0 left-0 w-full z-50 bg-black/80 transition-transform duration-500 ${
         visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
       <nav className={`${openNavigation ? "bg-(--bg)/40 backdrop-blur-lg" : "bg-transparent"}`}>
         <div className="max-w-screen-xl flex items-center justify-between mx-auto p-4 relative">
           <a href="/" className="flex items-center space-x-3">
-            <span className="self-center text-2xl font-semibold whitespace-nowrap transform transition-transform duration-300 hover:scale-110 group gradient-hover">
-              Mia Princz
-              <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
-            </span>
+          <img
+            src="/imgs/logos/self.png"
+            alt="Logo"
+            className="w-16 h-16 transform transition-transform duration-300 hover:scale-110"
+          />
           </a>
           <button
             onClick={toggleNavigation}
             type="button"
-            className="md:hidden inline-flex items-center justify-center p-2 text-gray-500 rounded-lg"
+            className="md:hidden inline-flex items-center justify-center p-2  text-stone-200 rounded-lg"
           >
             <span className="sr-only">Toggle main menu</span>
             <svg
@@ -93,7 +94,7 @@ const Navbar = () => {
                   <a
                     href={item.url}
                     onClick={handleClick}
-                    className="block relative text-gray-900 dark:text-white font-medium transform transition-transform duration-300 hover:scale-110 group gradient-hover mr-6"
+                    className="block relative  text-stone-200/70 font-medium transform transition-transform duration-300 hover:scale-110 group hover:text-white mr-6"
                   >
                     {item.title}
                     <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
@@ -115,7 +116,7 @@ const Navbar = () => {
                     <a
                       href={item.url}
                       onClick={handleClick}
-                      className="block xl:text-4xl lg:text-3xl md:text-2xl relative text-gray-900 dark:text-white font-medium transform transition-transform duration-300 hover:scale-105 group gradient-hover"
+                      className="block xl:text-4xl lg:text-3xl md:text-2xl relative text-stone-200/70 font-medium transform transition-transform duration-300 hover:scale-105 group hover:text-white"
                     >
                       {item.title}
                       <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
