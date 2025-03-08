@@ -4,12 +4,10 @@ import { ReactSocialMediaIcons } from 'react-social-media-icons';
 import DrawOutlineButton from './DrawOutlineButton';
 import { useState } from 'react';
 import MacTerminal from './MacTerminal';
+import resumePDF from '../assets/Mia_Princz___CV.pdf';
+
 
 const Hero = () => {
-  const codeText = `<h2>
-      Mia Princz, Software Engineer
-</h2>`;
-
   const iconVariants = {
     hidden: { x: -100, opacity: 0, rotate: -360 },
     visible: (index) => ({
@@ -43,14 +41,20 @@ const Hero = () => {
     },
   };
 
+  const handleViewResume = () => {
+    window.open(resumePDF, '_blank');
+  };
+
   return (
     <section className="w-full min-h-screen pt-8 sm:pt-20 md:pt-12 px-4 flex flex-col items-center justify-center">
       <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl flex flex-col p-6 mx-4">
         <MacTerminal />
 
-        <div className="flex justify-around w-full mt-8">
+        {/* Konténer a social iconoknak és a gombnak */}
+        <div className="flex flex-col md:flex-row justify-around w-full mt-8">
           <div className="flex justify-evenly w-full">
-            {[{ icon: "mail", label: "Email", url: "https://example.com/email" },
+            {[
+              { icon: "mail", label: "Email", url: "https://example.com/email" },
               { icon: "github", label: "GitHub", url: "https://example.com/github" },
               { icon: "linkedin", label: "LinkedIn", url: "https://example.com/linkedin" },
             ].map(({ icon, label, url }, index) => {
@@ -98,19 +102,21 @@ const Hero = () => {
               );
             })}
           </div>
-          <div className="flex justify-around w-full">
+          <div className="flex justify-around w-full mt-4 md:mt-0">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <DrawOutlineButton>View Resume</DrawOutlineButton>
+              <DrawOutlineButton onClick={handleViewResume}>
+                View Resume
+              </DrawOutlineButton>
             </motion.div>
           </div>
         </div>
       </div>
 
-      <div className="w-full md:w-2xl xl:w-3xl 2xl:w-4xl max-w-6xl flex items-center xl:pt-24 md:pt-12 sm:mt-16 md:mt-8">
+      <div className="w-full md:w-2xl xl:w-3xl 2xl:w-3xl max-w-6xl flex items-center xl:pt-16 md:pt-12 sm:mt-16 md:mt-8 xl:mt-0">
         <motion.div
           initial={{ translateY: 100, opacity: 0 }}
           animate={{ translateY: 0, opacity: 1 }}

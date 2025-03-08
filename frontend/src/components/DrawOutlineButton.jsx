@@ -1,8 +1,11 @@
-const DrawOutlineButton = ({ children, ...rest }) => {
+import React from 'react';
+
+const DrawOutlineButton = ({ children, onClick, ...rest }) => {
   return (
     <button
       {...rest}
-      className="group relative bg-black/20 px-4 py-2 font-medium text-slate-100 transition-colors duration-[400ms] hover:text-indigo-300"
+      onClick={onClick}
+      className="group relative bg-black/20 px-3 py-1 md:px-4 md:py-2 mb-6 md:mb-2 font-mono uppercase text-slate-100 text-xs md:text-base transition-colors duration-[400ms] hover:text-indigo-300"
     >
       <span>{children}</span>
 
