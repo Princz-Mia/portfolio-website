@@ -25,7 +25,7 @@ export const aboutMeParagraphs = [
   {
     id: "0",
     content:
-      "Hi, I'm Mia Princz, a final-year Computer Engineering student currently pursuing my Bachelor's degree at the Budapest University of Technology and Economics. Specializing in software development at the Department of Automation and Applied Informatics, my primary focus and passion lie in backend development, though I'm also comfortable and capable when working on frontend projects.",
+      "Hi, I'm Mia Princz, a final-year Computer Engineering student currently pursuing my Bachelor's degree at the Budapest University of Technology and Economics. Specializing in Software Engineering at the Department of Automation and Applied Informatics, my primary focus and passion lie in backend development, though I'm also comfortable and capable when working on frontend projects.",
   },
   {
     id: "1",
@@ -35,7 +35,7 @@ export const aboutMeParagraphs = [
   {
     id: "2",
     content:
-      "I'm highly motivated, detail-oriented, and continuously eager to expand my professional knowledge and skills. My goal is to become part of an innovative team where I can contribute effectively while growing professionally and personally. I'm always open to exciting career opportunities and collaboration—let's connect and discuss how I can bring value to your organization!",
+      "I'm highly motivated, detail-oriented, and continuously eager to expand my professional knowledge and skills. My goal is to become part of an innovative team where I can contribute effectively while growing professionally and personally. I'm always open to exciting career opportunities and collaboration — let's connect and discuss how I can bring value to your organization!",
   },
 ];
 
@@ -147,5 +147,35 @@ export const education = [
       "— Recipient of the Bláthy Award for sustained academic excellence and active participation in the school community",
       "— Supported peers in preparing for their professional final exams through tutoring and guidance",
     ],
+  },
+];
+
+export const projects = [
+  {
+    id: "0",
+    title: "Spring Coffee — E-commerce Web Application",
+    description:
+      "Developed as a course project for the Java-based Web Frameworks course, this application provided hands-on experience with Spring Boot, including Spring Data JPA, and Spring Security. Technologies: Java, Spring Boot, React, JavaScript, PostgreSQL, Docker",
+    imageUrlVertical: "/imgs/projects/SpringCoffee_v.webp",
+    imageUrlHorizontal: "/imgs/projects/SpringCoffee_h.webp",
+    githubUrl: "https://github.com/Princz-Mia/viaubv18-coffee-shop",
+  },
+  {
+    id: "1",
+    title: "GourmetGo — Food Delivery Web Application",
+    description:
+      "Developed as part of the Project Laboratory course at BME's Department of Automation and Applied Informatics, this food ordering web application leverages Spring Boot and React. Currently under active development with plans for further extension and refinement as a bachelor’s thesis topic. Technologies: Java, Spring Boot, React, JavaScript, PostgreSQL, Docker",
+    imageUrlVertical: "/imgs/projects/GourmetGo_v.webp",
+    imageUrlHorizontal: "/imgs/projects/GourmetGo_h.webp",
+    githubUrl: "https://github.com/Princz-Mia/viaual04-gourmetgo",
+  },
+  {
+    id: "2",
+    title: "PlanYourFuture — AI-Driven Mobile and Web Application",
+    description:
+      "PlanYourFuture is an AI-driven application designed to help users create personalized career and financial plans based on real-time trends and forecasts. It simulates various scenarios to guide informed decision-making. Developed for the BlackRock Application Development Competition as part of the Kotlin Multiplatform course. Currently in the planning and development phase. Technologies: Kotlin, Ktor, KMM, Kotlin/JS, React, OpenAI, PostgreSQL, Docker",
+    imageUrlVertical: "/imgs/projects/PlanYourFuture_v.webp",
+    imageUrlHorizontal: "/imgs/projects/PlanYourFuture_h.webp",
+    githubUrl: "https://github.com/Princz-Mia/viaubxav084-planyourfuture",
   },
 ];
