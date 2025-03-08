@@ -6,17 +6,9 @@ import { motion } from "framer-motion";
 
 const Technologies = () => {
   return (
-    <div className="w-full max-w-sm sm:max-w-lg md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative z-10 py-4 sm:py-6" id="about">
+    <div className="w-full max-w-sm sm:max-w-lg md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto relative z-10 py-4 sm:py-6">
       <div className="space-y-4 mb-10">
-        <motion.h1
-          initial={{ opacity: 0, x: -75 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="text-3xl min-[430px]:text-4xl md:text-5xl font-bold text-stone-200"
-        >
-          Technologies
-        </motion.h1>
+      <h2 className="text-3xl min-[430px]:text-4xl md:text-5xl font-bold text-stone-200 pb-6">Technologies</h2>
         <motion.p
           initial={{ opacity: 0, x: -90 }}
           whileInView={{ opacity: 1, x: 0 }}
