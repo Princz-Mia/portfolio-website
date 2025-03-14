@@ -11,12 +11,12 @@ export default function App() {
             whileInView={{ opacity: 1, x: 0, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.25 }}
-            className="border-l border-neutral-300 dark:border-neutral-500">
+            className="border-l border-neutral-500">
             {education.map((item, index) => {
                 return (
                 <li key={index}>
                     <div className="flex-start flex items-center pt-2">
-                    <div className="-ml-[5px] mr-3 h-[9px] w-[9px] rounded-full bg-neutral-300 dark:bg-neutral-500"></div>
+                    <div className="-ml-[5px] mr-3 h-[9px] w-[9px] rounded-full bg-neutral-500"></div>
                     <p className="text-sm text-stone-200/70">
                         {item.fromTo}
                     </p>

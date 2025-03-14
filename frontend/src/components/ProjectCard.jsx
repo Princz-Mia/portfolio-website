@@ -18,13 +18,13 @@ const ProjectCard = ({ project, index }) => {
     }
   };
 
-  // Nagyobb képernyőkön (1024px felett) a kártya 50%-os szélességű lesz, és az igazítás határozza meg,
+  // Nagyobb képernyőkön (1280px felett) a kártya 50%-os szélességű lesz, és az igazítás határozza meg,
   // hogy balról vagy jobbról érkezzen
   const alignmentClass = isEven ? 'lg:mr-auto' : 'lg:ml-auto';
 
   return (
     <motion.div
-      className={`bg-gray-800 lg:mb-6 rounded-lg shadow-lg p-6 flex flex-col lg:flex-row items-center xl:items-start w-full lg:w-3/5 ${alignmentClass}`}
+      className={`bg-black/20 border-2 border-black/20 lg:mb-6 rounded-lg shadow-lg p-6 flex flex-col lg:flex-row items-center xl:items-start w-full lg:w-3/5 ${alignmentClass}`}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
@@ -41,8 +41,8 @@ const ProjectCard = ({ project, index }) => {
         />
       </picture>
       <div className="mt-4 lg:mt-0 lg:ml-6 xl:w-1/2">
-        <h3 className="text-xl font-semibold text-white">{project.title}</h3>
-        <p className="text-gray-300 mt-2">{project.description}</p>
+        <h3 className="text-xl font-semibold text-stone-200">{project.title}</h3>
+        <p className="text-stone-200/70 mt-2">{project.description}</p>
         <a
           href={project.githubUrl}
           target="_blank"
