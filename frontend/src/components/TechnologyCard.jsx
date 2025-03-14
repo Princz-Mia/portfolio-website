@@ -15,7 +15,7 @@ const TechnologyCard = ({ cardInfo }) => {
         />
       </div>
       <div className="overflow-clip">
-        <h4 className="text-lg font-medium">{name}</h4>
+        <h4 className="text-lg font-medium text-stone-200">{name}</h4>
         <p className="text-white/70 text-sm ">
           {description}
         </p>
