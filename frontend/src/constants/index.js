@@ -30,7 +30,7 @@ export const aboutMeParagraphs = [
   {
     id: "1",
     content:
-      "Throughout my academic journey, I've actively participated in diverse projects that allowed me to build robust software solutions, enhancing my skills in software development, database management, and API design. My experience includes technologies such as Java, Kotlin, .NET, various JavaScript frameworks and many more, enabling me to confidently handle end-to-end application development.",
+      "Throughout my academic journey, I've actively participated in diverse projects that allowed me to build robust software solutions, enhancing my skills in software development, database management, and API design. My experience includes technologies such as Java, C#, Kotlin, various JavaScript frameworks and many more, enabling me to confidently handle end-to-end application development.",
   },
   {
     id: "2",
@@ -162,6 +162,33 @@ export const projects = [
   },
   {
     id: "1",
+    title: "FlowBoard — Kanban Board Web Application",
+    description:
+      "This project was developed as part of the Client-Side Systems course requirements. It is a fully client-side web application built with TypeScript and Tailwind CSS. Future improvements are planned, including a server-side implementation that will enable user authentication (registration & login) so that boards can be accessed from any device, rather than relying on local storage for data persistence. Additionally, more features will be introduced to enhance the user experience. Technologies: React, TypeScript, Tailwind CSS",
+    imageUrlVertical: "/imgs/projects/kanban_v.png",
+    imageUrlHorizontal: "/imgs/projects/kanban_h.png",
+    githubUrl: "https://github.com/Princz-Mia/viauac17-kanban",
+  },
+  {
+    id: "2",
+    title: "Sorting Algorithm Visualizer — Desktop Application",
+    description:
+      "A Java program that provides a graphical interface to visualize and understand various sorting algorithms, allowing users to observe the sorting process in real-time. Technologies: Java, Java Swing",
+    imageUrlVertical: "/imgs/projects/sav.png",
+    imageUrlHorizontal: "/imgs/projects/sav.png",
+    githubUrl: "https://github.com/Princz-Mia/sorting-algorithm-visualizer",
+  },
+  {
+    id: "3",
+    title: "Tetris Clone — Desktop Application",
+    description:
+      "Java Tetris is a simple implementation of the classic Tetris game written in Java. It provides a graphical user interface using Swing components and allows players to enjoy the addictive gameplay of arranging falling blocks to form complete lines. Technologies: Java, Java Swing",
+    imageUrlVertical: "/imgs/projects/tetris_v.png",
+    imageUrlHorizontal: "/imgs/projects/tetris_h.png",
+    githubUrl: "https://github.com/Princz-Mia/viiiab00-tetris-clone",
+  },
+  {
+    id: "4",
     title: "GourmetGo — Food Delivery Web Application",
     description:
       "Developed as part of the Project Laboratory course at BME's Department of Automation and Applied Informatics, this food ordering web application leverages Spring Boot and React. Currently under active development with plans for further extension and refinement as a bachelor’s thesis topic. Technologies: Java, Spring Boot, React, JavaScript, PostgreSQL, Docker",
@@ -170,7 +197,7 @@ export const projects = [
     githubUrl: "https://github.com/Princz-Mia/viaual04-gourmetgo",
   },
   {
-    id: "2",
+    id: "5",
     title: "PlanYourFuture — AI-Driven Mobile and Web Application",
     description:
       "PlanYourFuture is an AI-driven application designed to help users create personalized career and financial plans based on real-time trends and forecasts. It simulates various scenarios to guide informed decision-making. Developed for the BlackRock Application Development Competition as part of the Kotlin Multiplatform course. Currently in the planning and development phase. Technologies: Kotlin, Ktor, KMM, Kotlin/JS, React, OpenAI, PostgreSQL, Docker",
