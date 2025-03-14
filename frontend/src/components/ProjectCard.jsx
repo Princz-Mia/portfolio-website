@@ -1,26 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const ProjectCard = ({ project, index }) => {
+  // Figyeljük az ablakméretet, hogy mobil nézet-e (kevesebb, mint 1024px)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    handleResize(); // kezdeti ellenőrzés
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Határozzuk meg, hogy a kártya páros (balról) vagy páratlan (jobbról) érkezzen
   const isEven = index % 2 === 0;
-  
-  // A kezdő x érték – a kisebb értékekkel lehet finomhangolni az animációt
-  const initialX = isEven ? -200 : 200;
+  // Mobil esetén nem akarunk vízszintes eltolást, így x mindig 0,
+  // nem-mobil esetén pedig a régi logika szerint számolunk eltolást
+  const initialX = isMobile ? 0 : (isEven ? -200 : 200);
 
-  // Variánsok a framer-motion számára
-  const variants = {
-    hidden: { opacity: 0, x: initialX },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { type: 'spring', bounce: 0.2, duration: 1 }
-    }
-  };
+  // Variánsok: mobilon csak y tengelyen animálunk, és x érték mindig 0
+  const variants = isMobile
+    ? {
+        hidden: { opacity: 0, x: 0, y: 100 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          transition: { type: 'spring', bounce: 0.2, duration: 1 },
+        },
+      }
+    : {
+        hidden: { opacity: 0, x: initialX },
+        visible: {
+          opacity: 1,
+          x: 0,
+          transition: { type: 'spring', bounce: 0.2, duration: 1 },
+        },
+      };
 
-  // Nagyobb képernyőkön (1280px felett) a kártya 50%-os szélességű lesz, és az igazítás határozza meg,
-  // hogy balról vagy jobbról érkezzen
-  const alignmentClass = isEven ? 'lg:mr-auto' : 'lg:ml-auto';
+  // Mobilon a kártya középre kerül, nagyobb képernyőn az index alapján igazítjuk
+  const alignmentClass = isMobile ? 'mx-auto' : (isEven ? 'lg:mr-auto' : 'lg:ml-auto');
 
   return (
     <motion.div
@@ -30,8 +52,6 @@ const ProjectCard = ({ project, index }) => {
       viewport={{ once: true, amount: 0.3 }}
       variants={variants}
     >
-      {/* Kisebb képernyőkön: a horizontális kép, a kártya tetején; 1280px felett: vertikális kép, 
-          amely a kártya bal oldalán fél szélességben, teljes magasságban jelenik meg */}
       <picture className="w-full xl:w-1/2 xl:h-full rounded-md overflow-hidden">
         <source media="(min-width: 1280px)" srcSet={project.imageUrlVertical} />
         <img
