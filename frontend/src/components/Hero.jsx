@@ -54,9 +54,9 @@ const Hero = () => {
         <div className="flex flex-col md:flex-row justify-around w-full mt-8">
           <div className="flex justify-evenly w-full">
             {[
-              { icon: "mail", label: "Email", url: "https://example.com/email" },
-              { icon: "github", label: "GitHub", url: "https://example.com/github" },
-              { icon: "linkedin", label: "LinkedIn", url: "https://example.com/linkedin" },
+              { icon: "mail", label: "Email", url: "mailto:princz.mia@gmail.com" },
+              { icon: "github", label: "GitHub", url: "https://github.com/Princz-Mia" },
+              { icon: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com/in/mia-princz-445602347/" },
             ].map(({ icon, label, url }, index) => {
               const [isHovered, setIsHovered] = useState(false);
               return (
