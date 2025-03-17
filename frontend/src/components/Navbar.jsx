@@ -30,6 +30,19 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 960) {
+        setOpenNavigation(false);
+        enablePageScroll();
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -41,6 +54,7 @@ const Navbar = () => {
     enablePageScroll();
     setOpenNavigation(false);
   };
+
   return (
     <div
       className={`fixed top-0 left-0 w-full z-50 bg-black/80 transition-transform duration-500 ${
@@ -50,24 +64,19 @@ const Navbar = () => {
       <nav className={`${openNavigation ? "bg-(--bg)/40 backdrop-blur-lg" : "bg-transparent"}`}>
         <div className="max-w-screen-xl flex items-center justify-between mx-auto p-4 relative">
           <a href="/" className="flex items-center space-x-3">
-          <img
-            src="/imgs/logos/self.png"
-            alt="Logo"
-            className="w-16 h-16 transform transition-transform duration-300 hover:scale-110"
-          />
+            <img
+              src="/imgs/logos/self.png"
+              alt="Logo"
+              className="w-16 h-16 transform transition-transform duration-300 hover:scale-110"
+            />
           </a>
           <button
             onClick={toggleNavigation}
             type="button"
-            className="md:hidden inline-flex items-center justify-center p-2  text-stone-200 rounded-lg"
+            className="md:hidden inline-flex items-center justify-center p-2 text-stone-200 rounded-lg"
           >
             <span className="sr-only">Toggle main menu</span>
-            <svg
-              className="w-6 h-6"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               {openNavigation ? (
                 <path
                   stroke="currentColor"
@@ -94,7 +103,7 @@ const Navbar = () => {
                   <a
                     href={item.url}
                     onClick={handleClick}
-                    className="block relative  text-stone-200/70 font-medium transform transition-transform duration-300 hover:scale-110 group hover:text-white mr-6"
+                    className="block relative text-stone-200/70 font-medium transform transition-transform duration-300 hover:scale-110 group hover:text-white mr-6"
                   >
                     {item.title}
                     <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
@@ -106,28 +115,31 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {openNavigation && (
-        <div className="fixed h-screen inset-x-0 top-[5rem] bottom-0 bg-(--bg)/40 backdrop-blur-lg z-40 flex items-center justify-center">
-          <nav>
-            <div className="max-w-screen-xl mx-auto p-4">
-              <ul className="font-medium flex flex-col items-center space-y-16 -mt-32">
-                {navigation.map((item, index) => (
-                  <li key={index}>
-                    <a
-                      href={item.url}
-                      onClick={handleClick}
-                      className="block xl:text-4xl lg:text-3xl md:text-2xl relative text-stone-200/70 font-medium transform transition-transform duration-300 hover:scale-105 group hover:text-white"
-                    >
-                      {item.title}
-                      <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </nav>
-        </div>
-      )}
+      {/* A mobil navigációs menü mindig renderelve van, de opacity-val vezérelve */}
+      <div
+        className={`fixed h-screen inset-x-0 top-[6rem] bottom-0 bg-(--bg)/40 backdrop-blur-lg z-40 flex items-center justify-center transition-opacity duration-350 ease-in-out ${
+          openNavigation ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <nav>
+          <div className="max-w-screen-xl mx-auto p-4">
+            <ul className="font-medium flex flex-col items-center space-y-16 -mt-32">
+              {navigation.map((item, index) => (
+                <li key={index}>
+                  <a
+                    href={item.url}
+                    onClick={handleClick}
+                    className="block text-2xl lg:text-4xl md:text-3xl relative text-stone-200/80 font-medium transform transition-transform duration-300 hover:scale-105 group hover:text-white"
+                  >
+                    {item.title}
+                    <span className="absolute left-0 right-0 h-[2px] bg-white -bottom-1 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };
