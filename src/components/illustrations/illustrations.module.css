@@ -1,0 +1,78 @@
+/* Shared illustration language: 1.5px strokes, ink and accent only. */
+
+.figure {
+  color: var(--ink-2);
+  width: 100%;
+  height: auto;
+}
+
+.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.strokeThin {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.strokeAccent {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fillInk {
+  fill: currentColor;
+}
+
+.fillPaper {
+  fill: var(--paper);
+}
+
+.fillTint {
+  fill: var(--accent-tint);
+}
+
+.fillAccent {
+  fill: var(--accent);
+}
+
+.strokeDeep {
+  stroke: var(--accent-deep);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.strokePaper {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Transitions in the model motif draw themselves in once. The paths carry
+   pathLength="1", so one dash covers the whole path regardless of its length. */
+@media (prefers-reduced-motion: no-preference) {
+  .draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 1.3s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+}
