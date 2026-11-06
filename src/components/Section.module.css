@@ -1,0 +1,41 @@
+.section {
+  padding-block: clamp(3rem, 7vw, 5.5rem);
+  border-top: 1px solid var(--rule);
+}
+
+.grid {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: var(--step-3);
+}
+
+.lede {
+  color: var(--ink-2);
+  max-width: 26rem;
+}
+
+.body {
+  min-width: 0;
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .head {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+  }
+}
