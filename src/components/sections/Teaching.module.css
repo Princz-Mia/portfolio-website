@@ -1,0 +1,19 @@
+.text {
+  --flow: 1em;
+}
+
+.text p + p {
+  color: var(--ink-2);
+}
+
+.action {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.prompt {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}

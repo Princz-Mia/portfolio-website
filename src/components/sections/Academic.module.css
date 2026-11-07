@@ -1,0 +1,83 @@
+.intro {
+  --flow: 1em;
+}
+
+.intro p + p {
+  color: var(--ink-2);
+}
+
+.focus {
+  margin-top: 2.5rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.focusItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.focusIndex {
+  margin-bottom: 0.25rem;
+}
+
+.focusName {
+  font-size: var(--step-1);
+}
+
+.focusText {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  line-height: 1.6;
+}
+
+.education {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule);
+}
+
+.educationTitle {
+  font-size: var(--step-1);
+}
+
+.degrees {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.degree {
+  display: grid;
+  gap: 1rem 2.5rem;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.degreeHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.degreeName {
+  font-size: var(--step-1);
+}
+
+.institution {
+  color: var(--ink-2);
+  font-size: var(--step--1);
+}
+
+@media (min-width: 48rem) {
+  .focus {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .degree {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}

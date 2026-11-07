@@ -1,0 +1,40 @@
+.layout {
+  display: grid;
+  gap: 2rem;
+  align-items: end;
+}
+
+.text {
+  --flow: 1em;
+}
+
+.text p + p {
+  color: var(--ink-2);
+}
+
+.art {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  padding: 1.25rem 1.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cat {
+  width: min(300px, 62%);
+}
+
+.banner {
+  width: min(150px, 32%);
+}
+
+@media (min-width: 48rem) {
+  .layout {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+    column-gap: 3rem;
+  }
+
+  .art {
+    justify-content: flex-end;
+  }
+}
