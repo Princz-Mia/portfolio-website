@@ -1,0 +1,105 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.project + .project {
+  padding-top: 3rem;
+  border-top: 1px solid var(--rule);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.status {
+  color: var(--accent);
+}
+
+.name {
+  font-size: var(--step-2);
+}
+
+.tagline {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: var(--measure);
+}
+
+.columns {
+  display: grid;
+  gap: 1.5rem 2.5rem;
+}
+
+.column {
+  --flow: 0.6rem;
+  min-width: 0;
+}
+
+.column > h4 + p {
+  margin-top: 0.35rem;
+}
+
+.column > p + h4 {
+  margin-top: 1.25rem;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.4rem;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--rule-strong);
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.statusNote {
+  color: var(--ink-2);
+}
+
+.stack {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+}
+
+.links a {
+  display: inline-block;
+  padding-block: 0.4rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+@media (min-width: 48rem) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
