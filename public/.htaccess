@@ -1,0 +1,27 @@
+# Static hosting configuration for the exported site (Apache / LiteSpeed).
+# Every route is a folder with an index.html, so no rewrites are needed.
+
+AddDefaultCharset UTF-8
+Options -Indexes
+
+# Serve the exported not-found page with a real 404 status.
+ErrorDocument 404 /404.html
+
+# The social preview image is exported without a file extension.
+<Files "opengraph-image">
+  ForceType image/png
+</Files>
+
+# Fonts are immutable; HTML must always be revalidated.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(woff2|woff)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml
+</IfModule>
