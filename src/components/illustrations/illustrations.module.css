@@ -1,9 +1,15 @@
-/* Shared illustration language: 1.5px strokes, ink and accent only. */
+/*
+ * Shared illustration language: 1.5px ink strokes on paper, oxblood for the one
+ * detail that matters in each drawing. Entrance animations key on the
+ * `data-anim` attribute that InView sets, so without script every drawing is
+ * simply complete. Loops are slow and small.
+ */
 
 .figure {
   color: var(--ink-2);
   width: 100%;
   height: auto;
+  overflow: visible;
 }
 
 .stroke {
@@ -14,12 +20,20 @@
   stroke-linejoin: round;
 }
 
+.strokeBold {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .strokeThin {
   fill: none;
   stroke: currentColor;
   stroke-width: 1;
   stroke-linecap: round;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .strokeAccent {
@@ -30,20 +44,12 @@
   stroke-linejoin: round;
 }
 
-.fillInk {
-  fill: currentColor;
-}
-
-.fillPaper {
-  fill: var(--paper);
-}
-
-.fillTint {
-  fill: var(--accent-tint);
-}
-
-.fillAccent {
-  fill: var(--accent);
+.strokeAccentBold {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .strokeDeep {
@@ -55,24 +61,183 @@
 .strokePaper {
   fill: none;
   stroke: var(--paper);
-  stroke-width: 2;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-/* Transitions in the model motif draw themselves in once. The paths carry
-   pathLength="1", so one dash covers the whole path regardless of its length. */
-@media (prefers-reduced-motion: no-preference) {
-  .draw {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: draw 1.3s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
-    animation-delay: var(--delay, 0s);
+.fillInk {
+  fill: currentColor;
+}
+
+.fillDark {
+  fill: var(--ink);
+}
+
+.fillPaper {
+  fill: var(--paper);
+}
+
+.fillPaper2 {
+  fill: var(--paper-2);
+}
+
+.fillTint {
+  fill: var(--accent-tint);
+}
+
+.fillAccent {
+  fill: var(--accent);
+}
+
+.fillDeep {
+  fill: var(--accent-deep);
+}
+
+/* Entrance: a path with pathLength="1" draws itself in. */
+
+[data-anim="pending"] .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+[data-anim="in"] .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.1s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+[data-anim="pending"] .appear {
+  opacity: 0;
+}
+
+[data-anim="in"] .appear {
+  opacity: 0;
+  animation: appear 0.5s ease-out forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Loops: gentle, only while the drawing has been seen. */
+
+[data-anim="in"] .sway {
+  transform-box: fill-box;
+  transform-origin: var(--origin, 50% 0%);
+  animation: sway 5s ease-in-out infinite;
+}
+
+[data-anim="in"] .swayTail {
+  transform-box: fill-box;
+  transform-origin: var(--origin, 0% 50%);
+  animation: swayTail 4s ease-in-out infinite;
+}
+
+[data-anim="in"] .blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 6s ease-in-out infinite;
+}
+
+[data-anim="in"] .pulse {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+[data-anim="in"] .flow {
+  stroke-dasharray: 3 7;
+  animation: flow 9s linear infinite;
+}
+
+[data-anim="in"] .float {
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes swayTail {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim] .draw {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    animation: none;
   }
 
-  @keyframes draw {
-    to {
-      stroke-dashoffset: 0;
-    }
+  [data-anim] .appear {
+    opacity: 1;
+    animation: none;
+  }
+
+  [data-anim="in"] .sway,
+  [data-anim="in"] .swayTail,
+  [data-anim="in"] .blink,
+  [data-anim="in"] .pulse,
+  [data-anim="in"] .flow,
+  [data-anim="in"] .float {
+    animation: none;
   }
 }
