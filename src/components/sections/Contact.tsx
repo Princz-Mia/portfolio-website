@@ -1,5 +1,6 @@
 import type { SiteConfig } from "@/content";
 import { Section } from "@/components/Section";
+import { ContactArt } from "@/components/illustrations/ContactArt";
 import styles from "./Contact.module.css";
 
 type ContactProps = {
@@ -14,6 +15,7 @@ export function Contact({ site, number }: ContactProps) {
       number={number}
       title="Contact"
       lede="Email is the most reliable way to reach me."
+      art={<ContactArt />}
     >
       <p className={styles.emailLine}>
         <a className={styles.email} href={`mailto:${site.email}`}>

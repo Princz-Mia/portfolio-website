@@ -23,6 +23,11 @@
   max-width: 26rem;
 }
 
+.art {
+  width: min(100%, 17rem);
+  margin-top: 1.25rem;
+}
+
 .body {
   min-width: 0;
 }
@@ -37,5 +42,10 @@
     position: sticky;
     top: 2rem;
     align-self: start;
+  }
+
+  .art {
+    width: min(100%, 20rem);
+    margin-top: 2rem;
   }
 }

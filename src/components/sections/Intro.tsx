@@ -1,4 +1,5 @@
 import type { Profile, SiteConfig } from "@/content";
+import { InView } from "@/components/InView";
 import { ModelMotif } from "@/components/illustrations/ModelMotif";
 import styles from "./Intro.module.css";
 
@@ -36,7 +37,9 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
         </div>
 
         <div className={styles.aside} role="group" aria-label="At a glance">
-          <ModelMotif className={styles.motif} />
+          <InView className={styles.motif}>
+            <ModelMotif />
+          </InView>
           <dl className={styles.facts}>
             {profile.facts.map((fact) => (
               <div key={fact.label} className={styles.fact}>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { InView } from "@/components/InView";
 import styles from "./Section.module.css";
 
 type SectionProps = {
@@ -6,14 +7,17 @@ type SectionProps = {
   number: string;
   title: string;
   lede?: string;
+  /** Illustration shown under the heading; it animates in when scrolled to. */
+  art?: ReactNode;
   children: ReactNode;
 };
 
 /**
  * Editorial section: a numbered heading column on the left (sticky on wide
- * screens) and the content on the right. Stacks on narrow screens.
+ * screens) with the section's illustration, and the content on the right.
+ * Stacks on narrow screens.
  */
-export function Section({ id, number, title, lede, children }: SectionProps) {
+export function Section({ id, number, title, lede, art, children }: SectionProps) {
   const headingId = `${id}-title`;
   return (
     <section id={id} className={styles.section} aria-labelledby={headingId}>
@@ -28,6 +32,7 @@ export function Section({ id, number, title, lede, children }: SectionProps) {
             {title}
           </h2>
           {lede ? <p className={styles.lede}>{lede}</p> : null}
+          {art ? <InView className={styles.art}>{art}</InView> : null}
         </header>
         <div className={styles.body}>{children}</div>
       </div>

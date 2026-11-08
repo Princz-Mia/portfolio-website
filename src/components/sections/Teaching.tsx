@@ -1,5 +1,6 @@
 import type { Teaching as TeachingContent } from "@/content";
 import { Section } from "@/components/Section";
+import { TeachingArt } from "@/components/illustrations/TeachingArt";
 import styles from "./Teaching.module.css";
 
 type TeachingProps = {
@@ -16,6 +17,7 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
       number={number}
       title="Teaching"
       lede="Java for university students, and private tutoring."
+      art={<TeachingArt />}
     >
       <div className={`flow measure ${styles.text}`}>
         {teaching.paragraphs.map((paragraph) => (
