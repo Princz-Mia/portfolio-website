@@ -1,0 +1,14 @@
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4%;
+  width: 100%;
+}
+
+.cat {
+  width: 56%;
+}
+
+.banner {
+  width: 40%;
+}
