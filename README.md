@@ -11,6 +11,7 @@ TypeScript, exported to plain static files and uploaded to the web host by hand.
 ## Commands
 
 ```powershell
+git config core.hooksPath .githooks   # once after cloning: Conventional Commits check
 npm ci             # install the exact locked dependencies
 npm run dev        # development server on http://localhost:3000
 npm run check      # type check, lint and unit tests
@@ -27,7 +28,7 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 | `src/content/projects.ts` | Featured projects. Append an entry to add one; the section hides itself when the list is empty. |
 | `src/content/academic.ts` | Studies, research focus, education and the `outputs` list for future papers, TDK work, thesis and talks. |
 | `src/components/sections/` | One component per section of the page. |
-| `src/components/illustrations/` | The SVG line art (model motif, cat, banner). |
+| `src/components/illustrations/` | The SVG line art: one drawing per section, the cat and the banner. Entrance animations key on `InView`. |
 | `src/app/` | Routes, metadata, 404 page, sitemap, favicon and the social preview image. |
 | `public/.htaccess` | Hosting rules copied into `out/` (404 page, caching, content type for the preview image). |
 | `scripts/preview.mjs` | Dependency-free static server that mimics the host for local checks. |
