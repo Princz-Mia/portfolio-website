@@ -12,15 +12,12 @@ export const projects: Project[] = [
     tagline:
       "A simulated, browser-based stock exchange where people and Python bots trade virtual cash and shares.",
     context: "Personal project",
-    problem:
-      "Build a small but realistic trading venue end to end: order entry, matching, risk and settlement, plus public market data, with prices emerging from executions against a limit order book rather than from an external feed.",
-    contribution:
-      "I design and build all of it: the Java services, the Flink analytics job, the React terminal, the Python bots and the Compose-based runtime.",
+    summary:
+      "Everyone trades through the same API and rules, and prices emerge from executions against a price-time-priority limit order book. I design and build all of it: the Java services, the Flink analytics job, the React terminal, the Python bots and the Compose-based runtime.",
     decisions: [
-      "Orders, matching, risk and settlement commit in one database transaction in the execution service. A separate market-data service rebuilds public data from events.",
-      "Each service owns its database, and Kafka sits downstream of the commit. Trading keeps working if Kafka or Flink is down; public data goes stale until they return.",
-      "A Flink job turns trades into one-minute candles. Avro schemas shared between the Java modules are the contract between services.",
-      "Tests run against real PostgreSQL with Testcontainers, ArchUnit guards the module boundaries, and the terminal and bots have their own Vitest and pytest suites.",
+      "Orders, matching, risk and settlement commit in one database transaction; a separate service rebuilds public market data from events.",
+      "Each service owns its database and Kafka sits downstream of the commit, so trading keeps working when Kafka or Flink is down.",
+      "Tests run against real PostgreSQL with Testcontainers, and ArchUnit guards the module boundaries.",
     ],
     status: {
       label: "Early development",
@@ -49,16 +46,14 @@ export const projects: Project[] = [
     slug: "gourmetgo",
     name: "GourmetGo",
     tagline:
-      "A food ordering web application for customers, restaurants and administrators, built as my B.Sc. thesis project at BME.",
+      "A food ordering web application for customers, restaurants and administrators.",
     context: "B.Sc. thesis project",
-    problem:
-      "One platform for three kinds of users: customers browse menus, order and collect reward points; restaurants manage menus, orders and promotions and read their own analytics; administrators oversee accounts and the platform as a whole.",
-    contribution:
-      "My thesis project, built on my own: a Spring Boot backend and a React frontend, from data model and security to the dashboards.",
+    summary:
+      "My bachelor's thesis at BME, built on my own: a Spring Boot backend and a React frontend, from the data model and security to the restaurant dashboards. Customers browse and order, restaurants manage menus, orders and promotions, and administrators oversee the platform.",
     decisions: [
-      "JWT authentication with refresh tokens and Redis-backed sessions, with role-based access control across the API and the routes.",
-      "WebSocket endpoints for real-time chat and order status updates alongside the REST API.",
-      "A layered Spring Boot application with structured logging, email integration and PDF report generation for restaurants.",
+      "JWT authentication with refresh tokens and Redis-backed sessions, with role-based access across the API and the routes.",
+      "WebSocket endpoints for real-time chat and order status updates next to the REST API.",
+      "PDF report generation and analytics dashboards for restaurants.",
     ],
     status: {
       label: "Version 0.2.0",

@@ -1,7 +1,6 @@
 import type { Personal as PersonalContent } from "@/content";
 import { Section } from "@/components/Section";
-import { Cat } from "@/components/illustrations/Cat";
-import { Banner } from "@/components/illustrations/Banner";
+import { PersonalArt } from "@/components/illustrations/PersonalArt";
 import styles from "./Personal.module.css";
 
 type PersonalProps = {
@@ -12,22 +11,26 @@ type PersonalProps = {
 export function Personal({ personal, number }: PersonalProps) {
   return (
     <Section
-      id="elsewhere"
+      id="off-the-clock"
       number={number}
-      title="Elsewhere"
-      lede="What fills the time between work and study."
+      title="Off the clock"
+      lede="Movies, games, friends and cats."
+      art={<PersonalArt />}
     >
-      <div className={styles.layout}>
-        <div className={`flow measure ${styles.text}`}>
-          {personal.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-        </div>
-        <div className={styles.art}>
-          <Cat className={styles.cat} />
-          <Banner className={styles.banner} />
-        </div>
+      <div className={`flow measure ${styles.text}`}>
+        {personal.paragraphs.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
       </div>
+      {personal.links.length > 0 ? (
+        <ul className={`plain-list ${styles.links}`}>
+          {personal.links.map((link) => (
+            <li key={link.href}>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </Section>
   );
 }

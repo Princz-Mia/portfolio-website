@@ -1,5 +1,6 @@
 import type { Project } from "@/content";
 import { Section } from "@/components/Section";
+import { ProjectsArt } from "@/components/illustrations/ProjectsArt";
 import styles from "./Projects.module.css";
 
 type ProjectsProps = {
@@ -20,7 +21,8 @@ export function Projects({ projects }: ProjectsProps) {
       id="projects"
       number="02"
       title="Selected projects"
-      lede="Work with public source, described as it stands: the problem, my part in it, and the decisions that shaped it."
+      lede="Work with public source, described as it stands."
+      art={<ProjectsArt />}
     >
       <div className={styles.list}>
         {projects.map((project) => (
@@ -35,21 +37,15 @@ export function Projects({ projects }: ProjectsProps) {
               <p className={styles.tagline}>{project.tagline}</p>
             </header>
 
-            <div className={styles.columns}>
-              <div className={`flow ${styles.column}`}>
-                <h4 className={styles.label}>The problem</h4>
-                <p>{project.problem}</p>
-                <h4 className={styles.label}>My part</h4>
-                <p>{project.contribution}</p>
-              </div>
-              <div className={styles.column}>
-                <h4 className={styles.label}>Decisions worth noting</h4>
-                <ul className="dash-list">
-                  {project.decisions.map((decision) => (
-                    <li key={decision}>{decision}</li>
-                  ))}
-                </ul>
-              </div>
+            <p className={`measure ${styles.summary}`}>{project.summary}</p>
+
+            <div className={styles.decisions}>
+              <h4 className={styles.label}>Decisions worth noting</h4>
+              <ul className={`dash-list measure`}>
+                {project.decisions.map((decision) => (
+                  <li key={decision}>{decision}</li>
+                ))}
+              </ul>
             </div>
 
             <footer className={styles.meta}>

@@ -1,6 +1,7 @@
 import type { Academic as AcademicContent } from "@/content";
 import { Section } from "@/components/Section";
 import { ResearchOutputs } from "@/components/ResearchOutputs";
+import { AcademicArt } from "@/components/illustrations/AcademicArt";
 import styles from "./Academic.module.css";
 
 type AcademicProps = {
@@ -15,25 +16,14 @@ export function Academic({ academic, number }: AcademicProps) {
       id="academic"
       number={number}
       title="Academic work"
-      lede="Master's studies at BME, with a focus on modeling and verification."
+      lede="Master's studies at BME: software engineering, distributed systems, and a thesis in modeling and verification."
+      art={<AcademicArt />}
     >
       <div className={`flow measure ${styles.intro}`}>
         {academic.intro.map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>
         ))}
       </div>
-
-      <ol className={`plain-list ${styles.focus}`}>
-        {academic.focus.map((item, index) => (
-          <li key={item.name} className={styles.focusItem}>
-            <p className={`eyebrow ${styles.focusIndex}`}>
-              <span className="accent">{String(index + 1).padStart(2, "0")}</span>
-            </p>
-            <h3 className={styles.focusName}>{item.name}</h3>
-            <p className={styles.focusText}>{item.description}</p>
-          </li>
-        ))}
-      </ol>
 
       <div className={styles.education}>
         <h3 className={styles.educationTitle}>Education</h3>

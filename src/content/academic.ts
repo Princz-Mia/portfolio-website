@@ -2,25 +2,9 @@ import type { Academic } from "./types";
 
 export const academic: Academic = {
   intro: [
-    "I'm pursuing an M.Sc. in Computer Engineering at BME, with Software Engineering as my major specialization and Cloud-Based Distributed Systems as my minor. My Independent Laboratory work and thesis planning are at BME's Department of Measurement and Information Systems, and alongside them I'm taking courses from the department's Critical Systems specialization.",
-    "The thread through all of it is one question: how to describe a system precisely enough that its behaviour can be checked by a tool before it runs.",
-  ],
-  focus: [
-    {
-      name: "Modeling with SysML v2",
-      description:
-        "Describing structure and behaviour in a language with precise semantics, so that models are something to analyse rather than only to look at.",
-    },
-    {
-      name: "Formal methods",
-      description:
-        "Specifying what a system must and must not do, and reasoning about those properties with mathematical rigour.",
-    },
-    {
-      name: "Automated verification",
-      description:
-        "Model checking, automated testing and related techniques that turn a specification into evidence about an implementation.",
-    },
+    "I'm pursuing an M.Sc. in Computer Engineering at BME. My major is Software Engineering, which centres on software architecture, cloud and distributed systems and the design of large systems; my minor is Cloud-Based Distributed Systems. Alongside them I'm taking courses from the Critical Systems specialization.",
+    "My Independent Laboratory work and thesis planning are at BME's Department of Measurement and Information Systems, where I work with SysML v2 modeling, formal methods and automated verification.",
+    "When time and energy allow, I keep sharpening the fundamentals on my own: algorithms and data structures, SQL, optimization, mathematics and finance.",
   ],
   education: [
     {

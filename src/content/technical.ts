@@ -45,7 +45,15 @@ export const technical: Technical = {
     {
       name: "Ways of working",
       kind: "practice",
-      items: ["Agile", "Scrum", "Code review", "CI/CD", "Jira"],
+      items: [
+        "Agile",
+        "Scrum",
+        "Code review",
+        "CI/CD",
+        "Spec-driven development",
+        "AI-assisted development",
+        "Jira",
+      ],
     },
   ],
 };

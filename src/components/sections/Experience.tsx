@@ -1,5 +1,6 @@
 import type { Role, Technical } from "@/content";
 import { Section } from "@/components/Section";
+import { WorkArt } from "@/components/illustrations/WorkArt";
 import styles from "./Experience.module.css";
 
 type ExperienceProps = {
@@ -16,7 +17,8 @@ export function Experience({ roles, technical }: ExperienceProps) {
       id="work"
       number="01"
       title="Work"
-      lede="Backend systems, the pipelines that ship them, and the habits that keep them maintainable."
+      lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
+      art={<WorkArt />}
     >
       <div className={styles.roles}>
         {roles.map((role) => (
@@ -29,11 +31,17 @@ export function Experience({ roles, technical }: ExperienceProps) {
               {role.period ? <p className="eyebrow">{role.period}</p> : null}
             </header>
             <p className={`measure ${styles.summary}`}>{role.summary}</p>
-            <ul className={`dash-list measure ${styles.highlights}`}>
-              {role.highlights.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            {role.chapters.map((chapter) => (
+              <section key={chapter.name} className={styles.chapter} aria-label={chapter.name}>
+                <h4 className={styles.chapterName}>{chapter.name}</h4>
+                <p className={`measure ${styles.chapterSummary}`}>{chapter.summary}</p>
+                <ul className={`dash-list measure ${styles.highlights}`}>
+                  {chapter.highlights.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </article>
         ))}
       </div>

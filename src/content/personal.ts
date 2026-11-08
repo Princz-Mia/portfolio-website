@@ -2,7 +2,13 @@ import type { Personal } from "./types";
 
 export const personal: Personal = {
   paragraphs: [
-    "When time and energy allow, I study algorithms and data structures, SQL, optimization, mathematics and finance, mostly for the pleasure of understanding how things work.",
-    "The rest of the time I'm with my friends and my cats, or in World of Warcraft, raiding and pushing keys for the Horde.",
+    "My interests are the nerdy kind. I love movies, fantasy above all but really every genre, and video games are my main hobby. World of Warcraft has been my game for years: I raid and push Mythic+ keys, and I play for the Horde.",
+    "I'm just as happy offline, spending time with my friends, and at home with my cats.",
+  ],
+  links: [
+    {
+      label: "My character on Raider.IO",
+      href: "https://raider.io/characters/eu/ragnaros/Quelthara",
+    },
   ],
 };

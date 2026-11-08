@@ -38,6 +38,13 @@ export type Profile = {
   facts: { label: string; value: string }[];
 };
 
+/** A phase within one role, for example one platform or team. */
+export type RoleChapter = {
+  name: string;
+  summary: string;
+  highlights: string[];
+};
+
 export type Role = {
   organisation: string;
   title: string;
@@ -47,7 +54,8 @@ export type Role = {
    */
   period: string | null;
   summary: string;
-  highlights: string[];
+  /** Newest first. */
+  chapters: RoleChapter[];
 };
 
 export type TechnicalGroup = {
@@ -75,8 +83,9 @@ export type Project = {
   tagline: string;
   /** Context in which the project exists: personal project, thesis, course work. */
   context: string;
-  problem: string;
-  contribution: string;
+  /** What it is and what my part in it is, in one short paragraph. */
+  summary: string;
+  /** Two or three engineering decisions worth knowing about. */
   decisions: string[];
   status: ProjectStatus;
   stack: string[];
@@ -113,7 +122,6 @@ export type ResearchOutput = {
 
 export type Academic = {
   intro: string[];
-  focus: { name: string; description: string }[];
   education: EducationEntry[];
   /** Rendered only when non-empty. Keep it empty until there is genuine material. */
   outputs: ResearchOutput[];
@@ -129,4 +137,6 @@ export type Teaching = {
 
 export type Personal = {
   paragraphs: string[];
+  /** Optional real links, for example a game profile. */
+  links: ExternalLink[];
 };

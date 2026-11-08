@@ -10,11 +10,13 @@ const everyText = [
   profile.headline,
   ...profile.intro,
   ...profile.facts.map((f) => `${f.label} ${f.value}`),
-  ...roles.flatMap((r) => [r.summary, ...r.highlights]),
+  ...roles.flatMap((r) => [
+    r.summary,
+    ...r.chapters.flatMap((c) => [c.name, c.summary, ...c.highlights]),
+  ]),
   technical.note,
-  ...projects.flatMap((p) => [p.tagline, p.problem, p.contribution, ...p.decisions, p.status.note]),
+  ...projects.flatMap((p) => [p.tagline, p.summary, ...p.decisions, p.status.note]),
   ...academic.intro,
-  ...academic.focus.map((f) => f.description),
   ...academic.education.flatMap((e) => e.details),
   ...academic.outputs.map((o) => o.summary),
   ...teaching.paragraphs,
@@ -28,6 +30,7 @@ const everyHref = [
   ...(site.teachingSiteUrl ? [site.teachingSiteUrl] : []),
   ...projects.flatMap((p) => p.links.map((l) => l.href)),
   ...academic.outputs.flatMap((o) => (o.links ?? []).map((l) => l.href)),
+  ...personal.links.map((l) => l.href),
 ];
 
 describe("site content", () => {
@@ -63,6 +66,7 @@ describe("site content", () => {
       expect(project.status.note).toMatch(/20\d\d/);
       expect(project.links.length).toBeGreaterThan(0);
       expect(project.decisions.length).toBeGreaterThan(0);
+      expect(project.decisions.length).toBeLessThanOrEqual(3);
     }
   });
 
