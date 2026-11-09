@@ -1,9 +1,24 @@
 .section {
+  position: relative;
+  overflow: hidden;
   padding-block: clamp(3rem, 7vw, 5.5rem);
   border-top: 1px solid var(--rule);
 }
 
+/* The drawing lives behind the content, pale, towards the right edge. */
+.backdrop {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  top: 0.5rem;
+  right: -1.5rem;
+  width: 13rem;
+}
+
 .grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 1.75rem;
 }
@@ -23,16 +38,18 @@
   max-width: 26rem;
 }
 
-.art {
-  width: min(100%, 17rem);
-  margin-top: 1.25rem;
-}
-
 .body {
   min-width: 0;
 }
 
 @media (min-width: 60rem) {
+  .backdrop {
+    top: clamp(2.5rem, 6vw, 4.5rem);
+    right: max(0.5rem, calc((100% - var(--container)) / 2 - 1rem));
+    width: clamp(18rem, 28vw, 30rem);
+    opacity: 0.26;
+  }
+
   .grid {
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     column-gap: clamp(2rem, 5vw, 5rem);
@@ -42,10 +59,5 @@
     position: sticky;
     top: 2rem;
     align-self: start;
-  }
-
-  .art {
-    width: min(100%, 20rem);
-    margin-top: 2rem;
   }
 }
