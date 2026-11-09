@@ -31,8 +31,9 @@ export type SiteConfig = {
 };
 
 export type Profile = {
+  /** One short line under the name. */
   headline: string;
-  /** Opening paragraph(s) under the name. First person, plain language. */
+  /** Opening paragraph(s). First person, plain language. */
   intro: string[];
   /** Short labelled facts shown next to the introduction. */
   facts: { label: string; value: string }[];
@@ -135,8 +136,10 @@ export type Teaching = {
   contactPrompt: string;
 };
 
+/**
+ * Paragraph strings throughout the content may contain inline links written as
+ * `[label](https://…)`; they are rendered by `RichText`.
+ */
 export type Personal = {
   paragraphs: string[];
-  /** Optional real links, for example a game profile. */
-  links: ExternalLink[];
 };

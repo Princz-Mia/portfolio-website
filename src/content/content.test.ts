@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { extractLinks } from "@/lib/richText";
 import { academic, personal, profile, projects, roles, site, teaching, technical } from ".";
 
 /**
@@ -30,7 +31,7 @@ const everyHref = [
   ...(site.teachingSiteUrl ? [site.teachingSiteUrl] : []),
   ...projects.flatMap((p) => p.links.map((l) => l.href)),
   ...academic.outputs.flatMap((o) => (o.links ?? []).map((l) => l.href)),
-  ...personal.links.map((l) => l.href),
+  ...extractLinks(everyText),
 ];
 
 describe("site content", () => {

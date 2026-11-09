@@ -1,6 +1,7 @@
 import type { Teaching as TeachingContent } from "@/content";
 import { Section } from "@/components/Section";
 import { TeachingArt } from "@/components/illustrations/TeachingArt";
+import { RichText } from "@/lib/richText";
 import styles from "./Teaching.module.css";
 
 type TeachingProps = {
@@ -21,7 +22,9 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
     >
       <div className={`flow measure ${styles.text}`}>
         {teaching.paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+          <p key={paragraph}>
+            <RichText text={paragraph} />
+          </p>
         ))}
       </div>
       <TeachingAction

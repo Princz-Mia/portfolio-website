@@ -1,6 +1,7 @@
 import type { Personal as PersonalContent } from "@/content";
 import { Section } from "@/components/Section";
 import { PersonalArt } from "@/components/illustrations/PersonalArt";
+import { RichText } from "@/lib/richText";
 import styles from "./Personal.module.css";
 
 type PersonalProps = {
@@ -19,18 +20,11 @@ export function Personal({ personal, number }: PersonalProps) {
     >
       <div className={`flow measure ${styles.text}`}>
         {personal.paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+          <p key={paragraph}>
+            <RichText text={paragraph} />
+          </p>
         ))}
       </div>
-      {personal.links.length > 0 ? (
-        <ul className={`plain-list ${styles.links}`}>
-          {personal.links.map((link) => (
-            <li key={link.href}>
-              <a href={link.href}>{link.label}</a>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </Section>
   );
 }

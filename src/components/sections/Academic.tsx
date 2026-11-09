@@ -2,6 +2,7 @@ import type { Academic as AcademicContent } from "@/content";
 import { Section } from "@/components/Section";
 import { ResearchOutputs } from "@/components/ResearchOutputs";
 import { AcademicArt } from "@/components/illustrations/AcademicArt";
+import { RichText } from "@/lib/richText";
 import styles from "./Academic.module.css";
 
 type AcademicProps = {
@@ -21,7 +22,9 @@ export function Academic({ academic, number }: AcademicProps) {
     >
       <div className={`flow measure ${styles.intro}`}>
         {academic.intro.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+          <p key={paragraph}>
+            <RichText text={paragraph} />
+          </p>
         ))}
       </div>
 
