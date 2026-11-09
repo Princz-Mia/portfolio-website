@@ -1,14 +1,14 @@
 .row {
   display: flex;
   align-items: flex-end;
-  gap: 4%;
+  gap: 6%;
   width: 100%;
 }
 
 .cat {
-  width: 56%;
+  width: 60%;
 }
 
 .banner {
-  width: 40%;
+  width: 34%;
 }

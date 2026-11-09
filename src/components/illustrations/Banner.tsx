@@ -6,58 +6,52 @@ type BannerProps = {
 };
 
 /**
- * A Horde-inspired war banner: a spear-topped pole, a spiked crossbar and a
- * tattered red cloth with a dark angular crest. The crest is original artwork; it
- * evokes the faction without reproducing its official mark.
+ * A war banner in the Horde's colours: red cloth on a spiked standard, with a
+ * jagged black ring and an angular, pointed emblem inside it. Drawn by hand as an
+ * homage to the faction's crest; it is not the official artwork.
  */
 export function Banner({ className }: BannerProps) {
   return (
     <svg
       className={`${styles.figure} ${className ?? ""}`}
-      viewBox="0 0 200 260"
-      width="200"
-      height="260"
+      viewBox="0 0 220 300"
+      width="220"
+      height="300"
       role="img"
       aria-labelledby="banner-title"
       focusable="false"
     >
-      <title id="banner-title">A tattered red war banner with a dark crest, in the style of the Horde</title>
+      <title id="banner-title">A red war banner with a jagged black crest, in the style of the Horde</title>
 
-      {/* pole with spearhead */}
-      <path d="M40 30 V250" className={styles.strokeBold} />
-      <path d="M40 4 L31 28 H49 Z" className={styles.fillDark} />
-      <path d="M34 36 H46" className={styles.stroke} />
-
-      {/* crossbar with spiked ends */}
-      <path d="M40 48 H176" className={styles.strokeBold} />
-      <path d="M174 42 L192 48 L174 54 Z" className={styles.fillDark} />
-      <path d="M88 48 L92 36 L96 48 M132 48 L136 36 L140 48" className={styles.fillDark} />
-      <path d="M62 48 V56 M150 48 V56" className={styles.stroke} />
+      {/* standard */}
+      <path d="M36 32 V292" className={styles.strokeBold} />
+      <path d="M36 4 L26 30 H46 Z" className={styles.fillDark} />
+      <path d="M36 50 H198" className={styles.strokeBold} />
+      <path d="M196 44 L214 50 L196 56 Z" className={styles.fillDark} />
+      <path d="M70 50 L74 38 L78 50 M110 50 L114 36 L118 50 M150 50 L154 38 L158 50" className={styles.fillDark} />
 
       {/* cloth */}
       <g className={styles.sway} style={{ "--origin": "50% 0%" } as CSSProperties}>
+        <path d="M60 50 V58 M172 50 V58" className={styles.stroke} />
         <path
-          d="M56 56 H156 V196 L146 214 L136 198 L124 226 L108 202 L96 230 L82 206 L70 222 L56 198 Z"
+          d="M50 58 H182 V212 L166 234 L152 214 L138 242 L120 216 L102 246 L86 218 L70 238 L50 214 Z"
           className={`${styles.fillAccent} ${styles.strokeDeep}`}
         />
-        <path d="M56 60 H156 V72 H56 Z" className={styles.fillDeep} />
-        <path d="M72 80 V184 M140 80 V184" className={styles.strokePaper} opacity="0.2" />
-        <path d="M64 188 H148" className={styles.strokePaper} opacity="0.35" />
+        <path d="M50 62 H182 V74 H50 Z" className={styles.fillDark} />
+        <path d="M72 84 V196 M160 84 V196" className={styles.strokePaper} opacity="0.18" />
 
-        {/* crest: a jagged ring around an angular, tusked emblem */}
+        {/* crest: jagged ring */}
         <path
-          d="M106 90 L119 100.6 L135.7 102.3 L137.4 119 L148 132 L137.4 145 L135.7 161.7 L119 163.4 L106 174 L93 163.4 L76.3 161.7 L74.6 145 L64 132 L74.6 119 L76.3 102.3 L93 100.6 Z"
-          className={styles.fillDeep}
+          d="M162 146 L152.1 157.7 L153.2 173 L138.3 176.7 L130.2 189.7 L116 184 L101.8 189.7 L93.7 176.7 L78.8 173 L79.9 157.7 L70 146 L79.9 134.3 L78.8 119 L93.7 115.3 L101.8 102.3 L116 108 L130.2 102.3 L138.3 115.3 L153.2 119 L152.1 134.3 Z"
+          className={styles.ring}
         />
-        <circle cx="106" cy="132" r="28" className={styles.fillAccent} />
-        <path d="M106 108 L126 122 L121 150 L106 160 L91 150 L86 122 Z" className={styles.fillDark} />
-        <path d="M106 124 L115 136 L106 148 L97 136 Z" className={styles.fillAccent} />
-        <path d="M91 150 L82 162 L98 156 Z M121 150 L130 162 L114 156 Z" className={styles.fillDark} />
-        <path d="M86 122 L76 116 L90 114 Z M126 122 L136 116 L122 114 Z" className={styles.fillDark} />
+        {/* crest: pointed arch with a spike beneath */}
+        <path d="M116 106 L150 180 L136 180 L116 138 L96 180 L82 180 Z" className={styles.fillDark} />
+        <path d="M109 154 L116 198 L123 154 Z" className={styles.fillDark} />
       </g>
 
       {/* ground */}
-      <path d="M18 252 H118" className={styles.strokeThin} />
+      <path d="M14 294 H120" className={styles.strokeThin} />
     </svg>
   );
 }
