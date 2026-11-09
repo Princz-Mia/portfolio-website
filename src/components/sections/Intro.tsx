@@ -1,6 +1,7 @@
 import type { Profile, SiteConfig } from "@/content";
 import { InView } from "@/components/InView";
-import { ModelMotif } from "@/components/illustrations/ModelMotif";
+import { HeroArt } from "@/components/illustrations/HeroArt";
+import { RichText } from "@/lib/richText";
 import styles from "./Intro.module.css";
 
 type IntroProps = {
@@ -14,13 +15,15 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
     <section className={styles.intro} aria-labelledby="intro-title">
       <div className={`container ${styles.grid}`}>
         <div className={styles.text}>
-          <h1 id="intro-title" className={styles.heading}>
-            <span className={styles.name}>{site.name}</span>
-            <span className={styles.headline}>{profile.headline}</span>
+          <h1 id="intro-title" className={styles.name}>
+            {site.name}
           </h1>
+          <p className={styles.headline}>{profile.headline}</p>
           <div className={`flow ${styles.lede}`}>
             {profile.intro.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
+              <p key={paragraph}>
+                <RichText text={paragraph} />
+              </p>
             ))}
           </div>
           <div className={styles.actions}>
@@ -37,8 +40,8 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
         </div>
 
         <div className={styles.aside} role="group" aria-label="At a glance">
-          <InView className={styles.motif}>
-            <ModelMotif />
+          <InView className={styles.art}>
+            <HeroArt />
           </InView>
           <dl className={styles.facts}>
             {profile.facts.map((fact) => (

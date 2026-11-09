@@ -1,10 +1,10 @@
 import type { Profile } from "./types";
 
 export const profile: Profile = {
-  headline: "Software engineer with an interest in modeling and verification.",
+  headline: "Software engineer at Ericsson, M.Sc. student at BME.",
   intro: [
-    "I'm Mia Princz, a software engineer at Ericsson and an M.Sc. student in Computer Engineering at the Budapest University of Technology and Economics (BME).",
-    "At work I build backend services in Java and the tooling that delivers and runs them. At university my major is software engineering, with architecture, cloud and distributed systems at its centre, and my thesis work explores SysML v2 modeling, formal methods and automated verification.",
+    "I build backend services in Java and the tooling that delivers and runs them. At university my major is software engineering, with architecture, cloud and distributed systems at its centre, and my thesis work explores SysML v2 modeling, formal methods and automated verification.",
+    "I also teach: Java to more than 60 university students during my bachelor's, and private students since.",
   ],
   facts: [
     { label: "Now", value: "Software Engineer, Ericsson" },

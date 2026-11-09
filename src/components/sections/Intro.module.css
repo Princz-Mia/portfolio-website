@@ -10,58 +10,52 @@
 .text {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.5rem;
   min-width: 0;
 }
 
-.heading {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .name {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-size: var(--step-4);
+  letter-spacing: -0.02em;
 }
 
 .headline {
-  font-size: var(--step-4);
-  max-width: 16ch;
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--ink-2);
+  max-width: 24ch;
+  text-wrap: balance;
 }
 
 .lede {
   --flow: 1em;
   max-width: var(--measure);
-  font-size: var(--step-1);
-  line-height: 1.5;
   color: var(--ink-2);
 }
 
-.lede p + p {
-  font-size: var(--step-0);
-  line-height: 1.6;
+.lede p:first-child {
+  color: var(--ink);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .aside {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-top: 0.5rem;
 }
 
-.motif {
-  max-width: 24rem;
+.art {
+  width: min(100%, 26rem);
+  opacity: 0.55;
+  align-self: center;
 }
 
 .facts {
@@ -74,7 +68,7 @@
 
 .fact {
   display: grid;
-  grid-template-columns: 6rem 1fr;
+  grid-template-columns: 6.5rem 1fr;
   gap: 1rem;
 }
 
@@ -92,7 +86,7 @@
   color: var(--ink);
 }
 
-/* Tablet: the motif and the facts sit side by side under the text. */
+/* Tablet: the drawing and the facts sit side by side under the text. */
 @media (min-width: 40rem) and (max-width: 59.99rem) {
   .aside {
     display: grid;
@@ -115,6 +109,6 @@
   }
 
   .aside {
-    padding-top: 2.75rem;
+    padding-top: 1rem;
   }
 }

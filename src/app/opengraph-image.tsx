@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 import { profile, site } from "@/content";
 
 export const dynamic = "force-static";
-export const alt = `${site.name} — ${profile.headline}`;
+export const alt = `${site.name}. ${profile.headline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -59,17 +59,16 @@ export default async function OpenGraphImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div
             style={{
-              fontSize: 64,
+              fontSize: 84,
               fontWeight: 500,
-              lineHeight: 1.1,
-              letterSpacing: -1,
-              maxWidth: 900,
+              lineHeight: 1.05,
+              letterSpacing: -2,
             }}
           >
-            {profile.headline}
+            {site.name}
           </div>
-          <div style={{ fontSize: 28, lineHeight: 1.4, color: ink2, maxWidth: 940 }}>
-            Software engineer at Ericsson and Computer Engineering M.Sc. student at BME.
+          <div style={{ fontSize: 34, lineHeight: 1.35, color: ink2, maxWidth: 940 }}>
+            {profile.headline}
           </div>
         </div>
 

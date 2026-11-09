@@ -241,3 +241,30 @@
     animation: none;
   }
 }
+
+/* Thick, jagged ring of the banner crest. */
+.ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linejoin: miter;
+}
+
+/* The atom's electrons keep orbiting. */
+[data-anim="in"] .orbit {
+  transform-box: fill-box;
+  transform-origin: var(--origin, 50% 50%);
+  animation: orbit 14s linear infinite;
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim="in"] .orbit {
+    animation: none;
+  }
+}
