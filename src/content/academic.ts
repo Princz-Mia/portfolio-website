@@ -3,7 +3,7 @@ import type { Academic } from "./types";
 export const academic: Academic = {
   intro: [
     "I'm pursuing an M.Sc. in Computer Engineering at BME. My major is Software Engineering, which centres on software architecture, cloud and distributed systems and the design of large systems; my minor is Cloud-Based Distributed Systems. Alongside them I'm taking courses from the Critical Systems specialization.",
-    "My Independent Laboratory work and thesis planning are at BME's Department of Measurement and Information Systems, where I work with SysML v2 modeling, formal methods and automated verification.",
+    "I'm doing my Independent Laboratory at BME's Department of Measurement and Information Systems, exploring SysML v2 modeling, formal methods and automated verification. It's the direction I'd like to take my thesis, though the topic isn't settled yet.",
     "When time and energy allow, I keep sharpening the fundamentals on my own: algorithms and data structures, SQL, optimization, mathematics and finance.",
   ],
   education: [
@@ -15,7 +15,7 @@ export const academic: Academic = {
       details: [
         "Major specialization: Software Engineering",
         "Minor specialization: Cloud-Based Distributed Systems",
-        "Independent Laboratory and thesis planning at the Department of Measurement and Information Systems",
+        "Independent Laboratory at the Department of Measurement and Information Systems",
         "Additional coursework from the Critical Systems specialization",
       ],
     },
