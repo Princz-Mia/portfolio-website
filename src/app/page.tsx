@@ -10,6 +10,7 @@ import {
 } from "@/content";
 import { buildNavItems } from "@/lib/nav";
 import { SkipLink } from "@/components/SkipLink";
+import { RevealObserver } from "@/components/RevealObserver";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Intro } from "@/components/sections/Intro";
@@ -68,6 +69,7 @@ export default function HomePage() {
         <Contact site={site} number={contactNumber} />
       </main>
       <SiteFooter site={site} />
+      <RevealObserver />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }}
