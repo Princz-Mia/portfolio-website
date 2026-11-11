@@ -1,47 +1,131 @@
 .header {
-  padding-block: 1.25rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding-block: 0.7rem;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border-bottom: 1px solid var(--rule);
 }
 
 .bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 2rem;
+  gap: 0.25rem 2rem;
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   text-decoration: none;
-  padding-block: 0.4rem;
+  padding-block: 0.35rem;
+}
+
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  transition: transform 300ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+.wordmark:hover {
+  color: var(--ink);
+}
+
+.wordmark:hover .monogram {
+  transform: rotate(-12deg) scale(1.06);
 }
 
 .nav ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.4rem;
+  gap: 0 1.3rem;
 }
 
 .nav a {
+  position: relative;
   display: inline-block;
-  padding-block: 0.6rem;
+  padding-block: 0.65rem;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
   color: var(--ink-2);
 }
 
+.nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.4rem;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 100% 50%;
+  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
 .nav a:hover {
   color: var(--accent);
 }
 
-@media (min-width: 48rem) {
+.nav a:hover::after {
+  transform: scaleX(1);
+  transform-origin: 0 50%;
+}
+
+.progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .progress {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+    transform-origin: 0 50%;
+    animation: read linear both;
+    animation-timeline: scroll(root);
+  }
+
+  @keyframes read {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/* On phones the navigation wraps; a two-line sticky bar would eat the screen. */
+@media (max-width: 39.99rem) {
   .header {
-    padding-block: 1.75rem;
+    position: relative;
+  }
+
+  .monogram {
+    display: none;
   }
 }

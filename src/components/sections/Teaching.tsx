@@ -19,8 +19,9 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
       title="Teaching"
       lede="Java for university students, and private tutoring."
       art={<TeachingArt />}
+      side="left"
     >
-      <div className={`flow measure ${styles.text}`}>
+      <div className={`flow measure ${styles.text} reveal`}>
         {teaching.paragraphs.map((paragraph) => (
           <p key={paragraph}>
             <RichText text={paragraph} />

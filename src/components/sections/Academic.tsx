@@ -17,10 +17,11 @@ export function Academic({ academic, number }: AcademicProps) {
       id="academic"
       number={number}
       title="Academic work"
-      lede="Master's studies at BME: software engineering, distributed systems, and a thesis in modeling and verification."
+      lede="Master's studies at BME: software engineering and distributed systems, with an eye on modeling and verification."
       art={<AcademicArt />}
+      side="right"
     >
-      <div className={`flow measure ${styles.intro}`}>
+      <div className={`flow measure ${styles.intro} reveal`}>
         {academic.intro.map((paragraph) => (
           <p key={paragraph}>
             <RichText text={paragraph} />
@@ -28,7 +29,7 @@ export function Academic({ academic, number }: AcademicProps) {
         ))}
       </div>
 
-      <div className={styles.education}>
+      <div className={`${styles.education} reveal`}>
         <h3 className={styles.educationTitle}>Education</h3>
         <ol className={`plain-list ${styles.degrees}`}>
           {academic.education.map((entry) => (

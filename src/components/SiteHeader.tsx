@@ -7,14 +7,18 @@ type SiteHeaderProps = {
 };
 
 /**
- * The navigation is always visible and wraps on small screens, so it needs no
- * script and no disclosure widget to work.
+ * Sticky header. The navigation is always visible and wraps on small screens,
+ * so it needs no script and no disclosure widget. A hairline along the bottom
+ * fills as the page is read, where the browser supports scroll timelines.
  */
 export function SiteHeader({ name, items }: SiteHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={`container ${styles.bar}`}>
         <a href="#top" className={styles.wordmark}>
+          <span className={styles.monogram} aria-hidden="true">
+            MP
+          </span>
           {name}
         </a>
         <nav aria-label="Main" className={styles.nav}>
@@ -27,6 +31,7 @@ export function SiteHeader({ name, items }: SiteHeaderProps) {
           </ul>
         </nav>
       </div>
+      <span className={styles.progress} aria-hidden="true" />
     </header>
   );
 }

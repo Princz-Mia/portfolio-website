@@ -16,13 +16,14 @@ export function Contact({ site, number }: ContactProps) {
       title="Contact"
       lede="Email is the most reliable way to reach me."
       art={<ContactArt />}
+      side="left"
     >
-      <p className={styles.emailLine}>
+      <p className={`${styles.emailLine} reveal`}>
         <a className={styles.email} href={`mailto:${site.email}`}>
           {site.email}
         </a>
       </p>
-      <ul className={`plain-list ${styles.links}`}>
+      <ul className={`plain-list ${styles.links} reveal`}>
         <li>
           <a href={site.linkedin.href} rel="me">
             {site.linkedin.label}

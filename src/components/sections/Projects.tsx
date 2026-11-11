@@ -23,10 +23,11 @@ export function Projects({ projects }: ProjectsProps) {
       title="Selected projects"
       lede="Work with public source, described as it stands."
       art={<ProjectsArt />}
+      side="left"
     >
       <div className={styles.list}>
         {projects.map((project) => (
-          <article key={project.slug} className={styles.project} id={`project-${project.slug}`}>
+          <article key={project.slug} className={`${styles.project} reveal`} id={`project-${project.slug}`}>
             <header className={styles.head}>
               <p className="eyebrow">
                 {project.context}

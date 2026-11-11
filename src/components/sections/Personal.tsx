@@ -17,8 +17,9 @@ export function Personal({ personal, number }: PersonalProps) {
       title="Off the clock"
       lede="Movies, games, friends and cats."
       art={<PersonalArt />}
+      side="right"
     >
-      <div className={`flow measure ${styles.text}`}>
+      <div className={`flow measure ${styles.text} reveal`}>
         {personal.paragraphs.map((paragraph) => (
           <p key={paragraph}>
             <RichText text={paragraph} />
