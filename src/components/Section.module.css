@@ -99,12 +99,14 @@
     margin: 0;
   }
 
+  /* On the left side the drawing would sit where every line of text starts, so
+     there it gets its own five columns and does not overlap the content. */
   .section[data-side="left"] .content {
     grid-column: 6 / span 7;
   }
 
   .section[data-side="left"] .artCol {
-    grid-column: 1 / span 6;
+    grid-column: 1 / span 5;
     justify-content: flex-start;
   }
 }
