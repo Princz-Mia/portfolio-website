@@ -1,5 +1,6 @@
 import type { Role, Technical } from "@/content";
 import { Section } from "@/components/Section";
+import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
 import styles from "./Experience.module.css";
 
@@ -7,6 +8,11 @@ type ExperienceProps = {
   roles: Role[];
   technical: Technical;
 };
+
+/** The short name in parentheses, e.g. "TGF" from "Test Governance Framework (TGF)". */
+function shortName(name: string): string | undefined {
+  return /\(([^)]+)\)\s*$/.exec(name)?.[1];
+}
 
 export function Experience({ roles, technical }: ExperienceProps) {
   const technologies = technical.groups.filter((g) => g.kind === "technology");
@@ -19,34 +25,43 @@ export function Experience({ roles, technical }: ExperienceProps) {
       title="Work"
       lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
       art={<WorkArt />}
+      side="right"
     >
       <div className={styles.roles}>
         {roles.map((role) => (
           <article key={`${role.organisation}-${role.title}`} className={styles.role}>
-            <header className={styles.roleHead}>
+            <header className={`${styles.roleHead} reveal`}>
               <div>
                 <h3 className={styles.org}>{role.organisation}</h3>
                 <p className={styles.roleTitle}>{role.title}</p>
               </div>
-              {role.period ? <p className="eyebrow">{role.period}</p> : null}
+              {role.period ? <p className={styles.period}>{role.period}</p> : null}
             </header>
-            <p className={`measure ${styles.summary}`}>{role.summary}</p>
-            {role.chapters.map((chapter) => (
-              <section key={chapter.name} className={styles.chapter} aria-label={chapter.name}>
-                <h4 className={styles.chapterName}>{chapter.name}</h4>
-                <p className={`measure ${styles.chapterSummary}`}>{chapter.summary}</p>
-                <ul className={`dash-list measure ${styles.highlights}`}>
-                  {chapter.highlights.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            ))}
+            <p className={`measure ${styles.summary} reveal`}>{role.summary}</p>
+            <ol className={`plain-list ${styles.chapters}`}>
+              {role.chapters.map((chapter, index) => {
+                const short = shortName(chapter.name);
+                return (
+                  <li key={chapter.name} className={`${styles.chapter} reveal`}>
+                    <span className={styles.marker} aria-hidden="true">
+                      {String(role.chapters.length - index).padStart(2, "0")}
+                    </span>
+                    <h4 className={styles.chapterName}>{chapter.name}</h4>
+                    <p className={`measure ${styles.chapterSummary}`}>{chapter.summary}</p>
+                    <Highlights
+                      items={chapter.highlights}
+                      visible={3}
+                      moreLabel={short ? `from ${short}` : undefined}
+                    />
+                  </li>
+                );
+              })}
+            </ol>
           </article>
         ))}
       </div>
 
-      <div className={styles.technical}>
+      <div className={`${styles.technical} reveal`}>
         <h3 className={styles.technicalTitle}>Technical background</h3>
         <p className={`measure ${styles.note}`}>{technical.note}</p>
         <dl className={styles.groups}>
