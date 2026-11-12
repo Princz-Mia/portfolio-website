@@ -17,27 +17,37 @@ export function ContactArt({ className }: { className?: string }) {
 
       {/* envelope */}
       <g className={s.appear} style={delay(0)}>
-        <path
-          d="M72 226 L170 160 L268 226"
-          className={`${s.line} ${s.shade}`}
-        />
-        <rect
-          x="96"
-          y="182"
-          width="148"
-          height="108"
-          rx="4"
-          className={`${s.line} ${s.paper}`}
-        />
-        <path
-          d="M114 206 H210 M114 222 H226 M114 238 H190"
-          className={`${s.line} ${s.thin}`}
-        />
+        {/* offset print shadow, drawn first so it never covers the letter */}
         <path
           d="M72 226 V338 C72 344 76 348 82 348 H258 C264 348 268 344 268 338 V226"
           className={s.tint}
           transform="translate(7 6)"
         />
+        <path
+          d="M72 226 L170 160 L268 226"
+          className={`${s.line} ${s.shade}`}
+        />
+        {/* the letter, pulled well out of the envelope */}
+        <g className={s.float} style={delay(1.4)}>
+          <rect
+            x="100"
+            y="120"
+            width="140"
+            height="150"
+            rx="4"
+            className={`${s.line} ${s.paper}`}
+          />
+          <path
+            d="M118 146 H170 M118 166 H222 M118 182 H214 M118 198 H200"
+            className={`${s.line} ${s.thin}`}
+          />
+          <path d="M118 146 H150" className={s.accentLine} strokeWidth={2.4} />
+          <path
+            d="M186 216 C192 210 200 214 198 220 C196 226 186 230 186 230 C186 230 176 226 174 220 C172 214 180 210 186 216 Z"
+            className={s.accent}
+            opacity="0.85"
+          />
+        </g>
         <path
           d="M72 226 L170 296 L268 226 V338 C268 344 264 348 258 348 H82 C76 348 72 344 72 338 Z"
           className={`${s.line} ${s.paper}`}
