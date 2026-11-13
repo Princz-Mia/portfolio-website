@@ -1,0 +1,313 @@
+/* The Work drawing with a door over its laptop screen, and the terminal it opens:
+   the same screen up close, in the drawing's palette. The palette is written out
+   because the site has a single (light) theme. */
+
+.frame {
+  position: relative;
+  container-type: inline-size;
+}
+
+.door {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.door:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .door:hover {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.chip {
+  position: absolute;
+  right: 4%;
+  bottom: 6%;
+  padding: 0.15em 0.6em;
+  border: 1px solid #8a7f76;
+  border-radius: 4px;
+  background: rgb(246 241 234 / 0.9);
+  color: #a14d59;
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 2.6cqw, 12px);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Appears once the drawn code has finished writing itself. */
+[data-anim="pending"] .chip {
+  opacity: 0;
+}
+
+[data-anim="in"] .chip {
+  animation: fadeIn 0.4s ease-out 1.8s both;
+}
+
+.dialog {
+  width: min(100vw - 32px, 40rem);
+  max-width: none;
+  max-height: 85dvh;
+  padding: 0;
+  overflow: hidden;
+  border: 1.7px solid #8a7f76;
+  border-radius: 12px;
+  background: #f6f1ea;
+  box-shadow: 8px 7px 0 #f1e2dd;
+  color: #3f3532;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+
+.dialog[open] {
+  animation: zoomIn 180ms ease-out;
+}
+
+.dialog::backdrop {
+  background: rgb(63 53 50 / 0.35);
+}
+
+/* Holds the page still behind the open terminal, so a swipe cannot scroll it away. */
+:global(html):has(.dialog[open]) {
+  overflow: hidden;
+  /* Keeps the scrollbar's space so the desktop layout does not shift. */
+  scrollbar-gutter: stable;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(85dvh - 4px);
+  padding: 0 1rem 1rem;
+  /* Lets the controls scroll into view if a very short window still cannot fit them. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid #8a7f76;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(138 127 118 / 0.5);
+}
+
+.dots i:first-child {
+  background: #a14d59;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+}
+
+.close,
+.shortcut,
+.padButton,
+.textButton {
+  min-width: 44px;
+  min-height: 44px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.close {
+  margin-right: -0.75rem;
+  border: 0;
+  background: none;
+}
+
+.log {
+  flex: 1 1 auto;
+  min-height: min(14em, 30dvh);
+  margin: 0;
+  padding: 0.75rem 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prompt {
+  display: flex;
+  gap: 1ch;
+  padding: 0.4rem 0;
+  border-radius: 4px;
+}
+
+.prompt:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ps1 {
+  color: #a14d59;
+  white-space: nowrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  caret-color: #6f655d;
+}
+
+.shortcuts,
+.controls,
+.pad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shortcuts {
+  padding-top: 0.75rem;
+}
+
+.shortcut,
+.padButton {
+  padding: 0 0.9rem;
+  border: 1px solid #8a7f76;
+  border-radius: 6px;
+  background: #ebe4da;
+}
+
+.shortcut:hover,
+.padButton:hover {
+  border-color: #a14d59;
+}
+
+.doom {
+  border-color: #a14d59;
+  background: #a14d59;
+  color: #f6f1ea;
+}
+
+.game {
+  display: grid;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+}
+
+.view {
+  position: relative;
+  /* The canvas gets the height left after the title bar, hint and controls
+     (about 13rem), so the pad stays reachable in short landscape windows. */
+  width: min(100%, max(96px, 85dvh - 13rem) * 118 / 72);
+  margin-inline: auto;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 118 / 72;
+  border: 1.7px solid #8a7f76;
+  border-radius: 6px;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+/* Shown while focus is outside the whole game, pad included. */
+.game:not(:focus-within) .view::after {
+  content: "click to play";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  padding: 0.15em 0.7em;
+  border: 1px solid #8a7f76;
+  border-radius: 4px;
+  background: #f6f1ea;
+  color: #3f3532;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.hint {
+  margin: 0;
+  color: #6f655d;
+}
+
+.controls {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.padButton {
+  padding: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.padButton:active {
+  background: #f1e2dd;
+}
+
+.textButton {
+  border: 0;
+  background: none;
+  color: #a14d59;
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@media (hover: none) {
+  .game:not(:focus-within) .view::after {
+    content: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim] .chip {
+    opacity: 1;
+    animation: none;
+  }
+
+  .dialog[open] {
+    animation: none;
+  }
+}

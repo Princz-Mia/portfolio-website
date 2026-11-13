@@ -2,6 +2,7 @@ import type { Role, Technical } from "@/content";
 import { Section } from "@/components/Section";
 import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
+import { LaptopScreen } from "@/components/laptop/LaptopScreen";
 import styles from "./Experience.module.css";
 
 type ExperienceProps = {
@@ -24,7 +25,11 @@ export function Experience({ roles, technical }: ExperienceProps) {
       number="01"
       title="Work"
       lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
-      art={<WorkArt />}
+      art={
+        <LaptopScreen>
+          <WorkArt />
+        </LaptopScreen>
+      }
       side="right"
     >
       <div className={styles.roles}>
