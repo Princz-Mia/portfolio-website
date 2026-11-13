@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Profile, SiteConfig } from "@/content";
 import { InView } from "@/components/InView";
-import { HeroArt } from "@/components/illustrations/HeroArt";
+import { BongoCat } from "@/components/illustrations/BongoCat";
 import { RichText } from "@/lib/richText";
 import styles from "./Intro.module.css";
 
@@ -51,7 +51,7 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
 
         <div className={`${styles.artCol} ${styles.artItem}`}>
           <InView className={styles.art} afterIntro>
-            <HeroArt />
+            <BongoCat />
           </InView>
         </div>
 

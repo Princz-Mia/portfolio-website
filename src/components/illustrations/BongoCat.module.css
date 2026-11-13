@@ -1,0 +1,320 @@
+/*
+ * The bongo cat. Its viewBox is wider than the other drawings, so the line
+ * weights below replace the shared ones to keep about 1.7px on screen. Idle
+ * motion keys on `data-anim="in"` from the InView wrapper; without script, while
+ * pending and with reduced motion the scene is still: paws resting, code fully
+ * written, one note beside each headphone cup.
+ */
+
+.root {
+  position: relative;
+}
+
+.stage {
+  position: relative;
+}
+
+/* Line weights for this scale */
+
+.scene .w {
+  stroke-width: 2.4;
+}
+
+.scene .wBold {
+  stroke-width: 3.4;
+}
+
+.scene .wThin {
+  stroke-width: 1.6;
+}
+
+.scene .wHair {
+  stroke-width: 1.3;
+}
+
+/* Headphone band: an ink outline with a lighter core. */
+
+.band,
+.bandFill {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.band {
+  stroke: var(--art-ink-strong);
+  stroke-width: 12;
+}
+
+.bandFill {
+  stroke: var(--art-shade);
+  stroke-width: 7.2;
+}
+
+/* Code on the screen */
+
+.code {
+  fill: none;
+  stroke: var(--art-ink);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.45;
+}
+
+.codeAccent {
+  stroke: var(--art-accent);
+  opacity: 0.8;
+}
+
+/* Paws rest on the keys until the tapping starts. */
+
+.pawUp {
+  opacity: 0;
+}
+
+.pads {
+  opacity: 0.75;
+}
+
+/* Notes: the live ones stay hidden until they can move. */
+
+.noteLive {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.noteStill {
+  transition: opacity 0.6s ease;
+}
+
+/* Petting */
+
+.shakes {
+  transform-box: view-box;
+  transform-origin: 500px 175px;
+}
+
+.mark {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+.markText {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  fill: var(--art-accent);
+}
+
+.pet {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Only the outline of the head responds to the pointer. */
+.root .pet {
+  clip-path: var(--pet-shape);
+}
+
+/* The clip would hide the focus ring, so keyboard focus shows the whole box. */
+.root .pet:focus-visible {
+  clip-path: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 1.25rem;
+}
+
+.hint {
+  min-height: 1.5em;
+  margin: 0.35rem 0 0;
+  padding-right: 14%;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+[data-anim="pending"] .hint {
+  opacity: 0;
+}
+
+[data-anim="in"] .hint {
+  animation: hintIn 0.6s ease-out 1.6s both;
+}
+
+.root .hint[data-gone] {
+  animation: hintOut 0.5s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-anim="in"] .tapA,
+  [data-anim="in"] .tapB {
+    animation: tap 0.38s step-end infinite;
+  }
+
+  [data-anim="in"] .tapB {
+    animation-delay: -0.19s;
+  }
+
+  .root[data-mood="grumpy"] .tapA,
+  .root[data-mood="grumpy"] .tapB {
+    animation: none;
+  }
+
+  /* Each segment types out in turn, holds, then clears in the same order. The
+     negative delay starts the loop with the screen full. */
+  [data-anim="in"] .code {
+    stroke-dasharray: 1 1.5;
+    animation: type 22s linear infinite;
+    animation-delay: calc(var(--i) * 0.32s - 11s);
+  }
+
+  [data-anim="in"] .noteStill {
+    opacity: 0;
+  }
+
+  [data-anim="in"] .noteLive {
+    animation: rise 4.5s ease-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  .root[data-mood="grumpy"] .code,
+  .root[data-mood="grumpy"] .noteLive {
+    animation-play-state: paused;
+  }
+
+  .shakeA {
+    animation: shakeA 0.34s ease-in-out;
+  }
+
+  .shakeB {
+    animation: shakeB 0.34s ease-in-out;
+  }
+
+  .mark {
+    animation: markPop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim] .hint {
+    animation: none;
+    opacity: 1;
+  }
+
+  .root .hint[data-gone] {
+    animation: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes tap {
+  0% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes type {
+  0% {
+    stroke-dashoffset: 1.2;
+  }
+  1.4%,
+  60% {
+    stroke-dashoffset: 0;
+  }
+  61%,
+  100% {
+    stroke-dashoffset: -1.2;
+  }
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 8px) scale(0.5) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0px), -140px) scale(1) rotate(var(--turn, 0deg));
+  }
+}
+
+@keyframes shakeA {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20%,
+  60% {
+    transform: rotate(-3deg);
+  }
+  40% {
+    transform: rotate(3deg);
+  }
+  80% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@keyframes shakeB {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20%,
+  60% {
+    transform: rotate(-3deg);
+  }
+  40% {
+    transform: rotate(3deg);
+  }
+  80% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@keyframes markPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hintOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
