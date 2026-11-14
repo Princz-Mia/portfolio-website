@@ -1,6 +1,6 @@
 import type { Teaching as TeachingContent } from "@/content";
 import { Section } from "@/components/Section";
-import { TeachingArt } from "@/components/illustrations/TeachingArt";
+import { Chalkboard } from "@/components/teaching/Chalkboard";
 import { RichText } from "@/lib/richText";
 import styles from "./Teaching.module.css";
 
@@ -18,7 +18,7 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
       number={number}
       title="Teaching"
       lede="Java for university students, and private tutoring."
-      art={<TeachingArt />}
+      art={<Chalkboard />}
       side="left"
     >
       <div className={`flow measure ${styles.text} reveal`}>
