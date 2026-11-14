@@ -810,7 +810,7 @@ export function Chalkboard() {
           focusable="false"
         >
           {/* sponge on the tray */}
-          <g className={trayClass(tool === "sponge", sweeping)}>
+          <g className={`${trayClass(tool === "sponge", sweeping)} ${styles.spongeTray}`}>
             <rect x="100" y="257" width="48" height="20" rx="3" className={s.tint} transform="translate(4 3)" />
             <rect x="100" y="268" width="48" height="9" rx="2" className={`${s.line} ${s.dark}`} />
             <rect x="100" y="257" width="48" height="12" rx="3" className={`${s.line} ${s.paper}`} />
@@ -818,7 +818,7 @@ export function Chalkboard() {
           </g>
 
           {/* chalk on the tray */}
-          <g className={trayClass(tool === "chalk", writing)}>
+          <g className={`${trayClass(tool === "chalk", writing)} ${styles.chalkTray}`}>
             <rect x="306" y="273" width="30" height="7" rx="2.5" className={s.tint} transform="translate(3 2)" />
             <rect x="306" y="270" width="30" height="7" rx="2.5" className={s.line} style={STICK} />
             <path d="M312 270.5 V276.5" className={`${s.line} ${s.thin}`} />

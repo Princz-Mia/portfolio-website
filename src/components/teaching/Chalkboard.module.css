@@ -109,8 +109,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.toolButton:hover {
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
+/* Hovering a tool lifts the drawn tool a little instead of showing a box. */
+.board:has(.spongeButton:hover) .spongeTray:not(.lifted),
+.board:has(.chalkButton:hover) .chalkTray:not(.lifted) {
+  transform: translateY(-5px);
 }
 
 .toolButton:focus-visible {
@@ -118,9 +120,6 @@
   outline-offset: 2px;
 }
 
-.toolButton[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
-}
 
 .spongeButton {
   left: 25.8%;
