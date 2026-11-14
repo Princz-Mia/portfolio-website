@@ -142,4 +142,32 @@ export type Teaching = {
  */
 export type Personal = {
   paragraphs: string[];
+  /**
+   * Photos of the cats, shown as a little surprise after enough petting of the
+   * cat in the "Off the clock" drawing. Files live in `public/cats/`. While the
+   * list is empty, the surprise is simply not offered.
+   */
+  catPhotos: CatPhoto[];
+};
+
+export type CatPhoto = {
+  /** Path under `public/`, for example "/cats/mochi.jpg". */
+  src: string;
+  /** What the photo shows, for screen readers. */
+  alt: string;
+  /** Optional short caption under the photo. */
+  caption?: string;
+  /** Intrinsic size in pixels, so the layout does not shift while it loads. */
+  width: number;
+  height: number;
+};
+
+/**
+ * Optional recorded sounds. Each easter egg synthesises its own sound when its
+ * entry is `null`; set a path under `public/` (for example "/audio/horn.mp3") to
+ * play a file you have the rights to instead.
+ */
+export type Sounds = {
+  hordeHorn: string | null;
+  lichKingQuote: string | null;
 };

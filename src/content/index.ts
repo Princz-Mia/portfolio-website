@@ -6,4 +6,5 @@ export { projects } from "./projects";
 export { academic } from "./academic";
 export { teaching } from "./teaching";
 export { personal } from "./personal";
+export { sounds } from "./sounds";
 export type * from "./types";
