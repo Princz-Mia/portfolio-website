@@ -2,8 +2,9 @@
  * The bongo cat. Its viewBox is wider than the other drawings, so the line
  * weights below replace the shared ones to keep about 1.7px on screen. Idle
  * motion keys on `data-anim="in"` from the InView wrapper; without script, while
- * pending and with reduced motion the scene is still: paws resting, code fully
- * written, one note beside each headphone cup.
+ * pending and with reduced motion the scene is still: paws resting, a full
+ * screen of code, one note beside each headphone cup. While the cat is grumpy
+ * every loop is paused in place and carries on from the same spot afterwards.
  */
 
 .root {
@@ -50,12 +51,12 @@
   stroke-width: 7.2;
 }
 
-/* Code on the screen */
+/* Code on the screen, drawn in the screen's own grid units (see SCREEN_GRID). */
 
 .code {
   fill: none;
   stroke: var(--art-ink);
-  stroke-width: 4;
+  stroke-width: 2.9;
   stroke-linecap: round;
   opacity: 0.45;
 }
@@ -152,6 +153,20 @@
   animation: hintOut 0.5s ease-in forwards;
 }
 
+/*
+ * A grumpy cat stops playing: every loop holds its current frame and resumes
+ * from there, so nothing jumps back to the start.
+ */
+.root[data-mood="grumpy"] .tapA,
+.root[data-mood="grumpy"] .tapB,
+.root[data-mood="grumpy"] .scroll,
+.root[data-mood="grumpy"] .scrollEase,
+.root[data-mood="grumpy"] .code,
+.root[data-mood="grumpy"] .noteLive,
+.root[data-mood="grumpy"] .sparkles > * {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-anim="in"] .tapA,
   [data-anim="in"] .tapB {
@@ -162,17 +177,29 @@
     animation-delay: -0.19s;
   }
 
-  .root[data-mood="grumpy"] .tapA,
-  .root[data-mood="grumpy"] .tapB {
-    animation: none;
+  /*
+   * The screen scrolls like a terminal. The outer group jumps up one line per
+   * step and the inner group eases each jump, so the scroll is smooth but the
+   * two never drift apart. After a full program's height the lines repeat, so
+   * the loop restarts seamlessly. The timing comes from custom properties set
+   * on the scrolling group (--loop, --step, --steps, --gap, --shift, --open),
+   * and all three animations open at the same moment, --open, which matches
+   * the still drawing.
+   */
+  [data-anim="in"] .scroll {
+    animation: scroll var(--loop) steps(var(--steps), end) var(--open) infinite;
   }
 
-  /* Each segment types out in turn, holds, then clears in the same order. The
-     negative delay starts the loop with the screen full. */
+  [data-anim="in"] .scrollEase {
+    animation: scrollEase var(--step) ease-out var(--open) infinite;
+  }
+
+  /* Each token types itself from the start of its line when that line reaches
+     the bottom of the screen, and clears once it has scrolled out of sight. */
   [data-anim="in"] .code {
-    stroke-dasharray: 1 1.5;
-    animation: type 22s linear infinite;
-    animation-delay: calc(var(--i) * 0.32s - 11s);
+    stroke-dasharray: 1 2;
+    animation: type var(--loop) linear infinite;
+    animation-delay: var(--d, 0s);
   }
 
   [data-anim="in"] .noteStill {
@@ -184,10 +211,6 @@
     animation-delay: var(--delay, 0s);
   }
 
-  .root[data-mood="grumpy"] .code,
-  .root[data-mood="grumpy"] .noteLive {
-    animation-play-state: paused;
-  }
 
   .shakeA {
     animation: shakeA 0.34s ease-in-out;
@@ -225,17 +248,39 @@
   }
 }
 
+/* 2% of the loop is about 0.3s of typing; 88% clears the token after its line
+   has left the top of the screen and before it comes round again. A test checks
+   this window against the loop's timing in BongoCat.tsx. */
 @keyframes type {
   0% {
-    stroke-dashoffset: 1.2;
+    stroke-dashoffset: 1;
   }
-  1.4%,
-  60% {
+  2%,
+  88% {
     stroke-dashoffset: 0;
   }
-  61%,
+  88.5%,
   100% {
-    stroke-dashoffset: -1.2;
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes scroll {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(0, calc(var(--shift) * -1px));
+  }
+}
+
+@keyframes scrollEase {
+  0% {
+    transform: translate(0, calc(var(--gap) * 1px));
+  }
+  15%,
+  100% {
+    transform: translate(0, 0);
   }
 }
 

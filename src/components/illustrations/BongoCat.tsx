@@ -35,11 +35,13 @@ const VIEW = { x: -12, y: -60, width: 820, height: 430 };
  * then around the raised front paw and along the chin above the keyboard.
  */
 const HEAD_OUTLINE: readonly (readonly [number, number])[] = [
-  [334, 92],
-  [396, 46],
-  [520, 36],
-  [592, 66],
-  [646, 120],
+  [334, 96],
+  [372, 54],
+  [392, 34],
+  [470, 18],
+  [556, 20],
+  [632, 70],
+  [650, 118],
   [650, 212],
   [594, 214],
   [592, 178],
@@ -96,9 +98,6 @@ const HEAD =
   "M280.4,221 L280,240 L664,296 L664.2,283.6 a171.4,171.4,0,0,0-9.2-40.5,174,174,0,0,0-28.7-50.5,163.3,163.3,0,0,0,3.2-73.8c-11.6-1.9-42,14.2-44.5,17.5-19.6-24-88.5-52.7-153.7-48.1A78.8,78.8,0,0,0,398,67.1c-9.8,2.9-19,29.7-19.4,33.7a320,320,0,0,0-31.7,23.6c-14,11.8-28.9,24.4-42.5,44.3A173,173,0,0,0,280.4,221Z";
 const DESK = "25.3,158.5 783.2,293 513,354.9";
 const LAPTOP_BASE = "103.2,263.6 258.9,219.3 636.5,294.4 452.1,339";
-const LEFT_CUP =
-  "M609.5,137.3c-17.1,6.3-20.7,51.4-4.5,67.3,1.4,1.5,5.5,5.5,11.3,5.9,8.2.5,14.5-6.3,16.9-8.9,10.1-11,11.5-27.5,8.1-40.1-1.4-4.8-3.9-14-12.7-19.9C627.4,140.8,617.7,134.3,609.5,137.3Z";
-
 /** Rows of keys on the laptop deck. */
 const KEYS = [
   "369.6 265.6 255.3 244.3 255.5 243.5 264.7 241.9 380.9 262.3 380.8 263.1",
@@ -116,37 +115,161 @@ const KEYS = [
   "394.2 274.5 394.4 273.6 246.7 246.5 237.7 248.1 237.5 248.8 382.8 276.8",
 ];
 
-/** Code on the screen as [x1, y1, x2, y2] segments, in typing order. */
-const CODE: [number, number, number, number][] = [
-  [145.2, 83.5, 197.3, 87.5],
-  [212.2, 88.7, 260.2, 92.3],
-  [154.4, 95.6, 209.4, 100.5],
-  [223.4, 101.8, 251, 104.2],
-  [142.9, 105.3, 169.1, 108.2],
-  [183.5, 109.8, 215.9, 113.4],
-  [227.5, 114.7, 256.4, 117.9],
-  [149.1, 117.5, 185.6, 121.9],
-  [197.3, 123.3, 234.4, 127.8],
-  [249.4, 129.6, 275.4, 132.8],
-  [155.1, 131.1, 169.3, 132.9],
-  [180.4, 134.3, 203.4, 137.2],
-  [214.9, 138.7, 235.5, 141.3],
-  [244.5, 142.5, 261, 144.6],
-  [191.7, 147.7, 208.2, 150.1],
-  [221.9, 152.1, 264.7, 158.3],
-  [152.9, 153.2, 173.8, 156.4],
-  [185, 158.1, 217.3, 163],
-  [226.5, 164.4, 257.8, 169.2],
-  [268.8, 170.9, 291.3, 174.3],
-  [196.7, 172.5, 216.5, 175.8],
-  [230.3, 177.7, 243.8, 179.9],
-  [257.3, 182.2, 278.5, 185.6],
-  [180.8, 182.3, 202.7, 186],
-  [213.8, 187.9, 251.1, 194.2],
-  [262.1, 196.1, 280.5, 199.2],
+/**
+ * The headphone cups, each centred over an ear and tilted with the head so it
+ * covers the ear snugly. `turn` is in degrees; the near cup faces the viewer more.
+ */
+type Cup = { x: number; y: number; rx: number; ry: number; turn: number };
+const FAR_CUP: Cup = { x: 402, y: 85, rx: 23, ry: 31, turn: -10 };
+const NEAR_CUP: Cup = { x: 613, y: 152, rx: 31, ry: 40, turn: 12 };
+
+/** How far above a cup's top the band ends, hidden inside the yoke. */
+const BAND_TUCK = 4;
+
+/** Where the band meets a cup: just inside the yoke on top of it. */
+function bandEnd({ x, y, ry, turn }: Cup): [number, number] {
+  const angle = (turn * Math.PI) / 180;
+  const reach = ry + BAND_TUCK;
+  return [x + reach * Math.sin(angle), y - reach * Math.cos(angle)];
+}
+
+/**
+ * One continuous arc over the head from yoke to yoke. Each end leaves its cup
+ * along the cup's own axis, so the band runs straight into both yokes.
+ */
+const BAND = (() => {
+  const [x0, y0] = bandEnd(FAR_CUP);
+  const [x3, y3] = bandEnd(NEAR_CUP);
+  const lift = (cup: Cup, length: number): [number, number] => {
+    const angle = (cup.turn * Math.PI) / 180;
+    return [length * Math.sin(angle), -length * Math.cos(angle)];
+  };
+  const [dx1, dy1] = lift(FAR_CUP, 50);
+  const [dx2, dy2] = lift(NEAR_CUP, 80);
+  const r = (n: number) => Math.round(n * 10) / 10;
+  const [x1, y1, x2, y2] = [x0 + dx1, y0 + dy1, x3 + dx2, y3 + dy2];
+  // The midpoint and direction of the curve, where the accent pad sits.
+  const mx = (x0 + 3 * x1 + 3 * x2 + x3) / 8;
+  const my = (y0 + 3 * y1 + 3 * y2 + y3) / 8;
+  const angle = (Math.atan2(y3 + y2 - y1 - y0, x3 + x2 - x1 - x0) * 180) / Math.PI;
+  return {
+    d: `M${r(x0)} ${r(y0)} C${r(x1)} ${r(y1)} ${r(x2)} ${r(y2)} ${r(x3)} ${r(y3)}`,
+    pad: { x: r(mx), y: r(my), angle: r(angle) },
+  };
+})();
+
+/** The laptop screen's corners, clockwise from the far top corner. */
+const SCREEN = "93.8,63.3 284.1,73 335.9,230.5 146.2,197.6";
+
+/**
+ * The screen faces the cat, so its text runs from the near edge (the right of the
+ * drawing) towards the far edge. Code is laid out in a flat grid of 100 by 100
+ * units, with u along a line from where it starts and v down the screen, and
+ * this matrix lays that grid onto the screen.
+ */
+const SCREEN_GRID = "matrix(-1.9 -0.213 0.521 1.459 283.95 78.8)";
+
+/** Line spacing, first line, margin before each line, indent and token gap, in grid units. */
+const LINE_GAP = 9;
+const FIRST_LINE = 8;
+const MARGIN = 7;
+const INDENT = 7;
+const TOKEN_GAP = 3;
+
+/** Lines that fit on the screen at once; the bottom one is being typed. */
+const ROWS = 10;
+/** Seconds per line: scroll up, then type the new bottom line. */
+const STEP_S = 1.2;
+/** Seconds the scroll takes at the start of each step. */
+const SCROLL_S = 0.18;
+/** Extra delay per grid unit already typed on the line. */
+const PER_UNIT_S = 0.011;
+
+/** One screenful-plus of code: indentation level, token lengths, highlighted token. */
+const LINES: { indent: number; tokens: number[]; accent?: number }[] = [
+  { indent: 0, tokens: [14, 9, 16] },
+  { indent: 1, tokens: [12, 22], accent: 0 },
+  { indent: 2, tokens: [10, 6, 20] },
+  { indent: 2, tokens: [16, 12], accent: 1 },
+  { indent: 3, tokens: [24, 10] },
+  { indent: 2, tokens: [4] },
+  { indent: 1, tokens: [4] },
+  { indent: 0, tokens: [] },
+  { indent: 1, tokens: [12, 18, 8], accent: 0 },
+  { indent: 2, tokens: [20, 14] },
+  { indent: 2, tokens: [8, 24], accent: 1 },
+  { indent: 1, tokens: [4] },
 ];
-/** Segments drawn in the accent colour, like highlighted keywords. */
-const ACCENT_CODE = new Set([2, 9, 17, 24]);
+
+/** Seconds for the whole program to scroll past once. */
+const LOOP_S = LINES.length * STEP_S;
+
+/**
+ * Where the loop opens: late in the first step, after its bottom line has typed
+ * itself and before the next scroll. At that moment the screen shows rows 0 to
+ * ROWS - 1 at rest, exactly like the still drawing, so nothing shifts when the
+ * animation starts.
+ */
+const OPEN_S = STEP_S - 0.2;
+
+/**
+ * The loop's timing, shared with the stylesheet through custom properties so the
+ * scroll, the easing of each step and the typing always agree with LINES.
+ */
+export const SCREEN_LOOP = {
+  rows: ROWS,
+  lines: LINES.length,
+  gap: LINE_GAP,
+  stepS: STEP_S,
+  scrollS: SCROLL_S,
+  loopS: LOOP_S,
+  openS: OPEN_S,
+} as const;
+
+const SCREEN_VARS = {
+  "--loop": `${LOOP_S}s`,
+  "--step": `${STEP_S}s`,
+  "--steps": LINES.length,
+  "--gap": LINE_GAP,
+  "--shift": LINES.length * LINE_GAP,
+  "--open": `${-OPEN_S}s`,
+} as CSSProperties;
+
+type Token = { key: string; u1: number; u2: number; v: number; accent: boolean; delay: string };
+
+/**
+ * Every token on the screen, laid out once. The program is drawn one and a bit
+ * times so that, after scrolling a full program's height, the screen looks
+ * exactly as it did at the start and the loop restarts without a jump. Row -1, a
+ * copy of the last line just above the top edge, is the line that slides out at
+ * the start of the loop, so the wrap scrolls like every other step. Each token
+ * types itself when its line reaches the bottom of the screen; its delay is
+ * negative so the loop opens on a full screen.
+ */
+const TOKENS: Token[] = (() => {
+  const tokens: Token[] = [];
+  const count = LINES.length;
+  for (let row = -1; row < count + ROWS - 1; row += 1) {
+    const { indent, tokens: lengths, accent } = LINES[(row + count) % count];
+    // The step at which this row sits in the bottom slot and gets typed.
+    const step = (((row - (ROWS - 1)) % count) + count) % count;
+    let u = MARGIN + indent * INDENT;
+    lengths.forEach((length, index) => {
+      const offset = (u - MARGIN - indent * INDENT) * PER_UNIT_S;
+      const start = step * STEP_S + SCROLL_S + offset;
+      tokens.push({
+        key: `${row}-${index}`,
+        u1: u,
+        u2: u + length,
+        v: FIRST_LINE + row * LINE_GAP,
+        accent: index === accent,
+        delay: `${(start - LOOP_S - OPEN_S).toFixed(3)}s`,
+      });
+      u += length + TOKEN_GAP;
+    });
+  }
+  return tokens;
+})();
 
 type NoteKind = "single" | "pair";
 type Tone = "accent" | "ink";
@@ -292,7 +415,7 @@ function Paw({
   leadsWithUp: boolean;
 }) {
   return (
-    <g>
+    <g data-loop="paw">
       <path d={down} className={cx(line, s.fur, leadsWithUp ? b.tapB : b.tapA)} />
       <g className={cx(b.pawUp, leadsWithUp ? b.tapA : b.tapB)}>
         <path d={up} className={cx(line, s.fur)} />
@@ -327,8 +450,9 @@ function useMounted() {
 
 /**
  * The cat from the old site: headphones on, paws drumming on a laptop while code
- * types itself and notes drift up. Petting its head closes its eyes; too many
- * pets in a row make it grumpy for a moment.
+ * types and scrolls up the screen and notes drift up. Petting its head closes its
+ * eyes; too many pets in a row make it grumpy for a moment, which pauses the
+ * whole scene until it calms down and carries on where it left off.
  */
 export function BongoCat() {
   const titleId = useId();
@@ -402,11 +526,10 @@ export function BongoCat() {
           <circle cx="512" cy="160" r="146" className={s.blob} />
           <circle cx="118" cy="34" r="58" className={s.blobShade} />
 
-          {/* head, with the far headphone cup */}
+          {/* head and headphones */}
           <g className={cx(b.shakes, shake)}>
             <path d={HEAD} className={s.tint} transform="translate(7 6)" />
             <path d={HEAD} className={cx(line, s.fur)} />
-            <path d="M601 139 Q615 129 626 125 Q627 135 624 146 Z" className={s.tint} />
             <ellipse
               cx="422"
               cy="187"
@@ -439,26 +562,7 @@ export function BongoCat() {
             />
             <path d="M510 196 L552 191 M511 204 L553 209" className={thin} />
 
-            <path
-              d="M527,43.6c-15.9-4.6-57-14.1-104,2.3a166.9,166.9,0,0,0-60.9,37.3"
-              className={b.band}
-            />
-            <path
-              d="M527,43.6c-15.9-4.6-57-14.1-104,2.3a166.9,166.9,0,0,0-60.9,37.3"
-              className={b.bandFill}
-            />
-            <path
-              d="M400.7,80.2c-14.1-20.8-40.2.3-50.7,15-8.7,12.2-9.7,30.3,2.8,37.3,5.4-9,11.8-15.6,21-26.2A214.1,214.1,0,0,1,400.7,80.2Z"
-              className={cx(strong, s.dark)}
-            />
-            <path
-              d="M381.5,79.4c-6.6-7.5-9.6-5.8-12.3-5.5-16.3,1.3-32,20.3-27.8,33.9a21.8,21.8,0,0,0,5.9,8.5c1.7-2.6,3.5-5.1,5.4-7.7A150.7,150.7,0,0,1,381.5,79.4Z"
-              className={cx(line, s.shade)}
-            />
-            <path
-              d="M367.3,77.8a13.1,13.1,0,0,0-5.1-1.8c-8.5-.9-18.7,7.5-18.4,16.1a12.8,12.8,0,0,0,2.6,7c3.1-3.3,6.3-6.8,9.6-10.2S363.6,81.3,367.3,77.8Z"
-              className={cx(thin, s.tint)}
-            />
+            <Headset />
           </g>
 
           {/* notes from the far cup */}
@@ -491,24 +595,8 @@ export function BongoCat() {
           />
 
           {/* screen and lid */}
-          <polygon
-            points="93.8,63.3 284.1,73 335.9,230.5 146.2,197.6"
-            className={cx(line, s.shade)}
-          />
-          <g>
-            {CODE.map(([x1, y1, x2, y2], index) => (
-              <line
-                key={index}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                pathLength={1}
-                className={cx(b.code, ACCENT_CODE.has(index) && b.codeAccent)}
-                style={{ "--i": index } as CSSProperties}
-              />
-            ))}
-          </g>
+          <polygon points={SCREEN} className={cx(line, s.shade)} />
+          <Screen />
           <polygon points="103.2,263.6 452.1,339 360.8,12.4 2,2" className={line} />
 
           {/* paw in front of the lid */}
@@ -523,37 +611,6 @@ export function BongoCat() {
             ]}
             pad={[561.4, 216.8]}
           />
-
-          {/* near headphone cup and band */}
-          <g className={cx(b.shakes, shake)}>
-            <path
-              d="M638.9,157.7c-4-16.8-25.9-61.9-75.3-95.3A155.5,155.5,0,0,0,515,40.6"
-              className={b.band}
-            />
-            <path
-              d="M638.9,157.7c-4-16.8-25.9-61.9-75.3-95.3A155.5,155.5,0,0,0,515,40.6"
-              className={b.bandFill}
-            />
-            <rect
-              x="512"
-              y="34"
-              width="20"
-              height="14"
-              rx="5"
-              transform="rotate(10 522 41)"
-              className={cx(strong, s.accent)}
-            />
-            <path d={LEFT_CUP} className={s.tint} transform="translate(6 5)" />
-            <path d={LEFT_CUP} className={cx(strong, s.dark)} />
-            <path
-              d="M626.5,196.1c2.7-.4,5.9-2.6,9.3-6,6.6-6.6,6.8-16.6,5.8-24s-4.2-16.1-11.3-19.7a18.7,18.7,0,0,0-10.9-1.9C614,149.3,615.3,192.6,626.5,196.1Z"
-              className={cx(line, s.shade)}
-            />
-            <path
-              d="M631.6,151c-4.5,3.3-.5,27.1,3.8,28.2s6.9-6.6,6.2-13.1S637.4,153.5,631.6,151Z"
-              className={cx(thin, s.tint)}
-            />
-          </g>
 
           {/* notes from the near cup */}
           <Notes side="near" />
@@ -572,10 +629,12 @@ export function BongoCat() {
             </g>
           ) : null}
 
-          <Sparkle x={742} y={58} size={11} wait={0} />
-          <Sparkle x={262} y={-28} size={8} wait={0.9} tone="ink" />
-          <Sparkle x={780} y={212} size={8} wait={1.7} tone="ink" />
-          <Sparkle x={56} y={292} size={10} wait={1.2} />
+          <g className={b.sparkles}>
+            <Sparkle x={742} y={58} size={11} wait={0} />
+            <Sparkle x={262} y={-28} size={8} wait={0.9} tone="ink" />
+            <Sparkle x={780} y={212} size={8} wait={1.7} tone="ink" />
+            <Sparkle x={56} y={292} size={10} wait={1.2} />
+          </g>
         </svg>
 
         {mounted ? (
@@ -601,6 +660,119 @@ export function BongoCat() {
   );
 }
 
+/** One headphone cup with its yoke, tilted with the head. */
+function CupShape({ cup, outward }: { cup: Cup; outward: 1 | -1 }) {
+  const { x, y, rx, ry, turn } = cup;
+  return (
+    <g transform={`rotate(${turn} ${x} ${y})`}>
+      {/* the yoke the band slides into */}
+      <rect
+        x={x - 7.5}
+        y={y - ry - 11}
+        width="15"
+        height="17"
+        rx="5"
+        className={cx(strong, s.shade)}
+      />
+      <ellipse cx={x} cy={y} rx={rx} ry={ry} className={cx(strong, s.dark)} />
+      {/* the outer face, turned towards the outside of the head */}
+      <ellipse
+        cx={x + outward * rx * 0.3}
+        cy={y}
+        rx={rx * 0.58}
+        ry={ry * 0.78}
+        className={cx(line, s.shade)}
+      />
+      <ellipse
+        cx={x + outward * rx * 0.5}
+        cy={y - ry * 0.08}
+        rx={rx * 0.16}
+        ry={ry * 0.4}
+        className={cx(thin, s.tint)}
+      />
+    </g>
+  );
+}
+
+/**
+ * Over-ear headphones: a cup over each ear and one band arching over the head,
+ * its ends tucked into the yokes on top of the cups.
+ */
+function Headset() {
+  const { pad } = BAND;
+  return (
+    <g>
+      {[FAR_CUP, NEAR_CUP].map(({ x, y, rx, ry, turn }) => (
+        <ellipse
+          key={x}
+          cx={x}
+          cy={y}
+          rx={rx}
+          ry={ry}
+          transform={`translate(6 5) rotate(${turn} ${x} ${y})`}
+          className={s.tint}
+        />
+      ))}
+      <path d={BAND.d} className={b.band} />
+      <path d={BAND.d} className={b.bandFill} />
+      <rect
+        x={pad.x - 12}
+        y={pad.y - 5}
+        width="24"
+        height="10"
+        rx="5"
+        transform={`rotate(${pad.angle} ${pad.x} ${pad.y})`}
+        className={cx(strong, s.accent)}
+      />
+      <CupShape cup={FAR_CUP} outward={-1} />
+      <CupShape cup={NEAR_CUP} outward={1} />
+    </g>
+  );
+}
+
+/**
+ * Code on the laptop screen, scrolling like a terminal: each step the lines move
+ * up by one, the top line slides out past the edge of the screen and the new
+ * bottom line types itself from its start. The lines are clipped to the screen
+ * and the whole loop is CSS, so it costs nothing per frame in script.
+ */
+function Screen() {
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const screenClip = `${id}-screen`;
+  const rowsClip = `${id}-rows`;
+  return (
+    <g clipPath={`url(#${screenClip})`}>
+      <defs>
+        <clipPath id={screenClip}>
+          <polygon points={SCREEN} />
+        </clipPath>
+        <clipPath id={rowsClip}>
+          {/* exactly ROWS lines, in grid units */}
+          <rect x="-6" y="1" width="112" height="93" />
+        </clipPath>
+      </defs>
+      <g transform={SCREEN_GRID} clipPath={`url(#${rowsClip})`}>
+        <g className={b.scroll} data-loop="screen" style={SCREEN_VARS}>
+          <g className={b.scrollEase}>
+            {TOKENS.map(({ key, u1, u2, v, accent, delay }) => (
+              <line
+                key={key}
+                x1={u1}
+                y1={v}
+                x2={u2}
+                y2={v}
+                pathLength={1}
+                className={cx(b.code, accent && b.codeAccent)}
+                style={{ "--d": delay } as CSSProperties}
+              />
+            ))}
+          </g>
+        </g>
+      </g>
+    </g>
+  );
+}
+
 /**
  * The notes for one headphone cup: one still note that shows when nothing moves,
  * and a few that rise and fade in a staggered loop once the drawing is in view.
@@ -608,7 +780,7 @@ export function BongoCat() {
 function Notes({ side }: { side: "far" | "near" }) {
   const live = side === "far" ? NOTES.slice(0, 3) : NOTES.slice(3);
   return (
-    <g>
+    <g data-loop="notes">
       {side === "far" ? (
         <g className={b.noteStill} transform="translate(332 36) rotate(-14)">
           <Note kind="single" tone="accent" />
