@@ -41,6 +41,34 @@ const CONTROLLER =
   "M206 374 C192 374 186 388 190 398 C193 405 202 405 208 399 L216 392 H248 L256 399 C262 405 271 405 274 398 C278 388 272 374 258 374 Z";
 const BUCKET = "M444 324 L508 324 L498 400 H454 Z";
 
+/** The drawing's coordinate system, for overlays that line up with it. */
+export const PERSONAL_VIEW = { width: 520, height: 420 } as const;
+
+/** A rectangle in drawing units. */
+export type ArtBox = { x: number; y: number; width: number; height: number };
+
+/**
+ * Boxes around the parts a viewer can interact with, in drawing units: the
+ * banner cloth, the sleeping cat with its cushion top, the popcorn bucket and
+ * the controller on the floor. They do not overlap.
+ */
+export const PERSONAL_BOXES = {
+  banner: { x: 88, y: 80, width: 144, height: 274 },
+  cat: { x: 276, y: 276, width: 156, height: 96 },
+  popcorn: { x: 436, y: 288, width: 80, height: 118 },
+  controller: { x: 184, y: 368, width: 92, height: 42 },
+} as const satisfies Record<string, ArtBox>;
+
+/** Points that effects start from or land on, in drawing units. */
+export const PERSONAL_POINTS = {
+  /** Top of the popcorn heap in the bucket. */
+  popcorn: { x: 476, y: 306 },
+  /** Between the cat's ears. */
+  catHead: { x: 308, y: 290 },
+  /** The floor line the bucket, controller and pole stand on. */
+  floorY: 404,
+} as const;
+
 /**
  * One end of the crossbar: the horn (pale, with a darker tip and growth
  * ridges), the leather lashing that ties it on, and the iron collar with its
@@ -104,6 +132,10 @@ function Clasp() {
  * homage. At its foot a grey cat sleeps curled on a cushion, with a game
  * controller on the floor and a striped bucket of popcorn, under a crescent
  * moon.
+ *
+ * The parts that react to the viewer carry `data-part` (cloth, cat, cat-ear,
+ * zzz, controller, bucket) so a wrapper can animate them without the drawing
+ * itself needing any script.
  */
 export function PersonalArt({ className }: { className?: string }) {
   return (
@@ -181,45 +213,47 @@ export function PersonalArt({ className }: { className?: string }) {
       />
       <path d="M151 74 H169 M160 65 V83" className={`${s.line} ${s.thin}`} />
 
-      {/* cloth, swaying from its top edge */}
-      <g className={s.sway} style={origin("50% 0%")}>
-        <path d={CLOTH} className={s.tint} transform="translate(7 6)" />
-        <path d={CLOTH} className={`${s.line} ${s.strong} ${s.banner}`} />
-        <path
-          d="M104 100 C106 114 104 126 106 138 M216 100 C214 114 216 126 214 138"
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth={1.3}
-          strokeLinecap="round"
-          opacity={0.7}
-        />
-        <path
-          d="M98 304 V262 M98 244 V92 H222 V190 M222 210 V304"
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <g transform="translate(100 124) scale(1.2)">
+      {/* cloth, swaying from its top edge; the outer group can billow */}
+      <g data-part="cloth">
+        <g className={s.sway} style={origin("50% 0%")}>
+          <path d={CLOTH} className={s.tint} transform="translate(7 6)" />
+          <path d={CLOTH} className={`${s.line} ${s.strong} ${s.banner}`} />
           <path
-            d={EMBLEM}
-            className={s.dark}
-            stroke="var(--art-dark)"
-            strokeWidth={1.4}
-            strokeLinejoin="round"
+            d="M104 100 C106 114 104 126 106 138 M216 100 C214 114 216 126 214 138"
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth={1.3}
+            strokeLinecap="round"
+            opacity={0.7}
           />
           <path
-            d={EMBLEM_DIAMOND}
-            className={s.dark}
-            stroke="var(--art-dark)"
-            strokeWidth={1.4}
+            d="M98 304 V262 M98 244 V92 H222 V190 M222 210 V304"
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth={1.5}
+            strokeLinecap="round"
             strokeLinejoin="round"
           />
+          <g transform="translate(100 124) scale(1.2)">
+            <path
+              d={EMBLEM}
+              className={s.dark}
+              stroke="var(--art-dark)"
+              strokeWidth={1.4}
+              strokeLinejoin="round"
+            />
+            <path
+              d={EMBLEM_DIAMOND}
+              className={s.dark}
+              stroke="var(--art-dark)"
+              strokeWidth={1.4}
+              strokeLinejoin="round"
+            />
+          </g>
+          {/* small rips through the cloth */}
+          <path d="M186 262 L193 272 L190 273 Z" className={s.tint} />
+          <path d="M122 284 L126 296 L123.5 296 Z" className={s.tint} />
         </g>
-        {/* small rips through the cloth */}
-        <path d="M186 262 L193 272 L190 273 Z" className={s.tint} />
-        <path d="M122 284 L126 296 L123.5 296 Z" className={s.tint} />
       </g>
 
       <Clasp />
@@ -264,134 +298,144 @@ export function PersonalArt({ className }: { className?: string }) {
       />
 
       {/* ---------- cat, curled up asleep ---------- */}
-      <path d={CAT_BODY} className={s.tint} transform="translate(8 6)" />
-      <path d={CAT_BODY} className={`${s.line} ${s.fur}`} />
-      <path
-        d="M368 286 C362 296 364 306 372 312 M392 288 C386 298 388 306 396 312 M414 300 C410 308 412 314 418 318"
-        className={`${s.line} ${s.strong}`}
-      />
-      <path d="M386 356 C382 336 394 322 410 326" className={s.line} />
+      <g data-part="cat">
+        <path d={CAT_BODY} className={s.tint} transform="translate(8 6)" />
+        <path d={CAT_BODY} className={`${s.line} ${s.fur}`} />
+        <path
+          d="M368 286 C362 296 364 306 372 312 M392 288 C386 298 388 306 396 312 M414 300 C410 308 412 314 418 318"
+          className={`${s.line} ${s.strong}`}
+        />
+        <path d="M386 356 C382 336 394 322 410 326" className={s.line} />
 
-      {/* tail wrapped round the front */}
-      <Tube
-        d="M422 340 C434 362 400 368 370 366 C346 364 334 362 328 356"
-        width={14}
-      />
-      <path
-        d="M397 360 L398 372 M378 360 L379 372"
-        className={`${s.line} ${s.strong}`}
-      />
+        {/* tail wrapped round the front */}
+        <Tube
+          d="M422 340 C434 362 400 368 370 366 C346 364 334 362 328 356"
+          width={14}
+        />
+        <path
+          d="M397 360 L398 372 M378 360 L379 372"
+          className={`${s.line} ${s.strong}`}
+        />
 
-      {/* head */}
-      <path
-        d="M282 314 L278 284 Q279 278 285 281 L304 298 Z"
-        className={`${s.line} ${s.fur}`}
-      />
-      <path
-        d="M334 314 L338 284 Q337 278 331 281 L312 298 Z"
-        className={`${s.line} ${s.fur}`}
-      />
-      <path d="M284 306 L282 289 L296 299 Z" className={s.tint} />
-      <path d="M332 306 L334 289 L320 299 Z" className={s.tint} />
-      <path
-        d="M276 330 C276 308 290 296 308 296 C326 296 340 308 340 328 C340 346 326 356 308 356 C290 356 276 348 276 330 Z"
-        className={`${s.line} ${s.fur}`}
-      />
-      <path
-        d="M300 302 L302 310 M308 300 V309 M316 302 L314 310"
-        className={`${s.line} ${s.strong}`}
-      />
-      <path
-        d="M298 337 C298 331 303 329 308 332 C313 329 318 331 318 337 C318 343 313 347 308 347 C303 347 298 343 298 337 Z"
-        className={s.paper}
-      />
-      <path
-        d="M288 326 Q295 332 302 326 M314 326 Q321 332 328 326"
-        className={`${s.line} ${s.strong} ${s.bold}`}
-      />
-      <ellipse cx="290" cy="338" rx="6.5" ry="4" className={s.tint} />
-      <ellipse cx="326" cy="338" rx="6.5" ry="4" className={s.tint} />
-      <path d="M304 333 Q308 331 312 333 L308 338 Z" className={s.accent} />
-      <path
-        d="M308 338 Q308 342 303 343 M308 338 Q308 342 313 343"
-        className={s.line}
-      />
-      <path
-        d="M294 338 L266 334 M294 342 L268 347 M322 338 L350 334 M322 342 L348 347"
-        className={`${s.line} ${s.thin}`}
-      />
+        {/* head */}
+        <path
+          d="M282 314 L278 284 Q279 278 285 281 L304 298 Z"
+          className={`${s.line} ${s.fur}`}
+        />
+        <path d="M284 306 L282 289 L296 299 Z" className={s.tint} />
+        <g data-part="cat-ear">
+          <path
+            d="M334 314 L338 284 Q337 278 331 281 L312 298 Z"
+            className={`${s.line} ${s.fur}`}
+          />
+          <path d="M332 306 L334 289 L320 299 Z" className={s.tint} />
+        </g>
+        <path
+          d="M276 330 C276 308 290 296 308 296 C326 296 340 308 340 328 C340 346 326 356 308 356 C290 356 276 348 276 330 Z"
+          className={`${s.line} ${s.fur}`}
+        />
+        <path
+          d="M300 302 L302 310 M308 300 V309 M316 302 L314 310"
+          className={`${s.line} ${s.strong}`}
+        />
+        <path
+          d="M298 337 C298 331 303 329 308 332 C313 329 318 331 318 337 C318 343 313 347 308 347 C303 347 298 343 298 337 Z"
+          className={s.paper}
+        />
+        <path
+          d="M288 326 Q295 332 302 326 M314 326 Q321 332 328 326"
+          className={`${s.line} ${s.strong} ${s.bold}`}
+        />
+        <ellipse cx="290" cy="338" rx="6.5" ry="4" className={s.tint} />
+        <ellipse cx="326" cy="338" rx="6.5" ry="4" className={s.tint} />
+        <path d="M304 333 Q308 331 312 333 L308 338 Z" className={s.accent} />
+        <path
+          d="M308 338 Q308 342 303 343 M308 338 Q308 342 313 343"
+          className={s.line}
+        />
+        <path
+          d="M294 338 L266 334 M294 342 L268 347 M322 338 L350 334 M322 342 L348 347"
+          className={`${s.line} ${s.thin}`}
+        />
 
-      {/* front paws tucked under the chin */}
-      <ellipse cx="296" cy="358" rx="11" ry="6" className={`${s.line} ${s.paper}`} />
-      <ellipse cx="321" cy="359" rx="11" ry="6" className={`${s.line} ${s.paper}`} />
-      <path
-        d="M293 355 V359 M299 355 V359 M318 356 V360 M324 356 V360"
-        className={`${s.line} ${s.thin}`}
-      />
+        {/* front paws tucked under the chin */}
+        <ellipse cx="296" cy="358" rx="11" ry="6" className={`${s.line} ${s.paper}`} />
+        <ellipse cx="321" cy="359" rx="11" ry="6" className={`${s.line} ${s.paper}`} />
+        <path
+          d="M293 355 V359 M299 355 V359 M318 356 V360 M324 356 V360"
+          className={`${s.line} ${s.thin}`}
+        />
+      </g>
 
       {/* zzz */}
-      <g className={s.float} style={delay(0)}>
-        <text x="346" y="272" className={s.script} fontSize="24">
-          z
-        </text>
-      </g>
-      <g className={s.float} style={delay(0.8)}>
-        <text x="366" y="248" className={s.script} fontSize="19">
-          z
-        </text>
-      </g>
-      <g className={s.float} style={delay(1.6)}>
-        <text x="382" y="228" className={s.script} fontSize="15">
-          z
-        </text>
+      <g data-part="zzz">
+        <g className={s.float} style={delay(0)}>
+          <text x="346" y="272" className={s.script} fontSize="24">
+            z
+          </text>
+        </g>
+        <g className={s.float} style={delay(0.8)}>
+          <text x="366" y="248" className={s.script} fontSize="19">
+            z
+          </text>
+        </g>
+        <g className={s.float} style={delay(1.6)}>
+          <text x="382" y="228" className={s.script} fontSize="15">
+            z
+          </text>
+        </g>
       </g>
 
       {/* ---------- game controller on the floor ---------- */}
-      <g className={s.appear} style={delay(0.4)}>
-        <g transform="rotate(-6 232 388)">
-          <path d={CONTROLLER} className={s.tint} transform="translate(6 5)" />
-          <path d={CONTROLLER} className={`${s.line} ${s.paper}`} />
-          <path
-            d="M200 385 H212 M206 379 V391"
-            className={`${s.line} ${s.strong}`}
-            style={{ strokeWidth: 3 }}
-          />
-          <path
-            d="M226 382 H230 M234 382 H238"
-            className={`${s.line} ${s.strong}`}
-          />
-          <circle cx="258" cy="379" r="2.8" className={s.accent} />
-          <circle cx="264" cy="385" r="2.8" className={s.inkFill} />
-          <circle cx="252" cy="385" r="2.8" className={s.inkFill} />
-          <circle cx="258" cy="391" r="2.8" className={s.inkFill} />
+      <g data-part="controller">
+        <g className={s.appear} style={delay(0.4)}>
+          <g transform="rotate(-6 232 388)">
+            <path d={CONTROLLER} className={s.tint} transform="translate(6 5)" />
+            <path d={CONTROLLER} className={`${s.line} ${s.paper}`} />
+            <path
+              d="M200 385 H212 M206 379 V391"
+              className={`${s.line} ${s.strong}`}
+              style={{ strokeWidth: 3 }}
+            />
+            <path
+              d="M226 382 H230 M234 382 H238"
+              className={`${s.line} ${s.strong}`}
+            />
+            <circle cx="258" cy="379" r="2.8" className={s.accent} />
+            <circle cx="264" cy="385" r="2.8" className={s.inkFill} />
+            <circle cx="252" cy="385" r="2.8" className={s.inkFill} />
+            <circle cx="258" cy="391" r="2.8" className={s.inkFill} />
+          </g>
         </g>
       </g>
 
       {/* ---------- popcorn bucket ---------- */}
-      <g className={s.pop} style={delay(0.6)}>
-        <path d={BUCKET} className={s.tint} transform="translate(7 6)" />
-        <path
-          d="M446 318 C438 306 450 296 460 302 C462 290 478 290 481 300 C487 290 504 294 502 306 C512 306 512 318 506 318 Z"
-          className={`${s.line} ${s.paper}`}
-        />
-        <path
-          d="M458 310 C462 306 468 308 468 312 M484 306 C488 302 494 304 494 308"
-          className={`${s.line} ${s.thin}`}
-        />
-        <path d={BUCKET} className={s.paper} />
-        <path
-          d="M460 324 H476 V400 H465 Z M492 324 H508 L498 400 H487 Z"
-          className={s.accent}
-        />
-        <path d={BUCKET} className={s.line} />
-        <rect
-          x="440"
-          y="316"
-          width="72"
-          height="10"
-          rx="3"
-          className={`${s.line} ${s.paper}`}
-        />
+      <g data-part="bucket">
+        <g className={s.pop} style={delay(0.6)}>
+          <path d={BUCKET} className={s.tint} transform="translate(7 6)" />
+          <path
+            d="M446 318 C438 306 450 296 460 302 C462 290 478 290 481 300 C487 290 504 294 502 306 C512 306 512 318 506 318 Z"
+            className={`${s.line} ${s.paper}`}
+          />
+          <path
+            d="M458 310 C462 306 468 308 468 312 M484 306 C488 302 494 304 494 308"
+            className={`${s.line} ${s.thin}`}
+          />
+          <path d={BUCKET} className={s.paper} />
+          <path
+            d="M460 324 H476 V400 H465 Z M492 324 H508 L498 400 H487 Z"
+            className={s.accent}
+          />
+          <path d={BUCKET} className={s.line} />
+          <rect
+            x="440"
+            y="316"
+            width="72"
+            height="10"
+            rx="3"
+            className={`${s.line} ${s.paper}`}
+          />
+        </g>
       </g>
 
       <Sparkle x={300} y={120} size={7} wait={0.4} />

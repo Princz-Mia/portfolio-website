@@ -1,0 +1,444 @@
+/*
+ * Interactive layer over the "Off the clock" drawing. The drawing's parts carry
+ * `data-part`; this wrapper sets data attributes while something is happening
+ * (data-tip, data-pet, data-purring, data-horn) and the rules below animate the
+ * matching parts. Effects (popcorn, hearts) live in an overlay SVG with the
+ * drawing's viewBox and are moved by keyframes fed with per-item custom
+ * properties. Without script the wrapper holds only the still drawing.
+ */
+
+.wrap {
+  position: relative;
+}
+
+/* ---------- overlay controls ---------- */
+
+.hit {
+  position: absolute;
+  display: block;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cat {
+  border-radius: 48% 48% 40% 40%;
+}
+
+/* The controller's tooltip shows on hover and keyboard focus. */
+.tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+  pointer-events: none;
+}
+
+.controller:hover .tooltip,
+.controller:focus-visible .tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* A whisper that the drawing does things, gone after the first interaction. */
+.hint {
+  position: absolute;
+  top: 1.5%;
+  left: 60%;
+  max-width: 40%;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  pointer-events: none;
+  animation: hint-in 0.6s ease-out 1.2s backwards;
+  transition: opacity 0.4s ease;
+}
+
+.hint[data-hidden="true"] {
+  opacity: 0;
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- reactions of the drawing's parts ---------- */
+
+.wrap [data-part="cloth"],
+.wrap [data-part="bucket"],
+.wrap [data-part="controller"],
+.wrap [data-part="cat-ear"] {
+  transform-box: fill-box;
+}
+
+.wrap [data-part="cloth"] {
+  transform-origin: 50% 0%;
+}
+
+.wrap [data-part="bucket"],
+.wrap [data-part="controller"] {
+  transform-origin: 50% 100%;
+  transition: translate 0.2s ease;
+}
+
+.wrap [data-part="cat-ear"] {
+  transform-origin: 25% 100%;
+  transition: rotate 0.2s ease;
+}
+
+.wrap [data-part="zzz"] {
+  transition: opacity 0.3s ease;
+}
+
+/* Hover and focus lift the part a little; no box is drawn around it. */
+.wrap:has(.popcorn:hover, .popcorn:focus-visible) [data-part="bucket"],
+.wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"] {
+  translate: 0 -3px;
+}
+
+.wrap:has(.cat:hover, .cat:focus-visible) [data-part="cat-ear"] {
+  rotate: -6deg;
+}
+
+/* Popcorn: the bucket tips and wobbles on each grab. Two identical keyframe
+   names let a new grab restart the motion. */
+.wrap[data-tip="a"] [data-part="bucket"] {
+  animation: tip-a 0.7s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+.wrap[data-tip="b"] [data-part="bucket"] {
+  animation: tip-b 0.7s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes tip-a {
+  0%,
+  100% {
+    transform: none;
+  }
+  22% {
+    transform: translateY(-3px) rotate(-9deg);
+  }
+  48% {
+    transform: rotate(5deg);
+  }
+  72% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes tip-b {
+  0%,
+  100% {
+    transform: none;
+  }
+  22% {
+    transform: translateY(-3px) rotate(-9deg);
+  }
+  48% {
+    transform: rotate(5deg);
+  }
+  72% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* Cat: the body hums while it purrs, the zzz fade, an ear twitches per pet. */
+.wrap[data-purring="true"] [data-part="cat"] {
+  animation: purr 0.11s linear infinite;
+}
+
+.wrap[data-purring="true"] [data-part="zzz"] {
+  opacity: 0;
+}
+
+.wrap[data-pet="a"] [data-part="cat-ear"] {
+  animation: twitch-a 0.45s ease-out;
+}
+
+.wrap[data-pet="b"] [data-part="cat-ear"] {
+  animation: twitch-b 0.45s ease-out;
+}
+
+@keyframes purr {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(0.6px, -0.3px);
+  }
+  75% {
+    transform: translate(-0.6px, 0.3px);
+  }
+}
+
+@keyframes twitch-a {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  60% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes twitch-b {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  60% {
+    transform: rotate(4deg);
+  }
+}
+
+/* Banner: the cloth billows while the horn sounds. */
+.wrap[data-horn="true"] [data-part="cloth"] {
+  animation: billow 2.6s ease-in-out;
+}
+
+@keyframes billow {
+  0%,
+  100% {
+    transform: none;
+  }
+  14% {
+    transform: rotate(4deg) skewX(-5deg);
+  }
+  32% {
+    transform: rotate(-3.5deg) skewX(4deg);
+  }
+  52% {
+    transform: rotate(2.6deg) skewX(-3deg);
+  }
+  72% {
+    transform: rotate(-1.6deg) skewX(1.5deg);
+  }
+  88% {
+    transform: rotate(0.6deg);
+  }
+}
+
+/* ---------- effects ---------- */
+
+.effects {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.kernel,
+.heart {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation-delay: var(--wait, 0s);
+  animation-fill-mode: both;
+}
+
+.kernelShadow {
+  fill: var(--art-tint);
+}
+
+.kernelBody {
+  fill: var(--paper);
+  stroke: var(--art-ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.kernelHull {
+  fill: none;
+  stroke: var(--art-accent);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.spill {
+  animation-name: spill;
+  animation-duration: 4.2s;
+}
+
+.fly {
+  animation-name: fly;
+  animation-duration: 1.5s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+}
+
+@keyframes spill {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x0), var(--y0)) rotate(0deg) scale(calc(var(--s) * 0.6));
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  4% {
+    opacity: 1;
+  }
+  12% {
+    transform: translate(var(--xm), var(--ym)) rotate(calc(var(--rot) * 0.5)) scale(var(--s));
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5);
+  }
+  24% {
+    transform: translate(var(--x1), var(--y1)) rotate(var(--rot)) scale(var(--s));
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  29% {
+    transform: translate(var(--xb), var(--yb)) rotate(calc(var(--rot) * 1.1)) scale(var(--s));
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5);
+  }
+  34%,
+  84% {
+    opacity: 1;
+    transform: translate(var(--x2), var(--y1)) rotate(calc(var(--rot) * 1.2)) scale(var(--s));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x2), var(--y1)) rotate(calc(var(--rot) * 1.2)) scale(var(--s));
+  }
+}
+
+@keyframes fly {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x0), var(--y0)) rotate(0deg) scale(calc(var(--s) * 0.6));
+  }
+  12% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x1), var(--y1)) rotate(var(--rot)) scale(var(--s));
+  }
+}
+
+.heartAccent {
+  fill: var(--art-accent);
+}
+
+.heartTint {
+  fill: var(--art-tint);
+  stroke: var(--art-ink);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.heart {
+  animation-name: heart;
+  animation-duration: 1.6s;
+  animation-timing-function: ease-out;
+}
+
+@keyframes heart {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x0), var(--y0)) scale(calc(var(--s) * 0.4));
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x1), var(--y1)) scale(var(--s));
+  }
+}
+
+/* ---------- reduced motion: still results, sounds only on click ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hint {
+    animation: none;
+  }
+
+  .wrap [data-part],
+  .wrap[data-tip] [data-part="bucket"],
+  .wrap[data-pet] [data-part="cat-ear"],
+  .wrap[data-purring="true"] [data-part="cat"],
+  .wrap[data-horn="true"] [data-part="cloth"] {
+    animation: none;
+    transition: none;
+  }
+
+  .wrap:has(.popcorn:hover, .popcorn:focus-visible) [data-part="bucket"],
+  .wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"] {
+    translate: none;
+  }
+
+  .wrap:has(.cat:hover, .cat:focus-visible) [data-part="cat-ear"] {
+    rotate: none;
+  }
+
+  .tooltip {
+    transition: none;
+    transform: translate(-50%, 0);
+  }
+
+  /* Kernels simply lie where they would land, then fade. */
+  .spill {
+    animation: fade-late 4.2s linear both;
+    transform: translate(var(--x2), var(--y1)) rotate(var(--rot)) scale(var(--s));
+  }
+
+  .fly {
+    display: none;
+  }
+
+  /* Hearts appear above the cat and fade without moving. */
+  .heart {
+    animation: fade-late 1.6s linear both;
+    transform: translate(var(--x1), var(--y1)) scale(var(--s));
+  }
+}
+
+@keyframes fade-late {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
