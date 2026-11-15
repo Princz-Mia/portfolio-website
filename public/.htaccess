@@ -7,6 +7,10 @@ Options -Indexes
 # Serve the exported not-found page with a real 404 status.
 ErrorDocument 404 /404.html
 
+# WebAssembly must be served with its own type so browsers can compile it
+# while it streams (WebAssembly.instantiateStreaming).
+AddType application/wasm .wasm
+
 # The social preview image is exported without a file extension.
 <Files "opengraph-image">
   ForceType image/png
@@ -20,8 +24,13 @@ ErrorDocument 404 /404.html
   <FilesMatch "\.(woff2|woff)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
+  # The game engine in /doom/ is large and rarely changes, but its file name is
+  # not fingerprinted: cache it for 30 days and revalidate after that.
+  <FilesMatch "\.wasm$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
 </IfModule>
 
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml application/wasm
 </IfModule>
