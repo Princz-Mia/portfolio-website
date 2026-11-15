@@ -634,6 +634,8 @@ export function Chalkboard() {
     if (!tool) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.ctrlKey || event.altKey || event.metaKey) return;
+      // Escape that belongs to an open modal, or that another handler used, leaves the tool alone.
+      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
       toolRef.current = null;
       setTool(null);
       setMessage(`The ${tool} is back on the tray.`);

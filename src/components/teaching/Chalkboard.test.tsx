@@ -314,6 +314,29 @@ describe("Chalkboard", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/back on the tray/i);
   });
 
+  it("keeps the tool when Escape belongs to an open dialog or was already handled", async () => {
+    render(<Chalkboard />);
+    const chalk = await screen.findByRole("button", { name: "Pick up the chalk" });
+    fireEvent.click(chalk);
+
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("open", "");
+    document.body.append(dialog);
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(chalk).toHaveAttribute("aria-pressed", "true");
+    dialog.remove();
+
+    const handled = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    handled.preventDefault();
+    act(() => {
+      document.body.dispatchEvent(handled);
+    });
+    expect(chalk).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(chalk).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("wipes the board and writes it again from buttons", async () => {
     render(<Chalkboard />);
 
