@@ -52,10 +52,14 @@
   animation: fadeIn 0.4s ease-out 1.8s both;
 }
 
+/* A fixed-size panel: --panel-w and --panel-h come from PANEL_SIZE in
+   LaptopScreen.tsx (the fallbacks repeat them). Long output scrolls inside the
+   log and the game scales to fit, so the panel never grows. */
 .dialog {
-  width: min(100vw - 32px, 40rem);
+  width: var(--panel-w, min(100vw - 32px, 40rem));
+  height: var(--panel-h, min(85dvh, 34rem));
   max-width: none;
-  max-height: 85dvh;
+  max-height: none;
   padding: 0;
   overflow: hidden;
   border: 1.7px solid #8a7f76;
@@ -87,15 +91,14 @@
 .screen {
   display: flex;
   flex-direction: column;
-  max-height: calc(85dvh - 4px);
+  height: 100%;
   padding: 0 1rem 1rem;
-  /* Lets the controls scroll into view if a very short window still cannot fit them. */
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 .titleBar {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 0.75rem;
   border-bottom: 1px solid #8a7f76;
@@ -127,7 +130,7 @@
 .close,
 .shortcut,
 .padButton,
-.textButton {
+.quit {
   min-width: 44px;
   min-height: 44px;
   font: inherit;
@@ -141,9 +144,21 @@
   background: none;
 }
 
+.close:focus-visible,
+.shortcut:focus-visible,
+.padButton:focus-visible,
+.quit:focus-visible,
+.credit:focus-visible,
+.canvas:focus-visible,
+.dukeCanvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Takes whatever height is left and scrolls; the prompt and buttons stay put. */
 .log {
-  flex: 1 1 auto;
-  min-height: min(14em, 30dvh);
+  flex: 1 1 0;
+  min-height: 0;
   margin: 0;
   padding: 0.75rem 0;
   overflow-y: auto;
@@ -155,6 +170,7 @@
 
 .prompt {
   display: flex;
+  flex: none;
   gap: 1ch;
   padding: 0.4rem 0;
   border-radius: 4px;
@@ -183,9 +199,10 @@
 }
 
 .shortcuts,
-.controls,
-.pad {
+.pad,
+.gameBar {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -213,37 +230,52 @@
   color: #f6f1ea;
 }
 
+/* Duke runner's button: outlined in the accent, beside the filled doom button. */
+.duke {
+  border-color: #a14d59;
+  color: #a14d59;
+}
+
+/* The game: the canvas fills the space left by the hint, pad and buttons. */
 .game {
-  display: grid;
-  gap: 0.6rem;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
   padding-top: 0.75rem;
 }
 
 .view {
   position: relative;
-  /* The canvas gets the height left after the title bar, hint and controls
-     (about 13rem), so the pad stays reachable in short landscape windows. */
-  width: min(100%, max(96px, 85dvh - 13rem) * 118 / 72);
-  margin-inline: auto;
+  display: grid;
+  flex: 1 1 0;
+  min-height: 0;
+  place-items: center;
+  container-type: size;
 }
 
+/* Doom drew 320 x 200 pixels for a 4:3 screen, so its pixels are a little
+   taller than wide: the canvas is stretched to 4:3 and kept crisp. */
 .canvas {
   display: block;
-  width: 100%;
-  aspect-ratio: 118 / 72;
+  width: min(100cqw, 100cqh * 4 / 3);
+  height: auto;
+  aspect-ratio: 4 / 3;
   border: 1.7px solid #8a7f76;
   border-radius: 6px;
+  background: #000;
   image-rendering: pixelated;
   touch-action: none;
 }
 
-/* Shown while focus is outside the whole game, pad included. */
-.game:not(:focus-within) .view::after {
-  content: "click to play";
+.starting,
+.view:not(:focus-within)::after {
   position: absolute;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
+  margin: 0;
   padding: 0.15em 0.7em;
   border: 1px solid #8a7f76;
   border-radius: 4px;
@@ -253,14 +285,76 @@
   pointer-events: none;
 }
 
-.hint {
-  margin: 0;
-  color: #6f655d;
+/* Shown while the canvas does not have the keyboard. */
+.view:not(:focus-within)::after {
+  content: "click to play";
 }
 
-.controls {
-  align-items: center;
-  justify-content: space-between;
+.view:has(.starting)::after {
+  content: none;
+}
+
+/* Duke runner: a wide strip of paper, as wide as the panel allows. */
+.dukeView {
+  position: relative;
+  display: grid;
+  flex: 1 1 0;
+  min-height: 0;
+  place-items: center;
+  container-type: size;
+}
+
+.dukeCanvas {
+  display: block;
+  width: min(100cqw, 100cqh * 3);
+  height: auto;
+  aspect-ratio: 3 / 1;
+  border: 1.7px solid #8a7f76;
+  border-radius: 6px;
+  background: #f6f1ea;
+  box-shadow: 4px 3px 0 #f1e2dd;
+  font-family: var(--font-mono);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Start, pause and game over text, over the canvas; taps go through to it. */
+.dukeNote {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  max-width: calc(100% - 2rem);
+  padding: 0.35em 0.8em;
+  border: 1px solid #8a7f76;
+  border-radius: 4px;
+  background: rgb(246 241 234 / 0.94);
+  color: #3f3532;
+  font-size: 0.8em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.dukeNote p {
+  margin: 0;
+}
+
+.dukeNote p:first-child:not(:only-child) {
+  color: #a14d59;
+}
+
+.hint {
+  flex: none;
+  margin: 0;
+  color: #6f655d;
+  font-size: 0.8em;
+}
+
+.pad {
+  justify-content: center;
 }
 
 .padButton {
@@ -271,15 +365,30 @@
   -webkit-touch-callout: none;
 }
 
+.padWord {
+  padding: 0 0.6rem;
+}
+
 .padButton:active {
   background: #f1e2dd;
 }
 
-.textButton {
-  border: 0;
-  background: none;
-  color: #a14d59;
-  text-decoration: underline;
+.gameBar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quit {
+  padding: 0 0.9rem;
+  border: 1px solid #a14d59;
+  border-radius: 6px;
+  background: #a14d59;
+  color: #f6f1ea;
+}
+
+.credit {
+  color: #6f655d;
+  font-size: 0.75em;
 }
 
 @keyframes fadeIn {
@@ -295,9 +404,17 @@
   }
 }
 
+/* A mouse and keyboard play on the keyboard: the pad is for touch screens. */
+@media (hover: hover) and (pointer: fine) {
+  .pad {
+    display: none;
+  }
+}
+
 @media (hover: none) {
-  .game:not(:focus-within) .view::after {
-    content: none;
+  .hint,
+  .view:not(:focus-within)::after {
+    display: none;
   }
 }
 

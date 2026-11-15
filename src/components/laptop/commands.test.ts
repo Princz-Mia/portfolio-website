@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { profile, projects, site } from "@/content";
-import { PROMPT, normalize, run } from "./commands";
+import {
+  DOOM_HELP,
+  DOOM_MOTION_WARNING,
+  DUKE_HELP,
+  DUKE_MOTION_NOTE,
+  PROMPT,
+  normalize,
+  run,
+} from "./commands";
 
 const ctx = { reducedMotion: false };
 
@@ -55,10 +63,41 @@ describe("run", () => {
   it("signals clear, exit and doom", () => {
     expect(run("clear", ctx)).toEqual({ lines: [], clear: true });
     expect(run("exit", ctx).exit).toBe(true);
+    const doom = run("doom", ctx);
+    expect(doom.doom).toBe(true);
+    expect(doom.lines).toEqual([`${PROMPT} doom`, "loading doom.wad…"]);
+  });
+
+  it("warns about motion before doom when reduced motion is preferred", () => {
     const doom = run("doom", { reducedMotion: true });
     expect(doom.doom).toBe(true);
-    expect(doom.lines).toContain("reduced motion is on: step mode, one cell per key.");
-    expect(run("doom --help", ctx).doom).toBeUndefined();
+    expect(doom.lines).toContain(DOOM_MOTION_WARNING);
+  });
+
+  it("explains the controls and how to leave for doom --help", () => {
+    const help = run("doom --help", ctx);
+    expect(help.doom).toBeUndefined();
+    expect(help.lines.slice(1)).toEqual(DOOM_HELP);
+    expect(help.lines.join("\n")).toMatch(/quit to terminal/);
+    expect(help.lines.join("\n")).toMatch(/esc/);
+    expect(run("doom e1m1", ctx).lines.at(-1)).toBe("doom: command not found. try help");
+  });
+
+  it("starts the Duke runner", () => {
+    const duke = run("duke", ctx);
+    expect(duke.duke).toBe(true);
+    expect(duke.doom).toBeUndefined();
+    expect(duke.lines).toEqual([`${PROMPT} duke`, "java -jar duke-run.jar"]);
+    expect(run("duke", { reducedMotion: true }).lines).toContain(DUKE_MOTION_NOTE);
+  });
+
+  it("explains the Duke runner for duke --help and lists it in help", () => {
+    const help = run("duke --help", ctx);
+    expect(help.duke).toBeUndefined();
+    expect(help.lines.slice(1)).toEqual(DUKE_HELP);
+    expect(help.lines.join(" ")).toMatch(/esc/);
+    expect(run("duke now", ctx).lines.at(-1)).toBe("duke: command not found. try help");
+    expect(run("help", ctx).lines.some((line) => line.startsWith("duke "))).toBe(true);
   });
 
   it("answers the Horde", () => {

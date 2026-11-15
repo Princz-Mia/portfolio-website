@@ -7,13 +7,44 @@ export const PROMPT = "mia@desk:~$";
 export const BANNER = [
   "can it run doom?",
   "yes. type doom, or tap a button below.",
+  "or try duke, an endless runner for Java people.",
   "type help for everything else.",
 ];
 
 export type Context = {
-  /** Whether the visitor prefers reduced motion; the game then moves in steps. */
+  /** Whether the visitor prefers reduced motion; the games then start with a note. */
   reducedMotion: boolean;
 };
+
+/** Printed by `doom --help`. */
+export const DOOM_HELP = [
+  "doom: the 1993 shareware episode, Knee-Deep in the Dead.",
+  "  arrows      move and turn",
+  "  ctrl or x   fire",
+  "  space       use (doors, switches)",
+  "  shift       run",
+  "  , and .     strafe",
+  "  1 to 7      pick a weapon",
+  "  esc         doom's own menu (enter selects)",
+  "  touch       the pad under the game",
+  "leave with the quit to terminal button under the game.",
+];
+
+/** Printed by `duke --help`. */
+export const DUKE_HELP = [
+  "duke: an endless runner starring Duke, the Java mascot.",
+  "  space, up or w   jump (hold for a little higher)",
+  "  down or s        duck under flying braces",
+  "  touch            tap the game to jump, or the pad under it",
+  "dodge NullPointerExceptions, bugs, stack traces, stray braces and",
+  "deprecated APIs. coffee beans are worth 10.",
+  "leave with esc or the quit to terminal button.",
+];
+
+/** Printed before the game when reduced motion is preferred. */
+export const DUKE_MOTION_NOTE = "reduced motion is on: duke waits until you press space or tap.";
+
+export const DOOM_MOTION_WARNING = "reduced motion is on: heads up, doom moves fast and a lot.";
 
 export type Result = {
   /** Lines to append to the log, starting with the echoed command. */
@@ -22,8 +53,10 @@ export type Result = {
   clear?: boolean;
   /** Close the terminal. */
   exit?: boolean;
-  /** Start the game. */
+  /** Start Doom. */
   doom?: boolean;
+  /** Start the Duke runner. */
+  duke?: boolean;
 };
 
 const CAT = [" /\\_/\\", "( o.o )", " > ^ <"];
@@ -35,7 +68,8 @@ const HELP = [
   "projects    things being built",
   "ls          list files",
   "cat <file>  print a file",
-  "doom        yes, it runs doom",
+  "doom        yes, it runs doom (doom --help for keys)",
+  "duke        run, Duke, run (duke --help for keys)",
   "clear       clear the screen",
   "exit        close the terminal",
 ];
@@ -76,16 +110,21 @@ function output(command: string, arg: string, ctx: Context): Result {
     case "cd":
       return { lines: ["cd: there is only ~ here."] };
     case "doom":
-      if (arg === "--help") {
-        return { lines: ["find the red door. arrows/WASD or the pad move, Esc goes back."] };
-      }
+      if (arg === "--help") return { lines: DOOM_HELP };
       if (arg !== "") break;
       return {
         lines: [
-          ...(ctx.reducedMotion ? ["reduced motion is on: step mode, one cell per key."] : []),
+          ...(ctx.reducedMotion ? [DOOM_MOTION_WARNING] : []),
           "loading doom.wad…",
         ],
         doom: true,
+      };
+    case "duke":
+      if (arg === "--help") return { lines: DUKE_HELP };
+      if (arg !== "") break;
+      return {
+        lines: [...(ctx.reducedMotion ? [DUKE_MOTION_NOTE] : []), "java -jar duke-run.jar"],
+        duke: true,
       };
     case "clear":
       return { lines: [], clear: true };
