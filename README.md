@@ -29,7 +29,12 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 | `src/content/academic.ts` | Studies, research focus, education and the `outputs` list for future papers, TDK work, thesis and talks. |
 | `src/components/sections/` | One component per section of the page. |
 | `src/components/illustrations/` | The SVG line art: the clickable Bongo Cat in the hero and one drawing per section. Entrance animations key on `InView`. |
-| `src/components/laptop/` | The laptop terminal in the Work drawing and its `doom` maze (`raycast.ts` is the pure engine, `commands.ts` the pure command table). |
+| `src/components/laptop/` | The laptop terminal in the Work drawing: `commands.ts` (pure command table), real shareware Doom (`RealDoom.tsx`, `doomEngine.ts`) and the Duke runner (`DukeRun.tsx`, pure engine in `duke.ts`). |
+| `src/components/work/` | The Lich King easter egg on the Work desk and its speech helper. |
+| `src/components/personal/` | The Off the clock easter eggs (popcorn, purring cat, war horn, Raider.IO link) and the cat photo surprise. |
+| `src/lib/sound.ts` | Synthesised sounds (war horn, purr) on one shared audio context. |
+| `src/content/sounds.ts` | Optional recordings that replace the synthesised sounds. |
+| `public/doom/` | The Doom engine build with the shareware episode, plus its licence; see `docs/LICENSES-THIRD-PARTY.md`. |
 | `src/components/teaching/` | The interactive chalkboard: canvas painter in `Chalkboard.tsx`, pure chalk and sponge helpers in `chalk.ts`. |
 | `src/app/` | Routes, metadata, 404 page, sitemap, favicon and the social preview image. |
 | `public/.htaccess` | Hosting rules copied into `out/` (404 page, caching, content type for the preview image). |
@@ -41,6 +46,14 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 teaching site exists. While it is `null`, the teaching section shows an email prompt
 and the footer has no teaching link. Set it to the real `https://` address and both
 appear; nothing else needs to change.
+
+### Adding cat photos
+
+Put the photos in `public/cats/` (a few hundred KB each at most; around 1200 px on
+the long side is plenty) and list them in `catPhotos` in
+`src/content/personal.ts` with a path, a short description for screen readers and
+the pixel size. Petting the cat in the Off the clock drawing seven times then fans
+them out. While the list is empty, the surprise is not offered.
 
 ### Adding a research output
 
