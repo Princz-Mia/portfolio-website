@@ -1,8 +1,30 @@
+/* A pale band in the drawings' palette: a soft tint wash, a large blob like the
+   ones behind the illustrations, and a faint dot grid that fades out. */
 .footer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   border-top: 1px solid var(--rule);
-  padding-block: 2rem 3rem;
+  padding-block: 2.5rem 3rem;
   font-size: var(--step--1);
   color: var(--ink-2);
+  background:
+    radial-gradient(ellipse 38rem 16rem at 82% 0%, var(--art-tint) 0%, transparent 70%),
+    radial-gradient(ellipse 30rem 14rem at 8% 120%, var(--art-shade) 0%, transparent 70%),
+    var(--paper-2);
+}
+
+.footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(var(--rule-strong) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 50% 90% at 80% 20%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 50% 90% at 80% 20%, #000 0%, transparent 75%);
+  opacity: 0.6;
 }
 
 .bar {
