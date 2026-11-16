@@ -5,6 +5,7 @@ import {
   isHornSounding,
   playHordeHorn,
   playPurr,
+  canPlayRecording,
 } from "./sound";
 
 type Created = { kind: string; node: Record<string, unknown> };
@@ -144,10 +145,11 @@ describe("sound effects with the Web Audio API", () => {
   it("play the recording instead when one is given", () => {
     const created = installFakeAudio();
     const play = vi.fn(() => Promise.resolve());
-    const FakeAudio = vi.fn(function FakeAudio(this: Record<string, unknown>, src: string) {
+    const FakeAudio = vi.fn(function FakeAudio(this: Record<string, unknown>, src?: string) {
       this.src = src;
       this.volume = 1;
       this.play = play;
+      this.canPlayType = () => "maybe";
     });
     vi.stubGlobal("Audio", FakeAudio);
 
@@ -155,5 +157,17 @@ describe("sound effects with the Web Audio API", () => {
     expect(FakeAudio).toHaveBeenCalledWith("/audio/horn.mp3");
     expect(play).toHaveBeenCalled();
     expect(created).toHaveLength(0);
+  });
+
+  it("falls back to the synthesised horn when the format cannot be played", () => {
+    const created = installFakeAudio();
+    const FakeAudio = vi.fn(function FakeAudio(this: Record<string, unknown>) {
+      this.canPlayType = () => "";
+    });
+    vi.stubGlobal("Audio", FakeAudio);
+
+    expect(canPlayRecording("/audio/horn.ogg")).toBe(false);
+    expect(playHordeHorn("/audio/horn.ogg")).toBe(true);
+    expect(created.length).toBeGreaterThan(0);
   });
 });

@@ -313,9 +313,35 @@ function synthHorn(ctx: AudioContext): boolean {
   return true;
 }
 
-/** Plays a recording at a modest volume. Returns whether playback started. */
-export function playFile(src: string, volume = 0.35): boolean {
+const MIME_BY_EXTENSION: Record<string, string> = {
+  ogg: 'audio/ogg; codecs="vorbis"',
+  oga: 'audio/ogg; codecs="vorbis"',
+  wav: "audio/wav",
+  mp3: "audio/mpeg",
+  m4a: "audio/mp4",
+  webm: "audio/webm",
+};
+
+/** Whether this browser can decode the recording's format, judged by its extension. */
+export function canPlayRecording(src: string): boolean {
   if (typeof Audio === "undefined") return false;
+  const extension = src.split("?")[0].split(".").pop()?.toLowerCase() ?? "";
+  const mime = MIME_BY_EXTENSION[extension];
+  if (!mime) return true;
+  try {
+    return new Audio().canPlayType(mime) !== "";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Plays a recording at a modest volume. Returns whether playback started; a
+ * format the browser cannot decode counts as not started, so callers can fall
+ * back to a synthesised sound.
+ */
+export function playFile(src: string, volume = 0.35): boolean {
+  if (!canPlayRecording(src)) return false;
   try {
     const audio = new Audio(src);
     audio.volume = Math.min(volume, 1);
@@ -333,10 +359,8 @@ export function playFile(src: string, volume = 0.35): boolean {
  */
 export function playHordeHorn(file?: string | null): boolean {
   if (isHornSounding()) return false;
-  let played = false;
-  if (file) {
-    played = playFile(file);
-  } else {
+  let played = file ? playFile(file, 0.5) : false;
+  if (!played) {
     const ctx = getAudioContext();
     played = ctx ? synthHorn(ctx) : false;
   }

@@ -1,8 +1,9 @@
 import type { Sounds } from "./types";
 
-// Both sounds are synthesised in the browser while these are null. Point them at
-// files in public/audio/ that you have the rights to, to play recordings instead.
+// Recordings in public/audio/. Set an entry to null to use the sound the browser
+// synthesises instead; the horn also falls back to it in browsers that cannot
+// play Ogg Vorbis.
 export const sounds: Sounds = {
-  hordeHorn: null,
-  lichKingQuote: null,
+  hordeHorn: "/audio/horde-horn.ogg",
+  lichKingQuote: "/audio/lich-king.wav",
 };
