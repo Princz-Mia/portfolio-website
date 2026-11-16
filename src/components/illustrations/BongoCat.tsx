@@ -30,18 +30,22 @@ const GRUMPY_MS = 2000;
 /** The drawing's coordinate system; the pet button is placed against it. */
 const VIEW = { x: -12, y: -60, width: 820, height: 430 };
 /**
- * Outline of the visible head and headphones that the pet button responds to,
- * in drawing units: from the far cup, over the band, down past the near cup,
- * then around the raised front paw and along the chin above the keyboard.
+ * Outline of the visible head, ears and headphones that the pet button responds
+ * to, in drawing units: from the far cup, over the far ear and the band, past the
+ * near ear and down the near cup, then around the raised front paw and along the
+ * chin above the keyboard.
  */
 const HEAD_OUTLINE: readonly (readonly [number, number])[] = [
-  [334, 96],
-  [372, 54],
-  [392, 34],
-  [470, 18],
-  [556, 20],
-  [632, 70],
-  [650, 118],
+  [336, 132],
+  [338, 96],
+  [352, 74],
+  [394, 58],
+  [434, 76],
+  [500, 74],
+  [572, 100],
+  [628, 110],
+  [640, 124],
+  [650, 160],
   [650, 212],
   [594, 214],
   [592, 178],
@@ -85,6 +89,8 @@ const moodMessages: Record<Mood, string> = {
 const cx = (...classes: (string | false | undefined)[]) =>
   classes.filter(Boolean).join(" ");
 
+const round = (n: number) => Math.round(n * 10) / 10;
+
 /* Line weights tuned for this drawing's scale, layered on the shared styles. */
 const line = cx(s.line, b.w);
 const strong = cx(s.line, s.strong, b.w);
@@ -116,62 +122,158 @@ const KEYS = [
 ];
 
 /**
- * The headphone cups, each centred over an ear and tilted with the head so it
- * covers the ear snugly. `turn` is in degrees; the near cup faces the viewer more.
+ * The two pointed ears, traced from the head outline so they line up with it
+ * exactly. They are drawn again on top of the headband, so the band passes
+ * behind them and both ears stay in full view. Each has a closed shape for the
+ * fill (closed along its base, inside the head) and an open outline.
  */
-type Cup = { x: number; y: number; rx: number; ry: number; turn: number };
-const FAR_CUP: Cup = { x: 402, y: 85, rx: 23, ry: 31, turn: -10 };
-const NEAR_CUP: Cup = { x: 613, y: 152, rx: 31, ry: 40, turn: 12 };
-
-/** How far above a cup's top the band ends, hidden inside the yoke. */
-const BAND_TUCK = 4;
-
-/** Where the band meets a cup: just inside the yoke on top of it. */
-function bandEnd({ x, y, ry, turn }: Cup): [number, number] {
-  const angle = (turn * Math.PI) / 180;
-  const reach = ry + BAND_TUCK;
-  return [x + reach * Math.sin(angle), y - reach * Math.cos(angle)];
-}
+const EARS = [
+  {
+    side: "far",
+    fill: "M431.3,88.2 A78.8,78.8,0,0,0,398,67.1 C388.2,70 379,96.8 378.6,100.8 Z",
+    edge: "M431.3,88.2 A78.8,78.8,0,0,0,398,67.1 C388.2,70 379,96.8 378.6,100.8",
+    inner: "M418.4,85.6 Q408,74 399.4,74.6 Q393.2,80 389.6,94.4 Z",
+  },
+  {
+    side: "near",
+    fill: "M632.2,146 A163.3,163.3,0,0,0,629.5,118.8 C617.9,116.9 587.5,133 585,136.3 Z",
+    edge: "M632.2,146 A163.3,163.3,0,0,0,629.5,118.8 C617.9,116.9 587.5,133 585,136.3",
+    inner: "M624.8,140.6 Q625.6,130 623.2,125.2 Q610.4,127 598.6,135.4 Z",
+  },
+] as const;
 
 /**
- * One continuous arc over the head from yoke to yoke. Each end leaves its cup
- * along the cup's own axis, so the band runs straight into both yokes.
+ * The headphone cups, each pressed against the side of the head just below an
+ * ear and tilted with it. `turn` is in degrees: the far cup peeks out past the
+ * head on the left, the near cup sits on the side of the head facing the viewer.
+ */
+type Cup = { x: number; y: number; rx: number; ry: number; turn: number };
+const FAR_CUP: Cup = { x: 360, y: 116, rx: 18, ry: 26, turn: -20 };
+const NEAR_CUP: Cup = { x: 612, y: 184, rx: 25, ry: 33, turn: 8 };
+
+/** The yoke on top of each cup, in the cup's own tilted frame. */
+const YOKE = { width: 15, height: 17, rise: 11 };
+
+type Point = [number, number];
+
+/** A cup's "up" direction, along its tilted axis. */
+const axis = ({ turn }: Cup): Point => {
+  const angle = (turn * Math.PI) / 180;
+  return [Math.sin(angle), -Math.cos(angle)];
+};
+
+/** The centre of a cup's yoke, where the band ends out of sight. */
+function bandEnd(cup: Cup): Point {
+  const [ux, uy] = axis(cup);
+  const reach = cup.ry + YOKE.rise - YOKE.height / 2;
+  return [cup.x + reach * ux, cup.y + reach * uy];
+}
+
+const along = ([x, y]: Point, [dx, dy]: Point, length: number): Point => [
+  x + dx * length,
+  y + dy * length,
+];
+
+/**
+ * The crown of the head between the ears, from the far ear's inner base to the
+ * near ear's, lifted about half the band's width off the outline: the band's
+ * lower edge lies along the head's outline, so it rests on the head instead of
+ * floating above it. Both ends are lifted a little further, so where the band
+ * meets an ear its lower edge stays above that ear's base and none of it peeks
+ * out underneath.
+ */
+const CROWN: [Point, Point, Point, Point] = [
+  [431, 81.5],
+  [498.4, 79],
+  [567.3, 107.7],
+  [588.9, 127.2],
+];
+
+const cubicAt = ([p0, p1, p2, p3]: [Point, Point, Point, Point], t: number): Point => {
+  const u = 1 - t;
+  const w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+  return [
+    w[0] * p0[0] + w[1] * p1[0] + w[2] * p2[0] + w[3] * p3[0],
+    w[0] * p0[1] + w[1] * p1[1] + w[2] * p2[1] + w[3] * p3[1],
+  ];
+};
+
+/**
+ * One continuous band from yoke to yoke: up out of the far yoke along the cup's
+ * axis, behind the far ear, over the crown, on behind the near ear and down into
+ * the near yoke along that cup's axis. Both ends sit inside the yokes, which are
+ * drawn on top, so the joins are clean.
  */
 const BAND = (() => {
-  const [x0, y0] = bandEnd(FAR_CUP);
-  const [x3, y3] = bandEnd(NEAR_CUP);
-  const lift = (cup: Cup, length: number): [number, number] => {
-    const angle = (cup.turn * Math.PI) / 180;
-    return [length * Math.sin(angle), -length * Math.cos(angle)];
-  };
-  const [dx1, dy1] = lift(FAR_CUP, 50);
-  const [dx2, dy2] = lift(NEAR_CUP, 80);
-  const r = (n: number) => Math.round(n * 10) / 10;
-  const [x1, y1, x2, y2] = [x0 + dx1, y0 + dy1, x3 + dx2, y3 + dy2];
-  // The midpoint and direction of the curve, where the accent pad sits.
-  const mx = (x0 + 3 * x1 + 3 * x2 + x3) / 8;
-  const my = (y0 + 3 * y1 + 3 * y2 + y3) / 8;
-  const angle = (Math.atan2(y3 + y2 - y1 - y0, x3 + x2 - x1 - x0) * 180) / Math.PI;
+  const far = bandEnd(FAR_CUP);
+  const near = bandEnd(NEAR_CUP);
+  const [c0, c1, c2, c3] = CROWN;
+  // Leave the crown along its own direction so the curve has no corner.
+  const inTangent: Point = [c0[0] - c1[0], c0[1] - c1[1]];
+  const inLength = Math.hypot(...inTangent);
+  const a1 = along(far, axis(FAR_CUP), 24);
+  const a2 = along(c0, [inTangent[0] / inLength, inTangent[1] / inLength], 40);
+  // Behind the near ear the band turns along under its tip, out of sight, so
+  // none of it shows below the ear, then drops straight down into the yoke, so
+  // it stays clear of the yoke's rounded corners.
+  const b1 = along(c3, [0.99, -0.1], 13);
+  const b2 = along(near, axis(NEAR_CUP), 24);
+  const pts = (...points: Point[]) => points.map(([x, y]) => `${round(x)} ${round(y)}`).join(" ");
+
+  // The accent pad sits on the crown, turned with the band.
+  const [px, py] = cubicAt(CROWN, 0.32);
+  const [qx, qy] = cubicAt(CROWN, 0.34);
+  const angle = (Math.atan2(qy - py, qx - px) * 180) / Math.PI;
+
   return {
-    d: `M${r(x0)} ${r(y0)} C${r(x1)} ${r(y1)} ${r(x2)} ${r(y2)} ${r(x3)} ${r(y3)}`,
-    pad: { x: r(mx), y: r(my), angle: r(angle) },
+    d: `M${pts(far)} C${pts(a1, a2, c0)} C${pts(c1, c2, c3)} C${pts(b1, b2, near)}`,
+    pad: { x: round(px), y: round(py), angle: round(angle) },
   };
 })();
 
-/** The laptop screen's corners, clockwise from the far top corner. */
-const SCREEN = "93.8,63.3 284.1,73 335.9,230.5 146.2,197.6";
+/** The laptop screen's corners: far top, near top, near bottom, far bottom. */
+const SCREEN_CORNERS: readonly Point[] = [
+  [93.8, 63.3],
+  [284.1, 73],
+  [335.9, 230.5],
+  [146.2, 197.6],
+];
+const SCREEN = SCREEN_CORNERS.map(([x, y]) => `${x},${y}`).join(" ");
 
 /**
- * The screen faces the cat, so its text runs from the near edge (the right of the
- * drawing) towards the far edge. Code is laid out in a flat grid of 100 by 100
- * units, with u along a line from where it starts and v down the screen, and
- * this matrix lays that grid onto the screen.
+ * Code is laid out in a flat grid of 100 by 100 units, u along a line from the
+ * screen's left edge and v down from its top edge. The screen is drawn in
+ * perspective, so this is the projective map that takes the grid's corners
+ * exactly onto the screen's corners: lines of equal v fan from the slope of the
+ * top edge to the slope of the bottom edge, and every point of the grid lands
+ * inside the screen.
  */
-const SCREEN_GRID = "matrix(-1.9 -0.213 0.521 1.459 283.95 78.8)";
+const toScreen = (() => {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = SCREEN_CORNERS;
+  const dx1 = x1 - x2;
+  const dx2 = x3 - x2;
+  const dx3 = x0 - x1 + x2 - x3;
+  const dy1 = y1 - y2;
+  const dy2 = y3 - y2;
+  const dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const g = (dx3 * dy2 - dx2 * dy3) / den;
+  const h = (dx1 * dy3 - dx3 * dy1) / den;
+  const a = x1 - x0 + g * x1;
+  const bx = x3 - x0 + h * x3;
+  const d = y1 - y0 + g * y1;
+  const e = y3 - y0 + h * y3;
+  return (u: number, v: number): Point => {
+    const sx = u / 100;
+    const sy = v / 100;
+    const w = g * sx + h * sy + 1;
+    return [(a * sx + bx * sy + x0) / w, (d * sx + e * sy + y0) / w];
+  };
+})();
 
 /** Line spacing, first line, margin before each line, indent and token gap, in grid units. */
 const LINE_GAP = 9;
-const FIRST_LINE = 8;
+const FIRST_LINE = 9.5;
 const MARGIN = 7;
 const INDENT = 7;
 const TOKEN_GAP = 3;
@@ -182,8 +284,20 @@ const ROWS = 10;
 const STEP_S = 1.2;
 /** Seconds the scroll takes at the start of each step. */
 const SCROLL_S = 0.18;
-/** Extra delay per grid unit already typed on the line. */
-const PER_UNIT_S = 0.011;
+/** Typing speed in grid units per second, gaps between tokens included. */
+const TYPE_RATE = 90;
+
+/** The visible band of lines, in grid units: half a line above the first and below the last. */
+const ROWS_TOP = FIRST_LINE - LINE_GAP * 0.55;
+const ROWS_BOTTOM = FIRST_LINE + (ROWS - 1) * LINE_GAP + LINE_GAP * 0.55;
+const ROWS_CLIP = [
+  toScreen(2, ROWS_TOP),
+  toScreen(98, ROWS_TOP),
+  toScreen(98, ROWS_BOTTOM),
+  toScreen(2, ROWS_BOTTOM),
+]
+  .map(([x, y]) => `${round(x)},${round(y)}`)
+  .join(" ");
 
 /** One screenful-plus of code: indentation level, token lengths, highlighted token. */
 const LINES: { indent: number; tokens: number[]; accent?: number }[] = [
@@ -206,70 +320,86 @@ const LOOP_S = LINES.length * STEP_S;
 
 /**
  * Where the loop opens: late in the first step, after its bottom line has typed
- * itself and before the next scroll. At that moment the screen shows rows 0 to
- * ROWS - 1 at rest, exactly like the still drawing, so nothing shifts when the
+ * itself and before the next scroll. At that moment the screen shows lines 0 to
+ * ROWS - 1 at rest, which is also the still drawing, so nothing shifts when the
  * animation starts.
  */
 const OPEN_S = STEP_S - 0.2;
 
-/**
- * The loop's timing, shared with the stylesheet through custom properties so the
- * scroll, the easing of each step and the typing always agree with LINES.
- */
+/** The loop's timing, for tests and anything that wants to follow along. */
 export const SCREEN_LOOP = {
   rows: ROWS,
   lines: LINES.length,
   gap: LINE_GAP,
+  first: FIRST_LINE,
   stepS: STEP_S,
   scrollS: SCROLL_S,
   loopS: LOOP_S,
   openS: OPEN_S,
 } as const;
 
-const SCREEN_VARS = {
-  "--loop": `${LOOP_S}s`,
-  "--step": `${STEP_S}s`,
-  "--steps": LINES.length,
-  "--gap": LINE_GAP,
-  "--shift": LINES.length * LINE_GAP,
-  "--open": `${-OPEN_S}s`,
-} as CSSProperties;
+/** Every token of the program, laid out once along its line in grid units. */
+const TOKENS = LINES.flatMap(({ indent, tokens, accent }, row) => {
+  const start = MARGIN + indent * INDENT;
+  let u = start;
+  return tokens.map((length, index) => {
+    const token = {
+      key: `${row}-${index}`,
+      row,
+      u: u,
+      length,
+      /** Grid units typed on the line before this token begins. */
+      after: u - start,
+      accent: index === accent,
+    };
+    u += length + TOKEN_GAP;
+    return token;
+  });
+});
 
-type Token = { key: string; u1: number; u2: number; v: number; accent: boolean; delay: string };
+/** Where one token is on screen at some moment; `null` while it is not shown. */
+export type TokenSpot = { x1: number; y1: number; x2: number; y2: number } | null;
+
+const easeOut = (x: number) => 1 - (1 - x) ** 3;
+const mod = (n: number, m: number) => ((n % m) + m) % m;
 
 /**
- * Every token on the screen, laid out once. The program is drawn one and a bit
- * times so that, after scrolling a full program's height, the screen looks
- * exactly as it did at the start and the loop restarts without a jump. Row -1, a
- * copy of the last line just above the top edge, is the line that slides out at
- * the start of the loop, so the wrap scrolls like every other step. Each token
- * types itself when its line reaches the bottom of the screen; its delay is
- * negative so the loop opens on a full screen.
+ * The screen at `t` seconds into the loop. Each step the lines scroll up by one
+ * (eased), the top line slides out past the top edge, and the new bottom line
+ * types itself from its start at a steady pace. A line's slot counts from the
+ * top: slot ROWS is the line being typed this step, lower slots are finished and
+ * higher ones have not been reached yet.
  */
-const TOKENS: Token[] = (() => {
-  const tokens: Token[] = [];
-  const count = LINES.length;
-  for (let row = -1; row < count + ROWS - 1; row += 1) {
-    const { indent, tokens: lengths, accent } = LINES[(row + count) % count];
-    // The step at which this row sits in the bottom slot and gets typed.
-    const step = (((row - (ROWS - 1)) % count) + count) % count;
-    let u = MARGIN + indent * INDENT;
-    lengths.forEach((length, index) => {
-      const offset = (u - MARGIN - indent * INDENT) * PER_UNIT_S;
-      const start = step * STEP_S + SCROLL_S + offset;
-      tokens.push({
-        key: `${row}-${index}`,
-        u1: u,
-        u2: u + length,
-        v: FIRST_LINE + row * LINE_GAP,
-        accent: index === accent,
-        delay: `${(start - LOOP_S - OPEN_S).toFixed(3)}s`,
-      });
-      u += length + TOKEN_GAP;
-    });
-  }
-  return tokens;
-})();
+export function screenAt(t: number): TokenSpot[] {
+  const time = mod(t, LOOP_S);
+  const step = Math.floor(time / STEP_S);
+  const phase = time - step * STEP_S;
+  const scrolled = easeOut(Math.min(phase / SCROLL_S, 1));
+  const typed = Math.max(0, phase - SCROLL_S) * TYPE_RATE;
+
+  return TOKENS.map(({ row, u, length, after }) => {
+    const slot = mod(row - step + 1, LINES.length);
+    const position = slot - scrolled;
+    if (slot > ROWS || position <= -1) {
+      return null;
+    }
+    const shown = slot < ROWS ? length : Math.min(length, typed - after);
+    if (shown <= 0) {
+      return null;
+    }
+    const v = FIRST_LINE + position * LINE_GAP;
+    const [x1, y1] = toScreen(u, v);
+    const [x2, y2] = toScreen(u + shown, v);
+    const r = (n: number) => Math.round(n * 100) / 100;
+    return { x1: r(x1), y1: r(y1), x2: r(x2), y2: r(y2) };
+  });
+}
+
+/** The screen in the still drawing, which is also where the loop opens. */
+const STILL = screenAt(OPEN_S);
+
+const spotKey = (spot: TokenSpot) =>
+  spot ? `${spot.x1} ${spot.y1} ${spot.x2} ${spot.y2}` : "";
 
 type NoteKind = "single" | "pair";
 type Tone = "accent" | "ink";
@@ -405,6 +535,7 @@ function Paw({
   toes,
   pad,
   leadsWithUp,
+  paused,
 }: {
   down: string;
   up: string;
@@ -413,9 +544,11 @@ function Paw({
   /** Centre of the main pad on the raised paw. */
   pad: [number, number];
   leadsWithUp: boolean;
+  /** Holds the tapping on its current frame; it carries on from there. */
+  paused: boolean;
 }) {
   return (
-    <g data-loop="paw">
+    <g data-loop="paw" data-paused={paused ? "" : undefined}>
       <path d={down} className={cx(line, s.fur, leadsWithUp ? b.tapB : b.tapA)} />
       <g className={cx(b.pawUp, leadsWithUp ? b.tapA : b.tapB)}>
         <path d={up} className={cx(line, s.fur)} />
@@ -451,8 +584,9 @@ function useMounted() {
 /**
  * The cat from the old site: headphones on, paws drumming on a laptop while code
  * types and scrolls up the screen and notes drift up. Petting its head closes its
- * eyes; too many pets in a row make it grumpy for a moment, which pauses the
- * whole scene until it calms down and carries on where it left off.
+ * eyes; too many pets in a row make it grumpy for a moment: it stops drumming and
+ * typing until it calms down, then carries on where it left off, while the music
+ * in its headphones (and so the notes) never stops.
  */
 export function BongoCat() {
   const titleId = useId();
@@ -503,6 +637,7 @@ export function BongoCat() {
     }, STREAK_MS);
   };
 
+  const grumpy = mood === "grumpy";
   // Alternating between two identical animations restarts the shake on every pet.
   const shake = shakes === 0 ? undefined : shakes % 2 ? b.shakeA : b.shakeB;
 
@@ -526,7 +661,7 @@ export function BongoCat() {
           <circle cx="512" cy="160" r="146" className={s.blob} />
           <circle cx="118" cy="34" r="58" className={s.blobShade} />
 
-          {/* head and headphones */}
+          {/* head, headphones and ears */}
           <g className={cx(b.shakes, shake)}>
             <path d={HEAD} className={s.tint} transform="translate(7 6)" />
             <path d={HEAD} className={cx(line, s.fur)} />
@@ -584,6 +719,7 @@ export function BongoCat() {
           {/* paw behind the screen */}
           <Paw
             leadsWithUp={false}
+            paused={grumpy}
             down="M289.1,181.7c-12.1,9.8-20.6,20.7-20.7,32.1-0.2,9,3.8,20.4,13.3,25.2s20.1,0.6,29.6-3.4c13.4-5.7,23.9-14.6,29.4-21.5"
             up="M327.3,170c-0.4-1.4-6.3-18.8-23.5-23.5-0.8-0.2-18.6-4.7-28.9,6.3-8.4,9.1-6,22.5-4.6,30.2a54.3,54.3,0,0,0,8.1,19.9"
             toes={[
@@ -596,12 +732,13 @@ export function BongoCat() {
 
           {/* screen and lid */}
           <polygon points={SCREEN} className={cx(line, s.shade)} />
-          <Screen />
+          <Screen paused={grumpy} />
           <polygon points="103.2,263.6 452.1,339 360.8,12.4 2,2" className={line} />
 
           {/* paw in front of the lid */}
           <Paw
             leadsWithUp
+            paused={grumpy}
             down="M534.1,231.4c-19.7,6-32.9,18.4-34.2,29.1a30.1,30.1,0,0,0,1.7,14.1,24.8,24.8,0,0,0,6.1,8.8c6,5.1,16.8,4,38-3.9a288.7,288.7,0,0,0,46.5-22.1"
             up="M586.6,208.8c-.6-2.3-4.2-15.6-17.2-22.2-2.7-1.3-12.8-6.4-23.6-1.8s-14.6,16.5-14.8,18.4c-1.2,9-.7,18.4,2.4,26.1,2.4,6,7.5,17.2,9.7,20.2"
             toes={[
@@ -615,7 +752,7 @@ export function BongoCat() {
           {/* notes from the near cup */}
           <Notes side="near" />
 
-          {mood === "grumpy" ? (
+          {grumpy ? (
             <g>
               <g transform="translate(470 16)">
                 <path
@@ -667,10 +804,10 @@ function CupShape({ cup, outward }: { cup: Cup; outward: 1 | -1 }) {
     <g transform={`rotate(${turn} ${x} ${y})`}>
       {/* the yoke the band slides into */}
       <rect
-        x={x - 7.5}
-        y={y - ry - 11}
-        width="15"
-        height="17"
+        x={x - YOKE.width / 2}
+        y={y - ry - YOKE.rise}
+        width={YOKE.width}
+        height={YOKE.height}
         rx="5"
         className={cx(strong, s.shade)}
       />
@@ -695,8 +832,9 @@ function CupShape({ cup, outward }: { cup: Cup; outward: 1 | -1 }) {
 }
 
 /**
- * Over-ear headphones: a cup over each ear and one band arching over the head,
- * its ends tucked into the yokes on top of the cups.
+ * Over-ear headphones the way a cat wears them: one band resting on the crown
+ * between the ears, passing behind both ears, its ends tucked into the yokes on
+ * top of the cups, which press against the sides of the head below the ears.
  */
 function Headset() {
   const { pad } = BAND;
@@ -724,22 +862,141 @@ function Headset() {
         transform={`rotate(${pad.angle} ${pad.x} ${pad.y})`}
         className={cx(strong, s.accent)}
       />
-      <CupShape cup={FAR_CUP} outward={-1} />
+      {/* the near yoke tucks up under its ear, like the band it holds */}
       <CupShape cup={NEAR_CUP} outward={1} />
+      {EARS.map(({ side, fill, edge, inner }) => (
+        <g key={side} data-part="ear">
+          <path d={fill} className={s.fur} />
+          <path d={inner} className={s.tint} />
+          <path d={edge} className={line} />
+        </g>
+      ))}
+      <CupShape cup={FAR_CUP} outward={-1} />
     </g>
   );
 }
 
 /**
  * Code on the laptop screen, scrolling like a terminal: each step the lines move
- * up by one, the top line slides out past the edge of the screen and the new
- * bottom line types itself from its start. The lines are clipped to the screen
- * and the whole loop is CSS, so it costs nothing per frame in script.
+ * up by one, the top line slides out past the top margin and the new bottom line
+ * types itself from its start. The screen is in perspective, which a CSS or SVG
+ * transform cannot follow, so while the drawing is in view a small frame loop
+ * places each token with `screenAt`. It only writes attributes that changed,
+ * holds its place while paused, and stops when the drawing is off screen, the
+ * tab is hidden or motion is reduced. Without it the screen keeps the still
+ * frame rendered on the server.
  */
-function Screen() {
+function Screen({ paused }: { paused: boolean }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const screenClip = `${id}-screen`;
   const rowsClip = `${id}-rows`;
+  const group = useRef<SVGGElement>(null);
+  const hold = useRef(paused);
+  const wake = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    hold.current = paused;
+    wake.current();
+  }, [paused]);
+
+  useEffect(() => {
+    const root = group.current;
+    if (!root || typeof window.requestAnimationFrame !== "function") {
+      return;
+    }
+
+    const lines = Array.from(root.querySelectorAll("line"));
+    const written = STILL.map(spotKey);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let time = OPEN_S;
+    let frame = 0;
+    let last: number | null = null;
+    let onScreen = true;
+
+    const draw = () => {
+      screenAt(time).forEach((spot, index) => {
+        const key = spotKey(spot);
+        const node = lines[index];
+        if (!node || key === written[index]) {
+          return;
+        }
+        written[index] = key;
+        if (!spot) {
+          node.setAttribute("visibility", "hidden");
+          return;
+        }
+        node.setAttribute("x1", String(spot.x1));
+        node.setAttribute("y1", String(spot.y1));
+        node.setAttribute("x2", String(spot.x2));
+        node.setAttribute("y2", String(spot.y2));
+        node.removeAttribute("visibility");
+      });
+    };
+
+    const tick = (now: number) => {
+      frame = 0;
+      if (last !== null) {
+        // A long gap (a hidden tab, a busy frame) moves on by one frame at most.
+        time = mod(time + Math.min(now - last, 100) / 1000, LOOP_S);
+      }
+      last = now;
+      draw();
+      update();
+    };
+
+    const update = () => {
+      if (motion.matches && time !== OPEN_S) {
+        time = OPEN_S;
+        draw();
+      }
+      // The InView wrapper marks the drawing once it has scrolled into view.
+      const live =
+        root.closest("[data-anim]")?.getAttribute("data-anim") === "in" &&
+        !motion.matches &&
+        onScreen &&
+        !document.hidden &&
+        !hold.current;
+      if (live) {
+        if (!frame) {
+          frame = window.requestAnimationFrame(tick);
+        }
+        return;
+      }
+      window.cancelAnimationFrame(frame);
+      frame = 0;
+      last = null;
+    };
+
+    // The wrapper only gains its attribute after mount, so watch every ancestor.
+    const attributes = new MutationObserver(update);
+    for (let node = root.parentElement; node; node = node.parentElement) {
+      attributes.observe(node, { attributes: true, attributeFilter: ["data-anim"] });
+    }
+
+    let visibility: IntersectionObserver | undefined;
+    if (typeof IntersectionObserver !== "undefined") {
+      visibility = new IntersectionObserver((entries) => {
+        onScreen = entries.some((entry) => entry.isIntersecting);
+        update();
+      });
+      visibility.observe(root);
+    }
+
+    motion.addEventListener("change", update);
+    document.addEventListener("visibilitychange", update);
+    wake.current = update;
+    update();
+
+    return () => {
+      wake.current = () => {};
+      window.cancelAnimationFrame(frame);
+      attributes.disconnect();
+      visibility?.disconnect();
+      motion.removeEventListener("change", update);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, []);
+
   return (
     <g clipPath={`url(#${screenClip})`}>
       <defs>
@@ -747,26 +1004,26 @@ function Screen() {
           <polygon points={SCREEN} />
         </clipPath>
         <clipPath id={rowsClip}>
-          {/* exactly ROWS lines, in grid units */}
-          <rect x="-6" y="1" width="112" height="93" />
+          {/* exactly ROWS lines, with half a line of margin above and below */}
+          <polygon points={ROWS_CLIP} />
         </clipPath>
       </defs>
-      <g transform={SCREEN_GRID} clipPath={`url(#${rowsClip})`}>
-        <g className={b.scroll} data-loop="screen" style={SCREEN_VARS}>
-          <g className={b.scrollEase}>
-            {TOKENS.map(({ key, u1, u2, v, accent, delay }) => (
+      <g clipPath={`url(#${rowsClip})`}>
+        <g ref={group} data-loop="screen" data-paused={paused ? "" : undefined}>
+          {TOKENS.map(({ key, accent }, index) => {
+            const spot = STILL[index];
+            return (
               <line
                 key={key}
-                x1={u1}
-                y1={v}
-                x2={u2}
-                y2={v}
-                pathLength={1}
+                x1={spot?.x1 ?? 0}
+                y1={spot?.y1 ?? 0}
+                x2={spot?.x2 ?? 0}
+                y2={spot?.y2 ?? 0}
+                visibility={spot ? undefined : "hidden"}
                 className={cx(b.code, accent && b.codeAccent)}
-                style={{ "--d": delay } as CSSProperties}
               />
-            ))}
-          </g>
+            );
+          })}
         </g>
       </g>
     </g>

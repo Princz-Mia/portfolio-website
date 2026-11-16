@@ -4,27 +4,37 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BongoCat, SCREEN_LOOP } from "./BongoCat";
+import { BongoCat, SCREEN_LOOP, screenAt, type TokenSpot } from "./BongoCat";
 
 const css = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "BongoCat.module.css"),
   "utf8",
 );
 
-type ScreenToken = { u1: number; u2: number; v: number; delay: number };
+type Point = [number, number];
 
-const screenTokens = (container: HTMLElement): ScreenToken[] =>
-  Array.from(container.querySelectorAll("[data-loop='screen'] line")).map((line) => ({
-    u1: Number(line.getAttribute("x1")),
-    u2: Number(line.getAttribute("x2")),
-    v: Number(line.getAttribute("y1")),
-    delay: parseFloat((line as SVGElement).style.getPropertyValue("--d")),
-  }));
+/** The laptop screen's corners, clockwise from the far top corner. */
+const CORNERS: Point[] = [
+  [93.8, 63.3],
+  [284.1, 73],
+  [335.9, 230.5],
+  [146.2, 197.6],
+];
+const SCREEN_POINTS = CORNERS.map(([x, y]) => `${x},${y}`).join(" ");
 
-const rowAt = (tokens: ScreenToken[], v: number) =>
-  tokens
-    .filter((token) => Math.abs(token.v - v) < 1e-6)
-    .map(({ u1, u2, delay }) => ({ u1, u2, delay }));
+/** Distance of a point from the nearest screen edge, positive inside. */
+const inset = ([x, y]: Point) =>
+  Math.min(
+    ...CORNERS.map(([ax, ay], i) => {
+      const [bx, by] = CORNERS[(i + 1) % CORNERS.length];
+      return ((bx - ax) * (y - ay) - (by - ay) * (x - ax)) / Math.hypot(bx - ax, by - ay);
+    }),
+  );
+
+const slope = ([ax, ay]: Point, [bx, by]: Point) => (by - ay) / (bx - ax);
+
+const shown = (spots: TokenSpot[]) =>
+  spots.filter((spot): spot is NonNullable<TokenSpot> => spot !== null);
 
 const moodOf = () =>
   screen
@@ -112,13 +122,17 @@ describe("BongoCat", () => {
     expect(screen.queryByText("#$!")).not.toBeInTheDocument();
   });
 
-  it("pauses its loops while grumpy and resumes them without remounting", () => {
+  it("keeps the notes going while grumpy and holds the paws and screen without remounting", () => {
     const { container } = render(<BongoCat />);
     const loops = () => Array.from(container.querySelectorAll("[data-loop]"));
     const tokens = () => Array.from(container.querySelectorAll("[data-loop='screen'] line"));
+    const byKind = (kind: string) =>
+      Array.from(container.querySelectorAll(`[data-loop='${kind}']`));
+    const noteNodes = () => Array.from(container.querySelectorAll("[data-loop='notes'] *"));
 
     const loopsBefore = loops();
     const tokensBefore = tokens();
+    const notesBefore = noteNodes();
     expect(loopsBefore.map((node) => node.getAttribute("data-loop")).sort()).toEqual([
       "notes",
       "notes",
@@ -127,20 +141,133 @@ describe("BongoCat", () => {
       "screen",
     ]);
     expect(tokensBefore.length).toBeGreaterThan(0);
+    loopsBefore.forEach((node) => expect(node).not.toHaveAttribute("data-paused"));
 
     pet(5);
     expect(moodOf()).toBe("grumpy");
-    // The same nodes stay in place, so their animations hold rather than restart.
-    expect(loops()).toEqual(loopsBefore);
+    // Paws and screen hold their frame; the notes carry on.
+    [...byKind("paw"), ...byKind("screen")].forEach((node) =>
+      expect(node).toHaveAttribute("data-paused"),
+    );
+    byKind("notes").forEach((node) => {
+      expect(node).not.toHaveAttribute("data-paused");
+      expect(node.closest("[data-paused]")).toBeNull();
+      expect(node.querySelector("[data-paused]")).toBeNull();
+    });
+    // The same nodes stay in place, so no animation restarts.
     loops().forEach((node, index) => expect(node).toBe(loopsBefore[index]));
     tokens().forEach((node, index) => expect(node).toBe(tokensBefore[index]));
+    noteNodes().forEach((node, index) => expect(node).toBe(notesBefore[index]));
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
     expect(moodOf()).toBe("calm");
-    loops().forEach((node, index) => expect(node).toBe(loopsBefore[index]));
+    loops().forEach((node, index) => {
+      expect(node).toBe(loopsBefore[index]);
+      expect(node).not.toHaveAttribute("data-paused");
+    });
     tokens().forEach((node, index) => expect(node).toBe(tokensBefore[index]));
+    noteNodes().forEach((node, index) => expect(node).toBe(notesBefore[index]));
+  });
+
+  it("scrolls the screen while in view, holds it while grumpy and carries on from there", () => {
+    const { container } = render(
+      <div data-anim="in">
+        <BongoCat />
+      </div>,
+    );
+    const lines = Array.from(container.querySelectorAll("[data-loop='screen'] line"));
+    const frame = () =>
+      lines
+        .map((line) =>
+          line.hasAttribute("visibility")
+            ? "-"
+            : ["x1", "y1", "x2", "y2"].map((name) => line.getAttribute(name)).join(" "),
+        )
+        .join("|");
+    const still = frame();
+
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    const moving = frame();
+    expect(moving).not.toBe(still);
+
+    pet(5);
+    expect(moodOf()).toBe("grumpy");
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    const held = frame();
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(frame()).toBe(held);
+
+    // Calm again: it picks up from the held frame instead of starting over.
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(moodOf()).toBe("calm");
+    const resumed = frame();
+    expect(resumed).not.toBe(still);
+    const changed = resumed.split("|").filter((spot, index) => spot !== held.split("|")[index]);
+    expect(changed.length).toBeLessThanOrEqual(lines.length / 2);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(frame()).not.toBe(resumed);
+  });
+
+  it("keeps the still screen when motion is reduced", () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      ...matchMedia(query),
+      matches: query.includes("reduce"),
+    })) as typeof window.matchMedia;
+    try {
+      const { container } = render(
+        <div data-anim="in">
+          <BongoCat />
+        </div>,
+      );
+      const lines = Array.from(container.querySelectorAll("[data-loop='screen'] line"));
+      const before = lines.map((line) => line.outerHTML).join();
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(lines.map((line) => line.outerHTML).join()).toBe(before);
+    } finally {
+      window.matchMedia = matchMedia;
+    }
+  });
+
+  it("pauses only the paws in the stylesheet, never the notes", () => {
+    const paused = Array.from(
+      css
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .matchAll(/([^{}]+)\{[^{}]*animation-play-state:\s*paused/g),
+      (match) => match[1],
+    ).join(",");
+
+    expect(paused).toMatch(/\[data-paused\] \.tapA/);
+    expect(paused).toMatch(/\[data-paused\] \.tapB/);
+    expect(paused).not.toMatch(/note|sparkle/i);
+  });
+
+  it("draws both ears in front of the headband", () => {
+    const { container } = render(<BongoCat />);
+    const ears = Array.from(container.querySelectorAll("[data-part='ear']"));
+
+    expect(ears).toHaveLength(2);
+    ears.forEach((ear) => expect(ear.querySelectorAll("path").length).toBeGreaterThan(0));
+    // Later in the document means painted on top of the band.
+    const band = ears[0].parentElement?.querySelector(":scope > path");
+    expect(band).toBeTruthy();
+    ears.forEach((ear) =>
+      expect(band!.compareDocumentPosition(ear) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(),
+    );
   });
 
   it("can be petted again once it has calmed down", () => {
@@ -158,22 +285,23 @@ describe("BongoCat", () => {
 
   it("clips the scrolling code to the laptop screen", () => {
     const { container } = render(<BongoCat />);
-    const screen = container.querySelector("[data-loop='screen']");
-    expect(screen).not.toBeNull();
+    const code = container.querySelector("[data-loop='screen']");
+    expect(code).not.toBeNull();
 
-    // Every clip on the way up from the code points at a clip path that exists.
-    const clipped: Element[] = [];
-    for (let node = screen?.parentElement; node && node !== container; node = node.parentElement) {
-      if (node.hasAttribute("clip-path")) {
-        clipped.push(node);
+    const clipIds: string[] = [];
+    for (let node = code?.parentElement; node && node !== container; node = node.parentElement) {
+      const id = node.getAttribute("clip-path")?.match(/^url\(#(.+)\)$/)?.[1];
+      if (id) {
+        clipIds.push(id);
       }
     }
-    expect(clipped).toHaveLength(2);
-    clipped.forEach((node) => {
-      const id = node.getAttribute("clip-path")?.match(/^url\(#(.+)\)$/)?.[1];
-      expect(id).toBeTruthy();
-      expect(container.querySelector(`clipPath[id="${id}"]`)).not.toBeNull();
-    });
+    expect(clipIds).toHaveLength(2);
+    const shapes = clipIds.map((id) =>
+      container.querySelector(`clipPath[id="${id}"] polygon`)?.getAttribute("points"),
+    );
+    // The outer clip is the screen itself; the inner one is the band of rows.
+    expect(shapes[1]).toBe(SCREEN_POINTS);
+    expect(shapes[0]).toBeTruthy();
   });
 
   it("clears its timers when unmounted", () => {
@@ -196,64 +324,99 @@ describe("BongoCat", () => {
     expect(hint).toHaveAttribute("data-gone");
   });
 
-  it("draws the last line above the first, so the wrap scrolls like every other step", () => {
-    const { container } = render(<BongoCat />);
-    const tokens = screenTokens(container);
-    const { gap, lines } = SCREEN_LOOP;
-    const top = Math.min(...tokens.map((token) => token.v));
+  it("keeps every line inside the screen, following its perspective", () => {
+    const top = slope(CORNERS[0], CORNERS[1]);
+    const bottom = slope(CORNERS[3], CORNERS[2]);
+    const { stepS, loopS, openS } = SCREEN_LOOP;
 
-    const above = rowAt(tokens, top);
-    expect(above.length).toBeGreaterThan(0);
-    // Same layout and timing as the last line of the program, one row below the first.
-    expect(above).toEqual(rowAt(tokens, top + lines * gap));
-  });
+    for (let t = 0; t < loopS; t += stepS / 7) {
+      const visible = shown(screenAt(t));
+      expect(visible.length).toBeGreaterThan(0);
+      visible.forEach(({ x1, y1, x2, y2 }) => {
+        // Only the line sliding out past the top margin may come near the edge,
+        // and the scroll clip trims it there.
+        expect(inset([x1, y1])).toBeGreaterThan(-10);
+        expect(inset([x2, y2])).toBeGreaterThan(-10);
+        // Each line runs between the slopes of the screen's top and bottom edges.
+        if (x2 - x1 > 3) {
+          const s = slope([x1, y1], [x2, y2]);
+          expect(s).toBeGreaterThanOrEqual(top - 1e-3);
+          expect(s).toBeLessThanOrEqual(bottom + 1e-3);
+        }
+      });
+    }
 
-  it("opens the loop on the same frame as the still drawing", () => {
-    const { container } = render(<BongoCat />);
-    const tokens = screenTokens(container);
-    const { gap, rows, stepS, loopS, openS } = SCREEN_LOOP;
-    const first = Math.min(...tokens.map((token) => token.v)) + gap;
-
-    // No scroll has happened yet and the easing of the first step is over.
-    expect(openS).toBeLessThan(stepS);
-    expect(openS).toBeGreaterThanOrEqual(0.15 * stepS);
-
-    // Every line on screen is fully typed at that moment.
-    const visible = tokens.filter((token) => token.v >= first && token.v <= first + (rows - 1) * gap);
-    expect(visible.length).toBeGreaterThan(0);
-    visible.forEach(({ delay }) => {
-      const progress = (((-delay % loopS) + loopS) % loopS) / loopS;
-      expect(progress).toBeGreaterThanOrEqual(0.02);
-      expect(progress).toBeLessThanOrEqual(0.88);
+    // At rest every line is well inside the screen.
+    const rest = shown(screenAt(openS));
+    rest.forEach(({ x1, y1, x2, y2 }) => {
+      expect(inset([x1, y1])).toBeGreaterThan(5);
+      expect(inset([x2, y2])).toBeGreaterThan(5);
     });
+    // The first line runs parallel to the top edge and the last one nearly
+    // parallel to the bottom edge.
+    const byHeight = [...rest].sort((a, b) => a.y1 - b.y1);
+    const first = byHeight.filter((spot) => Math.abs(spot.y1 - byHeight[0].y1) < 6);
+    expect(slope([first[0].x1, first[0].y1], [first[0].x2, first[0].y2])).toBeCloseTo(top, 1);
+    const last = byHeight[byHeight.length - 1];
+    expect(slope([last.x1, last.y1], [last.x2, last.y2])).toBeCloseTo(bottom, 1);
   });
 
-  it("takes the scroll timing from the component instead of fixed numbers", () => {
+  it("indents lines from the screen's left edge with a consistent margin", () => {
+    const rest = shown(screenAt(SCREEN_LOOP.openS));
+    const [p0, p3] = [CORNERS[0], CORNERS[3]];
+    const [ex, ey] = [p3[0] - p0[0], p3[1] - p0[1]];
+    // Distance of each line's first token from the left edge.
+    const starts = rest
+      .filter((spot) => !rest.some((other) => other !== spot && Math.abs(other.y1 - spot.y1) < 4 && other.x1 < spot.x1))
+      .map(({ x1, y1 }) => Math.abs(ex * (y1 - p0[1]) - ey * (x1 - p0[0])) / Math.hypot(ex, ey));
+    expect(starts.length).toBeGreaterThan(5);
+    expect(Math.min(...starts)).toBeGreaterThan(8);
+    expect(Math.min(...starts)).toBeLessThan(16);
+  });
+
+  it("opens the loop on the still drawing and types each new line from its start", () => {
     const { container } = render(<BongoCat />);
-    const group = container.querySelector("[data-loop='screen']") as SVGElement;
-    const { gap, lines, stepS, loopS, openS } = SCREEN_LOOP;
+    const { rows, stepS, scrollS, openS } = SCREEN_LOOP;
+    const lines = Array.from(container.querySelectorAll("[data-loop='screen'] line"));
+    const still = screenAt(openS);
+    expect(lines).toHaveLength(still.length);
 
-    expect(group.style.getPropertyValue("--loop")).toBe(`${loopS}s`);
-    expect(group.style.getPropertyValue("--step")).toBe(`${stepS}s`);
-    expect(group.style.getPropertyValue("--steps")).toBe(String(lines));
-    expect(group.style.getPropertyValue("--gap")).toBe(String(gap));
-    expect(group.style.getPropertyValue("--shift")).toBe(String(lines * gap));
-    expect(group.style.getPropertyValue("--open")).toBe(`${-openS}s`);
+    // The rendered screen is the opening frame.
+    lines.forEach((line, index) => {
+      const spot = still[index];
+      if (spot) {
+        expect(Number(line.getAttribute("x1"))).toBe(spot.x1);
+        expect(Number(line.getAttribute("y1"))).toBe(spot.y1);
+        expect(Number(line.getAttribute("x2"))).toBe(spot.x2);
+        expect(Number(line.getAttribute("y2"))).toBe(spot.y2);
+        expect(line).not.toHaveAttribute("visibility");
+      } else {
+        expect(line).toHaveAttribute("visibility", "hidden");
+      }
+    });
 
-    expect(css).toMatch(/animation: scroll var\(--loop\) steps\(var\(--steps\), end\) var\(--open\)/);
-    expect(css).toMatch(/animation: scrollEase var\(--step\) ease-out var\(--open\)/);
-    expect(css).toMatch(/animation: type var\(--loop\)/);
+    // A full screen of lines at rest (one program line is blank).
+    const heights = new Set(shown(still).map((spot) => Math.round(spot.y1 / 8)));
+    expect(heights.size).toBeGreaterThanOrEqual(rows - 2);
+
+    // Early in the next step only the first token of the new bottom line has
+    // started, and it grows from its start.
+    const early = screenAt(stepS + scrollS + 0.05);
+    const later = screenAt(stepS + scrollS + 0.1);
+    const typing = early
+      .map((spot, index) => ({ spot, next: later[index], was: still[index] }))
+      .filter(({ spot, was }) => spot && !was);
+    expect(typing).toHaveLength(1);
+    const [{ spot, next }] = typing;
+    expect(next!.x1).toBeCloseTo(spot!.x1, 1);
+    expect(next!.x2).toBeGreaterThan(spot!.x2);
   });
 
-  it("clears each line after it leaves the top and before it scrolls in again", () => {
-    const { rows, stepS, scrollS, loopS } = SCREEN_LOOP;
-    const type = css.match(/@keyframes type \{([\s\S]*?)\r?\n\}/)?.[1] ?? "";
-    const shownUntil = Number(type.match(/2%,\s*([\d.]+)% \{\s*stroke-dashoffset: 0;/)?.[1]);
-    const clearedFrom = Number(type.match(/([\d.]+)%,\s*100% \{\s*stroke-dashoffset: 1;/)?.[1]);
-
-    // Seconds after a line starts typing: it leaves the top of the screen
-    // ROWS steps later, and the next copy scrolls in a whole loop later.
-    expect((shownUntil / 100) * loopS).toBeGreaterThanOrEqual(rows * stepS + scrollS);
-    expect((clearedFrom / 100) * loopS).toBeLessThan(loopS - stepS);
+  it("loops seamlessly", () => {
+    const { loopS } = SCREEN_LOOP;
+    expect(screenAt(loopS + 0.37)).toEqual(screenAt(0.37));
+    expect(screenAt(loopS - 1e-6).map((spot) => spot !== null)).toEqual(
+      screenAt(0).map((spot) => spot !== null),
+    );
   });
 });
