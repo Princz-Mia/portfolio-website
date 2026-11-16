@@ -3,7 +3,7 @@ import { Section } from "@/components/Section";
 import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
 import { LaptopScreen } from "@/components/laptop/LaptopScreen";
-import { LichKingEgg } from "@/components/work/LichKingEgg";
+import { DeskScene } from "@/components/work/DeskScene";
 import styles from "./Experience.module.css";
 
 type ExperienceProps = {
@@ -28,9 +28,9 @@ export function Experience({ roles, technical }: ExperienceProps) {
       lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
       art={
         <LaptopScreen>
-          <LichKingEgg>
+          <DeskScene>
             <WorkArt />
-          </LichKingEgg>
+          </DeskScene>
         </LaptopScreen>
       }
       side="right"

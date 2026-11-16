@@ -1,8 +1,16 @@
 /*
- * The Lich King figure's easter egg. WorkArt draws both poses and the frost
- * with the classes below; the wrapper's data-lich and data-poke attributes pick
- * what shows. Without JavaScript there is no wrapper state, so the figure stays
- * at rest.
+ * The Lich King figure's easter egg. WorkArt draws the seated figure, the
+ * standing legs, the frost and the glow with the classes below; the scene's
+ * data-lich and data-poke attributes pick what shows. Without JavaScript there
+ * is no state, so the figure stays seated.
+ *
+ * Waking: the upper body rises as the legs straighten, then the sword arm
+ * swings Frostmourne up about the shoulder. Settling plays it back the other
+ * way: the arm lowers first, then the figure sits down. The rules for the
+ * resting state carry the timings of the way back.
+ *
+ * Transform origins are in the figure's own units (see WorkArt): the shoulder
+ * is at (57, 77) and the seat's front edge, under the figure, at (35, 104).
  */
 
 .wrap {
@@ -11,20 +19,51 @@
 }
 
 /* Hidden until the figure wakes. */
-.raise,
 .frost,
 .aura {
   display: none;
 }
 
-.glow {
+.glow,
+.glint {
   opacity: 0;
-  transition: opacity 0.4s ease-out;
+  transition: opacity 0.3s ease-out;
 }
 
 .figure {
   transform-box: fill-box;
   transform-origin: 50% 100%;
+}
+
+.rise {
+  transform-box: view-box;
+  transform-origin: 35px 104px;
+  transition: transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s;
+}
+
+.arm {
+  transform-box: view-box;
+  transform-origin: 57px 77px;
+  transform: rotate(150deg);
+  transition: transform 0.55s cubic-bezier(0.45, 0, 0.4, 1);
+}
+
+.standLegs {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: scaleY(0.35);
+  opacity: 0;
+  transition:
+    transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s,
+    opacity 0.15s linear 0.85s;
+}
+
+/*
+ * Both ways, the bent and the straight legs cross-fade while the straight ones
+ * still show below the cape's hem, so the figure never floats legless.
+ */
+.sitLegs {
+  transition: opacity 0.15s linear 0.7s;
 }
 
 .wrap[data-poke="a"] .figure {
@@ -35,29 +74,38 @@
   animation: wobbleB 0.45s ease-out;
 }
 
-.wrap[data-lich="awake"] .figure {
-  animation: awaken 0.7s cubic-bezier(0.3, 0.8, 0.3, 1.2);
+/* Awake: stand up, then raise the sword. */
+
+.wrap[data-lich="awake"] .rise {
+  transform: translateY(-14px) scale(1.03);
+  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08);
 }
 
-.wrap[data-lich="awake"] .rest {
-  display: none;
+.wrap[data-lich="awake"] .standLegs {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08),
+    opacity 0.12s linear;
 }
 
-.wrap[data-lich="awake"] .raise {
-  display: inline;
+.wrap[data-lich="awake"] .sitLegs {
+  opacity: 0;
+  transition: opacity 0.15s linear 0.4s;
 }
 
-.raise {
-  transform-box: fill-box;
-  transform-origin: 15% 95%;
-}
-
-.wrap[data-lich="awake"] .raise {
-  animation: raise 0.55s cubic-bezier(0.25, 0.9, 0.3, 1.15);
+.wrap[data-lich="awake"] .arm {
+  transform: none;
+  transition: transform 0.65s cubic-bezier(0.3, 0.85, 0.35, 1.12) 0.5s;
 }
 
 .wrap[data-lich="awake"] .glow {
   opacity: 1;
+}
+
+.wrap[data-lich="awake"] .glint {
+  opacity: 1;
+  transition: opacity 0.3s ease-out 1.1s;
 }
 
 .wrap[data-lich="awake"] .aura {
@@ -83,9 +131,11 @@
 /* The poke target over the figure; it draws nothing but a focus ring. */
 .poke {
   position: absolute;
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   cursor: pointer;
   pointer-events: auto;
@@ -130,6 +180,7 @@
 .bubble[data-show] {
   opacity: 1;
   transform: none;
+  transition-delay: 0.6s;
 }
 
 /* The tail points down at the figure's head. */
@@ -156,10 +207,10 @@
     transform: rotate(0deg);
   }
   30% {
-    transform: rotate(-4deg);
+    transform: rotate(-3deg);
   }
   65% {
-    transform: rotate(2.5deg);
+    transform: rotate(2deg);
   }
 }
 
@@ -169,31 +220,10 @@
     transform: rotate(0deg);
   }
   30% {
-    transform: rotate(4deg);
+    transform: rotate(3deg);
   }
   65% {
-    transform: rotate(-2.5deg);
-  }
-}
-
-@keyframes awaken {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-5px) scale(1.03);
-  }
-}
-
-@keyframes raise {
-  from {
-    opacity: 0.2;
-    transform: translateY(14px) rotate(28deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: rotate(-2deg);
   }
 }
 
@@ -221,15 +251,25 @@
   }
 }
 
+/* Without motion the poses simply switch. */
 @media (prefers-reduced-motion: reduce) {
-  .wrap[data-poke] .figure,
-  .wrap[data-lich="awake"] .figure,
-  .wrap[data-lich="awake"] .raise {
+  .wrap[data-poke] .figure {
     animation: none;
   }
 
+  .rise,
+  .arm,
+  .standLegs,
+  .sitLegs,
   .glow,
-  .bubble {
+  .glint,
+  .bubble,
+  .wrap[data-lich] .rise,
+  .wrap[data-lich] .arm,
+  .wrap[data-lich] .standLegs,
+  .wrap[data-lich] .sitLegs,
+  .wrap[data-lich] .glint,
+  .bubble[data-show] {
     transition: none;
   }
 

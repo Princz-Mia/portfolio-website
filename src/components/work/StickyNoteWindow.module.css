@@ -1,0 +1,44 @@
+/* Hand-written lines on the big sticky note, each a little crooked. */
+
+.hand {
+  padding: 0.5rem 0.25rem 0;
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 1.2rem + 1.2vw, 1.75rem);
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.line {
+  margin: 0 0 0.45em;
+  rotate: -2deg;
+  transform-origin: 0 50%;
+}
+
+.line:nth-child(2) {
+  margin-left: 0.6em;
+  rotate: -0.5deg;
+}
+
+.line:nth-child(3) {
+  margin: 0.2em 0 0 1.6em;
+  color: var(--ink-3);
+  font-size: 0.85em;
+  rotate: -3deg;
+}
+
+.password {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline wavy var(--art-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  white-space: nowrap;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.heart {
+  color: var(--art-accent);
+  font-style: normal;
+}

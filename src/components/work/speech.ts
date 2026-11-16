@@ -188,33 +188,60 @@ export function frostDrone(seconds = 4): Stop {
   }
 }
 
-/** Plays an audio file once at a modest volume. */
-export function playRecording(src: string): Stop {
-  if (typeof window === "undefined" || typeof window.Audio !== "function")
+/**
+ * Plays an audio file once at a modest volume. `onEnd` is called once, when
+ * the recording finishes or cannot be played; never after the returned stop
+ * function has been called.
+ */
+export function playRecording(src: string, onEnd?: () => void): Stop {
+  let ended = false;
+  const finish = () => {
+    if (ended) return;
+    ended = true;
+    onEnd?.();
+  };
+  if (typeof window === "undefined" || typeof window.Audio !== "function") {
+    finish();
     return noop;
+  }
   try {
     const audio = new window.Audio(src);
     audio.volume = 0.6;
-    void audio.play()?.catch(() => undefined);
+    audio.addEventListener("ended", finish);
+    audio.addEventListener("error", finish);
+    const playing = audio.play();
+    if (playing && typeof playing.catch === "function") {
+      playing.catch(finish);
+    }
     return () => {
+      ended = true;
+      audio.removeEventListener("ended", finish);
+      audio.removeEventListener("error", finish);
       audio.pause();
       audio.removeAttribute("src");
       audio.load();
     };
   } catch {
+    finish();
     return noop;
   }
 }
 
 /**
  * Says the Lich King's line: the recording at `src` when set, otherwise the
- * speech synthesiser with a frosty drone underneath. Call it only from a
- * click, tap or key press.
+ * speech synthesiser with a frosty drone underneath. `onEnd` is called when a
+ * recording finishes or fails; the spoken fallback calls it straight away.
+ * Call it only from a click, tap or key press.
  */
-export function sayLichKingLine(text: string, src: string | null): Stop {
-  if (src) return playRecording(src);
+export function sayLichKingLine(
+  text: string,
+  src: string | null,
+  onEnd?: () => void,
+): Stop {
+  if (src) return playRecording(src, onEnd);
   const spoke = speak(text);
   const stopDrone = frostDrone();
+  onEnd?.();
   return () => {
     stopDrone();
     if (spoke) hush();

@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { sounds } from "@/content";
-import { ART_VIEWBOX, LICH_BOX } from "@/components/illustrations/WorkArt";
+import { ART_VIEWBOX, LICH_BOX, LICH_HEAD_X } from "@/components/illustrations/WorkArt";
 import { sayLichKingLine } from "./speech";
 import styles from "./LichKingEgg.module.css";
 
@@ -19,8 +12,22 @@ export const LICH_QUOTE = "Warriors of the frozen wastes, rise!";
 const POKES_TO_WAKE = 5;
 /** How close together the pokes must be, in milliseconds. */
 const POKE_WINDOW_MS = 3000;
-/** How long the figure stays awake, in milliseconds. */
-export const AWAKE_MS = 4500;
+/**
+ * The shortest time the figure stays awake, in milliseconds: a little longer
+ * than the recorded line (6.7 seconds). If the recording is still playing then,
+ * the figure waits for it to end.
+ */
+export const AWAKE_MS = 7400;
+/** The longest time the figure stays awake, should a recording never end. */
+export const MAX_AWAKE_MS = 15000;
+
+export type LichState = "rest" | "awake";
+export type LichKing = {
+  state: LichState;
+  /** Alternates on every poke, to restart the wobble. */
+  poke: "a" | "b" | null;
+  onPoke: () => void;
+};
 
 const pct = (value: number) => `${(value * 100).toFixed(3)}%`;
 
@@ -33,39 +40,54 @@ const POKE_BOX: CSSProperties = {
 };
 
 /**
- * The bubble sits just above the figure, starting at its left edge so it stays
+ * The bubble sits just above the throne, starting at its left edge so it stays
  * clear of the strip of the drawing that lies under the text column on wide
  * screens, with its tail over the helm.
  */
 const BUBBLE_BOX = {
   left: POKE_BOX.left,
-  bottom: pct(1 - (LICH_BOX.y - 6 - ART_VIEWBOX.y) / ART_VIEWBOX.h),
-  "--tail": `${((35 / ART_VIEWBOX.w) * 100).toFixed(3)}cqw`,
+  bottom: pct(1 - (LICH_BOX.y - 4 - ART_VIEWBOX.y) / ART_VIEWBOX.h),
+  "--tail": `${((LICH_HEAD_X / ART_VIEWBOX.w) * 100).toFixed(3)}cqw`,
 } as CSSProperties;
 
-const subscribeNever = () => () => {};
-
-type LichState = "rest" | "awake";
-
 /**
- * Wraps the Work drawing and lays a poke target over its Lich King figure. Each
- * poke wobbles the figure; five quick pokes wake it: its eyes burn ice blue, it
- * raises Frostmourne to the sky and calls out its line, then it settles back.
- * Until the page is hydrated only the drawing renders.
+ * The Lich King figure's state. Each poke wobbles it; five quick pokes wake
+ * it: it stands up from the throne, raises Frostmourne and says its line, then
+ * sits back down once both the line and at least AWAKE_MS are over.
  */
-export function LichKingEgg({ children }: { children: ReactNode }) {
-  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+export function useLichKing(): LichKing {
   const [state, setState] = useState<LichState>("rest");
   const [poke, setPoke] = useState<"a" | "b" | null>(null);
   const pokesRef = useRef<number[]>([]);
   const awakeRef = useRef(false);
-  const timerRef = useRef<number | undefined>(undefined);
+  const minDoneRef = useRef(false);
+  const soundDoneRef = useRef(false);
+  const tokenRef = useRef(0);
+  const minTimerRef = useRef<number | undefined>(undefined);
+  const maxTimerRef = useRef<number | undefined>(undefined);
   const stopSoundRef = useRef<(() => void) | null>(null);
+
+  const clearTimers = () => {
+    window.clearTimeout(minTimerRef.current);
+    window.clearTimeout(maxTimerRef.current);
+    minTimerRef.current = undefined;
+    maxTimerRef.current = undefined;
+  };
+
+  const sleep = useCallback(() => {
+    tokenRef.current += 1;
+    clearTimers();
+    awakeRef.current = false;
+    stopSoundRef.current?.();
+    stopSoundRef.current = null;
+    setState("rest");
+    setPoke(null);
+  }, []);
 
   useEffect(
     () => () => {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = undefined;
+      tokenRef.current += 1;
+      clearTimers();
       awakeRef.current = false;
       stopSoundRef.current?.();
       stopSoundRef.current = null;
@@ -85,43 +107,50 @@ export function LichKingEgg({ children }: { children: ReactNode }) {
 
     pokesRef.current = [];
     awakeRef.current = true;
+    minDoneRef.current = false;
+    soundDoneRef.current = false;
+    const token = ++tokenRef.current;
     setState("awake");
-    stopSoundRef.current?.();
-    stopSoundRef.current = sayLichKingLine(LICH_QUOTE, sounds.lichKingQuote);
 
-    window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = undefined;
-      awakeRef.current = false;
-      setState("rest");
-      setPoke(null);
+    const settleIfDone = () => {
+      if (token === tokenRef.current && minDoneRef.current && soundDoneRef.current) sleep();
+    };
+
+    clearTimers();
+    minTimerRef.current = window.setTimeout(() => {
+      minDoneRef.current = true;
+      settleIfDone();
     }, AWAKE_MS);
+    maxTimerRef.current = window.setTimeout(() => {
+      if (token === tokenRef.current) sleep();
+    }, MAX_AWAKE_MS);
+
+    stopSoundRef.current?.();
+    stopSoundRef.current = sayLichKingLine(LICH_QUOTE, sounds.lichKingQuote, () => {
+      if (token !== tokenRef.current) return;
+      soundDoneRef.current = true;
+      settleIfDone();
+    });
   };
 
-  const awake = state === "awake";
+  return { state, poke, onPoke };
+}
 
+/** The poke target over the figure and the speech bubble above it. */
+export function LichKingEgg({ state, onPoke }: Pick<LichKing, "state" | "onPoke">) {
+  const awake = state === "awake";
   return (
-    <div className={styles.wrap} data-lich={state} data-poke={poke ?? undefined}>
-      {children}
-      {mounted ? (
-        <>
-          <button
-            type="button"
-            className={styles.poke}
-            style={POKE_BOX}
-            aria-label="Poke the Lich King figure"
-            onClick={onPoke}
-          />
-          <p
-            className={styles.bubble}
-            style={BUBBLE_BOX}
-            role="status"
-            data-show={awake ? "" : undefined}
-          >
-            {awake ? LICH_QUOTE : ""}
-          </p>
-        </>
-      ) : null}
-    </div>
+    <>
+      <button
+        type="button"
+        className={styles.poke}
+        style={POKE_BOX}
+        aria-label="Poke the Lich King figure"
+        onClick={onPoke}
+      />
+      <p className={styles.bubble} style={BUBBLE_BOX} role="status" data-show={awake ? "" : undefined}>
+        {awake ? LICH_QUOTE : ""}
+      </p>
+    </>
   );
 }
