@@ -94,18 +94,19 @@
 }
 
 /* Invisible buttons over the chalk and the sponge on the tray. */
+/* Each tool's button covers the drawn tool on the tray and no more, apart from
+   a minimum 24px height so the thin chalk stays easy to hit. */
 .toolButton {
   position: absolute;
-  top: 63.5%;
-  width: max(44px, 13%);
-  height: max(44px, 11%);
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
   pointer-events: auto;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -120,13 +121,20 @@
   outline-offset: 2px;
 }
 
-
+/* The sponge is drawn at 100,257 and is 48 x 20 in the 480 x 400 view box. */
 .spongeButton {
-  left: 25.8%;
+  left: 25.83%;
+  top: 66.75%;
+  width: 10.4%;
+  height: 5.6%;
 }
 
+/* The chalk is drawn at 306,270 and is 30 x 7. */
 .chalkButton {
-  left: 66.2%;
+  left: 66.88%;
+  top: 68.4%;
+  width: 6.8%;
+  height: 2.2%;
 }
 
 .controls {
@@ -138,14 +146,6 @@
   pointer-events: auto;
 }
 
-.hint {
-  flex-basis: 100%;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.03em;
-  text-align: center;
-}
 
 .textButton {
   min-height: 44px;

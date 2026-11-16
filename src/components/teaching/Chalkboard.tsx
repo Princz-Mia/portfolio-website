@@ -869,11 +869,6 @@ export function Chalkboard() {
 
       {live ? (
         <div className={styles.controls}>
-          <p className={styles.hint}>
-            {tool
-              ? `Press and move on the board to ${tool === "chalk" ? "draw" : "wipe"}. Choose the ${tool} again, or press Esc, to put it down.`
-              : "Pick up the chalk or the sponge on the tray."}
-          </p>
           <button type="button" className={styles.textButton} onClick={wipeBoard}>
             Wipe the board
           </button>
