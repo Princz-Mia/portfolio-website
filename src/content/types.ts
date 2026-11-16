@@ -171,3 +171,20 @@ export type Sounds = {
   hordeHorn: string | null;
   lichKingQuote: string | null;
 };
+
+/** Little secrets on the Work desk drawing. */
+export type Desk = {
+  /**
+   * Written by hand on the sticky note on the laptop. It also unlocks the
+   * terminal's locked folder, which holds the cat photos. Compared without
+   * regard to letter case.
+   */
+  notePassword: string;
+  /** The locked folder's name in the terminal. */
+  lockedFolder: string;
+  /**
+   * A "buy me a coffee" style support page. While null, the coffee mug's window
+   * only brews a joke and offers no payment link.
+   */
+  supportUrl: string | null;
+};

@@ -7,4 +7,5 @@ export { academic } from "./academic";
 export { teaching } from "./teaching";
 export { personal } from "./personal";
 export { sounds } from "./sounds";
+export { desk } from "./desk";
 export type * from "./types";
