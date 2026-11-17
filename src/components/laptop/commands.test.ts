@@ -1,14 +1,30 @@
-import { describe, expect, it } from "vitest";
-import { profile, projects, site } from "@/content";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { desk, profile, projects, site, type CatPhoto } from "@/content";
 import {
   DOOM_HELP,
   DOOM_MOTION_WARNING,
   DUKE_HELP,
   DUKE_MOTION_NOTE,
+  DENIED,
+  EMPTY,
+  HINT,
+  MASK,
   PROMPT,
+  answerPassword,
   normalize,
   run,
 } from "./commands";
+
+// The cat photos start empty whatever the content holds; a test can add some.
+const catPhotos = vi.hoisted(() => [] as CatPhoto[]);
+vi.mock("@/content", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/content")>();
+  return { ...actual, personal: { ...actual.personal, catPhotos } };
+});
+
+afterEach(() => {
+  catPhotos.length = 0;
+});
 
 const ctx = { reducedMotion: false };
 
@@ -102,5 +118,84 @@ describe("run", () => {
 
   it("answers the Horde", () => {
     expect(run("For the Horde", ctx).lines.at(-1)).toBe("Lok'tar ogar! For the Horde.");
+  });
+});
+
+describe("the locked folder", () => {
+  const folder = desk.lockedFolder;
+
+  it("is listed by ls as locked, and plainly once unlocked", () => {
+    expect(run("ls", ctx).lines.at(-1)?.endsWith(`${folder}/ (locked)`)).toBe(true);
+    const open = run("ls", { ...ctx, unlocked: true }).lines.at(-1) ?? "";
+    expect(open).toMatch(new RegExp(`${folder}/$`));
+    expect(open).not.toMatch(/locked/);
+  });
+
+  it("is mentioned by help as open <folder>", () => {
+    expect(run("help", ctx).lines.some((line) => line.startsWith("open <folder>"))).toBe(true);
+  });
+
+  it.each(["cd", "open", "ls", "cat"])(
+    "asks for the password on %s, with or without a slash",
+    (command) => {
+      for (const target of [folder, `${folder}/`]) {
+        const result = run(`${command} ${target}`, ctx);
+        expect(result.password).toBe(folder);
+        expect(result.lines).toEqual([`${PROMPT} ${command} ${target}`]);
+      }
+    },
+  );
+
+  it("goes straight in once unlocked", () => {
+    const result = run(`open ${folder}`, { ...ctx, unlocked: true });
+    expect(result.password).toBeUndefined();
+    expect(result.lines[1]).toBe(`Opening ${folder}/…`);
+  });
+
+  it("denies a wrong password with a hint and never echoes the attempt", () => {
+    const result = answerPassword(folder, "hunter2");
+    expect(result.granted).toBe(false);
+    expect(result.lines).toEqual([`password for ${folder}/: ${MASK}`, DENIED, HINT]);
+    expect(result.lines.join(" ")).not.toContain("hunter2");
+  });
+
+  it("grants the note's password trimmed and in any case", () => {
+    for (const attempt of [desk.notePassword, `  ${desk.notePassword.toUpperCase()} `]) {
+      const result = answerPassword(folder, attempt);
+      expect(result.granted).toBe(true);
+      expect(result.lines[1]).toBe(`Access granted. Opening ${folder}/…`);
+      expect(result.lines.join(" ")).not.toContain(desk.notePassword);
+    }
+  });
+
+  it("says the folder is empty while there are no photos", () => {
+    const result = answerPassword(folder, desk.notePassword);
+    expect(result.lines.at(-1)).toBe(EMPTY);
+    expect(result.photos).toBeUndefined();
+    expect(run(`open ${folder}`, { ...ctx, unlocked: true }).photos).toBeUndefined();
+    expect(run(`ls ${folder}`, { ...ctx, unlocked: true }).lines.at(-1)).toBe(EMPTY);
+  });
+
+  it("shows the photos and lists their file names once there are some", () => {
+    catPhotos.push(
+      { src: "/cats/keyboard.jpg", alt: "A cat on a keyboard", width: 400, height: 300 },
+      { src: "/cats/box.jpg", alt: "A cat in a box", width: 400, height: 300 },
+    );
+    const result = answerPassword(folder, desk.notePassword);
+    expect(result.granted).toBe(true);
+    expect(result.photos).toBe(true);
+    expect(result.lines).not.toContain(EMPTY);
+    const open = run(`open ${folder}`, { ...ctx, unlocked: true });
+    expect(open.photos).toBe(true);
+    expect(open.lines).toEqual([`${PROMPT} open ${folder}`, `Opening ${folder}/…`]);
+    expect(run(`ls ${folder}/`, { ...ctx, unlocked: true }).lines.at(-1)).toBe(
+      "keyboard.jpg  box.jpg",
+    );
+  });
+
+  it("opens other folders without a password", () => {
+    expect(run("open projects", ctx).lines.at(-1)).toMatch(/Selected projects/);
+    expect(run("open nowhere", ctx).lines.at(-1)).toBe("open: nowhere: No such file or directory");
+    expect(run("cd projects", ctx).lines.at(-1)).toBe("cd: there is only ~ here.");
   });
 });

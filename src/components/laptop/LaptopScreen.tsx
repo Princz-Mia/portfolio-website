@@ -9,12 +9,16 @@ import {
   useSyncExternalStore,
   type ComponentType,
   type CSSProperties,
+  type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { ART_SCREEN, ART_VIEWBOX } from "@/components/illustrations/WorkArt";
-import { BANNER, PROMPT, run } from "./commands";
+import { CatPhotos } from "@/components/personal/CatPhotos";
+import { personal } from "@/content";
+import { BANNER, PROMPT, answerPassword, passwordPrompt, run } from "./commands";
 import { DukeRun, type DukeHandle, type DukeResult } from "./DukeRun";
 import type { DoomExit, RealDoomProps } from "./RealDoom";
 import styles from "./LaptopScreen.module.css";
@@ -136,10 +140,22 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
   const [game, setGame] = useState<Game | null>(null);
   // Whole percent of the engine download, drawn as a bar while loading.
   const [progress, setProgress] = useState(0);
+  // The locked folder whose password the prompt is asking for, if any.
+  const [asking, setAskingState] = useState<string | null>(null);
+  const askingRef = useRef<string | null>(null);
+  // Opened with the password once, the folder stays open for this page session.
+  const unlockedRef = useRef(false);
+  // Where the cat photos fly out from while they are shown over the terminal.
+  const [photosFrom, setPhotosFrom] = useState<{ x: number; y: number } | null>(null);
 
   function setMode(next: Mode) {
     modeRef.current = next;
     setModeState(next);
+  }
+
+  function setAsking(next: string | null) {
+    askingRef.current = next;
+    setAskingState(next);
   }
 
   function append(texts: string[]) {
@@ -154,6 +170,11 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
     const target = touchRef.current ? dialogRef.current : inputRef.current;
     target?.focus({ preventScroll: true });
   }, [mode]);
+
+  // A password prompt needs the keyboard, so it focuses the input even on touch.
+  useEffect(() => {
+    if (asking) inputRef.current?.focus({ preventScroll: true });
+  }, [asking]);
 
   // The newest line stays in view; older ones scroll up inside the log.
   useLayoutEffect(() => {
@@ -195,6 +216,8 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
     }).then(
       (loaded) => {
         if (token !== loadToken.current) return;
+        // The game takes over the prompt, so a password asked for meanwhile is dropped.
+        if (askingRef.current) cancelPassword();
         setGame(loaded);
         setMode("doom");
       },
@@ -204,14 +227,66 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
     );
   }
 
+  function cancelPassword() {
+    const folder = askingRef.current;
+    if (!folder) return;
+    setAsking(null);
+    setInput("");
+    append([`${passwordPrompt(folder)} (cancelled)`]);
+    setStatus("Password prompt cancelled.");
+  }
+
+  function showPhotos() {
+    // The photos open only over an idle terminal, never over a game that is loading.
+    if (modeRef.current !== "terminal") return append(["doom: still loading (esc to cancel)"]);
+    const box = dialogRef.current?.getBoundingClientRect();
+    // The photos fly out from the middle of the terminal.
+    setPhotosFrom(
+      box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : { x: 0, y: 0 },
+    );
+  }
+
+  function submitPassword(attempt: string) {
+    const folder = askingRef.current;
+    if (!folder) return;
+    if (attempt.trim() === "") return cancelPassword();
+    const result = answerPassword(folder, attempt);
+    setAsking(null);
+    if (result.granted) unlockedRef.current = true;
+    append(result.lines);
+    setStatus(result.lines.slice(1).join(" "));
+    if (result.photos) showPhotos();
+  }
+
+  // Back from the photos, the terminal underneath (or a running game) has the keyboard again.
+  function closePhotos() {
+    setPhotosFrom(null);
+    const target =
+      modeRef.current === "doom"
+        ? dialogRef.current?.querySelector("canvas")
+        : touchRef.current
+          ? dialogRef.current
+          : inputRef.current;
+    target?.focus({ preventScroll: true });
+  }
+
   function execute(raw: string) {
-    const result = run(raw, { reducedMotion: prefersReducedMotion() });
+    // A button pressed while a password is asked for cancels the prompt first.
+    if (askingRef.current) cancelPassword();
+    const result = run(raw, {
+      reducedMotion: prefersReducedMotion(),
+      unlocked: unlockedRef.current,
+    });
     if (result.clear) return setLines([]);
     // A game can start only from an idle terminal, so a second one waits for the load to end.
     if ((result.doom || result.duke) && modeRef.current !== "terminal") {
       return append(["doom: still loading (esc to cancel)"]);
     }
     append(result.lines);
+    if (result.password) {
+      setAsking(result.password);
+      setStatus(`${passwordPrompt(result.password)} type it and press Enter. Escape cancels.`);
+    } else if (result.photos) showPhotos();
     if (result.exit) dialogRef.current?.close();
     else if (result.doom) startDoom();
     else if (result.duke) startDuke();
@@ -244,7 +319,12 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
   // the terminal; while loading, it cancels the load. In the Duke runner,
   // Escape always goes back to the terminal.
   function onCancel(e: SyntheticEvent<HTMLDialogElement>) {
-    if (modeRef.current === "duke") {
+    // Only the terminal's own Escape counts, never one from a dialog inside it.
+    if (e.target !== e.currentTarget) return;
+    if (askingRef.current) {
+      e.preventDefault();
+      cancelPassword();
+    } else if (modeRef.current === "duke") {
       e.preventDefault();
       leaveDuke();
     } else if (modeRef.current === "loading") {
@@ -257,7 +337,9 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
     }
   }
 
-  function onClose() {
+  function onClose(e: SyntheticEvent<HTMLDialogElement>) {
+    if (e.target !== e.currentTarget) return;
+    if (askingRef.current) cancelPassword();
     // Closing in the middle of a run still leaves the score in the log.
     if (modeRef.current === "duke") {
       const result = dukeRef.current?.finish();
@@ -277,6 +359,13 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
     if (startedOnBackdrop && e.target === e.currentTarget && modeRef.current === "terminal") {
       e.currentTarget.close();
     }
+  }
+
+  // Escape at the password prompt cancels it and keeps the terminal open.
+  function onPasswordKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (!asking || e.key !== "Escape" || e.ctrlKey || e.altKey || e.metaKey) return;
+    e.preventDefault();
+    cancelPassword();
   }
 
   if (!mounted) return <>{children}</>;
@@ -354,22 +443,25 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
                 className={styles.prompt}
                 onSubmit={(e) => {
                   e.preventDefault();
-                  execute(input);
+                  if (asking) submitPassword(input);
+                  else execute(input);
                   setInput("");
                 }}
               >
                 <label htmlFor={inputId} className="visually-hidden">
-                  Command
+                  {asking ? "Password" : "Command"}
                 </label>
                 <span className={styles.ps1} aria-hidden="true">
-                  {PROMPT}
+                  {asking ? passwordPrompt(asking) : PROMPT}
                 </span>
                 <input
                   ref={inputRef}
                   id={inputId}
                   className={styles.input}
+                  type={asking ? "password" : "text"}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={onPasswordKey}
                   autoComplete="off"
                   autoCapitalize="off"
                   spellCheck={false}
@@ -408,6 +500,14 @@ export function LaptopScreen({ children }: { children: ReactNode }) {
           )}
         </div>
       </dialog>
+
+      {/* The photos open as a second modal on top of the terminal, which stays open below. */}
+      {photosFrom
+        ? createPortal(
+            <CatPhotos photos={personal.catPhotos} from={photosFrom} onClose={closePhotos} />,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

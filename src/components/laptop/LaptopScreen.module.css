@@ -198,6 +198,11 @@
   caret-color: #6f655d;
 }
 
+/* The masked password: a little air between the dots. */
+.input[type="password"] {
+  letter-spacing: 0.12em;
+}
+
 .shortcuts,
 .pad,
 .gameBar {

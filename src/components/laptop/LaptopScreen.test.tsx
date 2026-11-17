@@ -1,9 +1,16 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { site } from "@/content";
+import { desk, site, type CatPhoto } from "@/content";
 import { DOOM_KEYS } from "./doomEngine";
 import { LaptopScreen, MAX_LINES, PANEL_SIZE, progressBar } from "./LaptopScreen";
+
+// The cat photos start empty, as in the content; a test can add some.
+const catPhotos = vi.hoisted(() => [] as CatPhoto[]);
+vi.mock("@/content", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/content")>();
+  return { ...actual, personal: { ...actual.personal, catPhotos } };
+});
 
 // The engine file is never fetched in tests: each test decides what loading it does.
 const loadDoomModule = vi.hoisted(() => vi.fn());
@@ -76,6 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  catPhotos.length = 0;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -407,5 +415,117 @@ describe("LaptopScreen doom", () => {
       expect(within(dialog).getByRole("log")).toHaveTextContent("doom exited. thanks for playing."),
     );
     expect(dialog.open).toBe(true);
+  });
+});
+
+describe("LaptopScreen locked folder", () => {
+  const folder = desk.lockedFolder;
+
+  function askPassword() {
+    const terminal = openTerminal();
+    typeCommand(terminal.input, `cd ${folder}`);
+    const field = within(terminal.dialog).getByLabelText("Password");
+    return { ...terminal, field, log: within(terminal.dialog).getByRole("log") };
+  }
+
+  it("shows the locked folder in ls", () => {
+    const { dialog, input } = openTerminal();
+    typeCommand(input, "ls");
+    expect(within(dialog).getByRole("log")).toHaveTextContent(`${folder}/ (locked)`);
+  });
+
+  it("asks for the password in a masked field", () => {
+    const { dialog, field } = askPassword();
+    expect(field).toHaveAttribute("type", "password");
+    expect(field).toHaveAttribute("autocomplete", "off");
+    expect(field).toHaveFocus();
+    expect(within(dialog).getByText(`password for ${folder}/:`)).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Command")).toBeNull();
+  });
+
+  it("denies a wrong password with a hint, never logging it", () => {
+    const { dialog, field, log } = askPassword();
+    typeCommand(field, "hunter2");
+    expect(log).toHaveTextContent(`password for ${folder}/: ********`);
+    expect(log).toHaveTextContent("Access denied.");
+    expect(log).toHaveTextContent("Hint: some people write their passwords on sticky notes");
+    expect(dialog.textContent).not.toContain("hunter2");
+    // No lockout: the next try is asked for the same way.
+    const input = within(dialog).getByLabelText("Command");
+    typeCommand(input, `open ${folder}`);
+    expect(within(dialog).getByLabelText("Password")).toBeInTheDocument();
+  });
+
+  it("grants the note's password in any case and stays unlocked", () => {
+    const { dialog, field, log } = askPassword();
+    typeCommand(field, ` ${desk.notePassword.toUpperCase()} `);
+    expect(log).toHaveTextContent(`Access granted. Opening ${folder}/…`);
+    expect(log).toHaveTextContent(`${folder}/ is empty for now. The cats are camera-shy.`);
+    expect(dialog.textContent?.toLowerCase()).not.toContain(desk.notePassword.toLowerCase());
+    const input = within(dialog).getByLabelText("Command");
+    expect(input).toHaveFocus();
+    typeCommand(input, `open ${folder}`);
+    expect(within(dialog).queryByLabelText("Password")).toBeNull();
+    expect(log.textContent?.match(/camera-shy/g)).toHaveLength(2);
+  });
+
+  it("cancels the prompt on Escape without closing the terminal", () => {
+    const { dialog, field, log } = askPassword();
+    fireEvent.change(field, { target: { value: "half typed" } });
+    expect(fireEvent.keyDown(field, { key: "Escape", code: "Escape" })).toBe(false);
+    expect(dialog.open).toBe(true);
+    expect(log).toHaveTextContent(`password for ${folder}/: (cancelled)`);
+    expect(dialog.textContent).not.toContain("half typed");
+    expect(within(dialog).getByLabelText("Command")).toHaveFocus();
+  });
+
+  it("cancels the prompt on the dialog's own Escape and on an empty answer", () => {
+    const { dialog, log } = askPassword();
+    const cancel = new Event("cancel", { cancelable: true });
+    act(() => {
+      dialog.dispatchEvent(cancel);
+    });
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(dialog.open).toBe(true);
+    expect(within(dialog).getByLabelText("Command")).toBeInTheDocument();
+
+    typeCommand(within(dialog).getByLabelText("Command"), `ls ${folder}/`);
+    typeCommand(within(dialog).getByLabelText("Password"), "   ");
+    expect(log.textContent?.match(/\(cancelled\)/g)).toHaveLength(2);
+    expect(log).not.toHaveTextContent("Access denied.");
+  });
+
+  it("opens the cat photos over the terminal and comes back to the prompt", () => {
+    catPhotos.push(
+      { src: "/cats/a.jpg", alt: "A cat on a keyboard", width: 400, height: 300 },
+      { src: "/cats/b.jpg", alt: "A cat in a box", width: 400, height: 300 },
+    );
+    const { dialog, field, log } = askPassword();
+    typeCommand(field, desk.notePassword);
+    expect(log).toHaveTextContent(`Access granted. Opening ${folder}/…`);
+
+    const photos = screen.getByRole("dialog", { name: "You found the cats" });
+    expect(photos).not.toBe(dialog);
+    expect((photos as HTMLDialogElement).open).toBe(true);
+    expect(within(photos).getAllByRole("img")).toHaveLength(2);
+
+    // Closing the photos leaves the terminal open with the prompt focused.
+    fireEvent.click(within(photos).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog", { name: "You found the cats" })).toBeNull();
+    expect(dialog.open).toBe(true);
+    expect(within(dialog).getByLabelText("Command")).toHaveFocus();
+  });
+
+  it("keeps the cat photos closed while Doom is loading", () => {
+    catPhotos.push({ src: "/cats/a.jpg", alt: "A cat on a keyboard", width: 400, height: 300 });
+    loadDoomModule.mockReturnValue(new Promise(() => {}));
+    const { dialog, input } = openTerminal();
+    fireEvent.click(within(dialog).getByRole("button", { name: "› doom" }));
+    typeCommand(input, `cd ${folder}`);
+    typeCommand(within(dialog).getByLabelText("Password"), desk.notePassword);
+    const log = within(dialog).getByRole("log");
+    expect(log).toHaveTextContent(`Access granted. Opening ${folder}/…`);
+    expect(log).toHaveTextContent("doom: still loading (esc to cancel)");
+    expect(screen.queryByRole("dialog", { name: "You found the cats" })).toBeNull();
   });
 });

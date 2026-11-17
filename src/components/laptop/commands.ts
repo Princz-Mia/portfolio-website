@@ -1,4 +1,4 @@
-import { profile, projects, site } from "@/content";
+import { desk, personal, profile, projects, site } from "@/content";
 
 /** The prompt shown before every command, in the log and beside the input. */
 export const PROMPT = "mia@desk:~$";
@@ -14,6 +14,8 @@ export const BANNER = [
 export type Context = {
   /** Whether the visitor prefers reduced motion; the games then start with a note. */
   reducedMotion: boolean;
+  /** Whether the locked folder has been opened with its password this page session. */
+  unlocked?: boolean;
 };
 
 /** Printed by `doom --help`. */
@@ -57,22 +59,77 @@ export type Result = {
   doom?: boolean;
   /** Start the Duke runner. */
   duke?: boolean;
+  /** Ask for the password of this locked folder before going on. */
+  password?: string;
+  /** Show the cat photos. */
+  photos?: boolean;
 };
 
 const CAT = [" /\\_/\\", "( o.o )", " > ^ <"];
 
 const HORDE = "Lok'tar ogar! For the Horde.";
 
-const HELP = [
-  "whoami      who uses this laptop",
-  "projects    things being built",
-  "ls          list files",
-  "cat <file>  print a file",
-  "doom        yes, it runs doom (doom --help for keys)",
-  "duke        run, Duke, run (duke --help for keys)",
-  "clear       clear the screen",
-  "exit        close the terminal",
-];
+const HELP = (
+  [
+    ["whoami", "who uses this laptop"],
+    ["projects", "things being built"],
+    ["ls", "list files"],
+    ["cat <file>", "print a file"],
+    ["open <folder>", "open a folder"],
+    ["doom", "yes, it runs doom (doom --help for keys)"],
+    ["duke", "run, Duke, run (duke --help for keys)"],
+    ["clear", "clear the screen"],
+    ["exit", "close the terminal"],
+  ] as const
+).map(([command, what]) => `${command.padEnd(15)}${what}`);
+
+/** The password-protected folder, from the desk content. */
+const LOCKED = desk.lockedFolder;
+
+/** Printed when the locked folder is opened while it has no photos. */
+export const EMPTY = `${LOCKED}/ is empty for now. The cats are camera-shy.`;
+
+/** Printed after a wrong password. */
+export const DENIED = "Access denied.";
+export const HINT = "Hint: some people write their passwords on sticky notes…";
+
+/** The prompt shown beside the masked input while a folder asks for its password. */
+export const passwordPrompt = (folder: string) => `password for ${folder}/:`;
+
+/** What the log shows in place of a typed password, whatever its length. */
+export const MASK = "********";
+
+const isProjects = (arg: string) => arg === "projects" || arg === "projects/";
+const isLocked = (arg: string) => arg === LOCKED || arg === `${LOCKED}/`;
+
+/** Lines and flags for going into the locked folder once it is open. */
+function enterLocked(): Result {
+  const opening = `Opening ${LOCKED}/…`;
+  if (personal.catPhotos.length === 0) return { lines: [opening, EMPTY] };
+  return { lines: [opening], photos: true };
+}
+
+/** Asks for the password while the folder is locked, or goes straight in. */
+function openLocked(ctx: Context): Result {
+  return ctx.unlocked ? enterLocked() : { lines: [], password: LOCKED };
+}
+
+/**
+ * Checks a password typed at the locked folder's prompt. The password is the
+ * one on the sticky note on the desk, compared trimmed and ignoring case. The
+ * log never shows what was typed, only a fixed mask.
+ */
+export function answerPassword(folder: string, attempt: string): Result & { granted: boolean } {
+  const echo = `${passwordPrompt(folder)} ${MASK}`;
+  const granted = attempt.trim().toLowerCase() === desk.notePassword.trim().toLowerCase();
+  if (!granted) return { lines: [echo, DENIED, HINT], granted };
+  const entered = enterLocked();
+  return {
+    ...entered,
+    lines: [echo, `Access granted. ${entered.lines[0]}`, ...entered.lines.slice(1)],
+    granted,
+  };
+}
 
 /** Trims, collapses runs of whitespace and lowercases a command line. */
 export function normalize(raw: string): string {
@@ -87,9 +144,17 @@ function output(command: string, arg: string, ctx: Context): Result {
     case "whoami":
       return { lines: [site.name, profile.headline] };
     case "ls":
-      if (arg === "") return { lines: ["about.txt  cat.txt  horde.txt  projects/"] };
-      if (arg === "projects" || arg === "projects/") {
-        return { lines: [`${projects.map((p) => p.slug).join("/  ")}/`] };
+      if (arg === "") {
+        const folder = `${LOCKED}/${ctx.unlocked ? "" : " (locked)"}`;
+        return { lines: [`about.txt  cat.txt  horde.txt  projects/  ${folder}`] };
+      }
+      if (isProjects(arg)) return { lines: [`${projects.map((p) => p.slug).join("/  ")}/`] };
+      if (isLocked(arg)) {
+        if (!ctx.unlocked) return { lines: [], password: LOCKED };
+        if (personal.catPhotos.length === 0) return { lines: [EMPTY] };
+        return {
+          lines: [personal.catPhotos.map((p) => p.src.split("/").pop()).join("  ")],
+        };
       }
       return { lines: [`ls: ${arg}: No such file or directory`] };
     case "projects":
@@ -104,11 +169,18 @@ function output(command: string, arg: string, ctx: Context): Result {
       if (arg === "about.txt") return { lines: [profile.intro[0] ?? ""] };
       if (arg === "cat.txt") return { lines: CAT };
       if (arg === "horde.txt") return { lines: [HORDE] };
+      if (isLocked(arg)) return openLocked(ctx);
       return { lines: [`cat: ${arg}: No such file or directory`] };
     case "sudo":
       return { lines: ["mia is not in the sudoers file. This incident will be reported."] };
     case "cd":
+      if (isLocked(arg)) return openLocked(ctx);
       return { lines: ["cd: there is only ~ here."] };
+    case "open":
+      if (arg === "") return { lines: ["open: missing operand. try ls"] };
+      if (isLocked(arg)) return openLocked(ctx);
+      if (isProjects(arg)) return output("projects", "", ctx);
+      return { lines: [`open: ${arg}: No such file or directory`] };
     case "doom":
       if (arg === "--help") return { lines: DOOM_HELP };
       if (arg !== "") break;
