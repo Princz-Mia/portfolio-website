@@ -30,7 +30,9 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 | `src/components/sections/` | One component per section of the page. |
 | `src/components/illustrations/` | The SVG line art: the clickable Bongo Cat in the hero and one drawing per section. Entrance animations key on `InView`. |
 | `src/components/laptop/` | The laptop terminal in the Work drawing: `commands.ts` (pure command table), real shareware Doom (`RealDoom.tsx`, `doomEngine.ts`) and the Duke runner (`DukeRun.tsx`, pure engine in `duke.ts`). |
-| `src/components/work/` | The Lich King easter egg on the Work desk and its speech helper. |
+| `src/components/work/` | The desk easter eggs: the Lich King on its throne, the coffee mug window and the sticky note. |
+| `src/components/murloc/` | The murloc hiding in the footer. |
+| `public/audio/` | The horn and Lich King recordings. |
 | `src/components/personal/` | The Off the clock easter eggs (popcorn, purring cat, war horn, Raider.IO link) and the cat photo surprise. |
 | `src/lib/sound.ts` | Synthesised sounds (war horn, purr) on one shared audio context. |
 | `src/content/sounds.ts` | Optional recordings that replace the synthesised sounds. |
@@ -52,8 +54,15 @@ appear; nothing else needs to change.
 Put the photos in `public/cats/` (a few hundred KB each at most; around 1200 px on
 the long side is plenty) and list them in `catPhotos` in
 `src/content/personal.ts` with a path, a short description for screen readers and
-the pixel size. Petting the cat in the Off the clock drawing seven times then fans
-them out. While the list is empty, the surprise is not offered.
+the pixel size. They then appear in two places: petting the cat in the Off the clock
+drawing seven times fans them out, and the terminal's locked `cats/` folder opens
+them with the sticky-note password. While the list is empty, neither shows photos.
+
+### Desk secrets and the support link
+
+`src/content/desk.ts` holds the sticky-note password and `supportUrl`. Set
+`supportUrl` to a Buy Me a Coffee or Ko-fi page to add a support button to the coffee
+mug's window; while it is `null` the window only tells a joke.
 
 ### Adding a research output
 
