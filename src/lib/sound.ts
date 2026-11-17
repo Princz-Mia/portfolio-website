@@ -367,3 +367,121 @@ export function playHordeHorn(file?: string | null): boolean {
   if (played) hornBusyUntil = nowMs() + HORN_SECONDS * 1000;
   return played;
 }
+
+/* ---------- murloc gurgle ---------- */
+
+/** How long the synthesised murloc call lasts, in seconds. */
+export const GURGLE_SECONDS = 0.8;
+/** Calls closer together than this are skipped, so rapid clicks never stack. */
+const GURGLE_GAP = GURGLE_SECONDS;
+const lastGurgle = new WeakMap<BaseAudioContext, number>();
+
+/**
+ * A murloc's warbling "mrglglgl": a buzzy square tone pushed through a narrow
+ * band-pass, its pitch wobbling about 15 times a second while it slides up and
+ * back down, with a matching tremolo and a burst of bubbly noise at the start.
+ * Returns whether it played.
+ */
+export function playMurlocGurgle(): boolean {
+  const ctx = getAudioContext();
+  if (!ctx) return false;
+
+  const t0 = ctx.currentTime + 0.01;
+  const previous = lastGurgle.get(ctx);
+  if (previous !== undefined && t0 - previous < GURGLE_GAP) return false;
+  lastGurgle.set(ctx, t0);
+
+  const end = t0 + GURGLE_SECONDS;
+
+  const voice = ctx.createOscillator();
+  voice.type = "square";
+  voice.frequency.setValueAtTime(260, t0);
+  voice.frequency.exponentialRampToValueAtTime(560, t0 + 0.3);
+  voice.frequency.exponentialRampToValueAtTime(230, end);
+
+  // The warble: a fast wobble on the pitch and, in step, on the loudness.
+  const wobble = ctx.createOscillator();
+  wobble.type = "sine";
+  wobble.frequency.setValueAtTime(16, t0);
+  wobble.frequency.linearRampToValueAtTime(13, end);
+  const wobbleDepth = ctx.createGain();
+  wobbleDepth.gain.value = 70;
+  wobble.connect(wobbleDepth);
+  wobbleDepth.connect(voice.frequency);
+
+  const tremolo = ctx.createGain();
+  tremolo.gain.value = 0.6;
+  const tremoloDepth = ctx.createGain();
+  tremoloDepth.gain.value = 0.4;
+  wobble.connect(tremoloDepth);
+  tremoloDepth.connect(tremolo.gain);
+
+  // A moving formant gives the wet "mrgl" vowel.
+  const formant = ctx.createBiquadFilter();
+  formant.type = "bandpass";
+  formant.Q.value = 3.5;
+  formant.frequency.setValueAtTime(700, t0);
+  formant.frequency.exponentialRampToValueAtTime(1500, t0 + 0.3);
+  formant.frequency.exponentialRampToValueAtTime(600, end);
+
+  // Bubbles: band-passed noise chopped by a faster wobble, only at the start.
+  const bubbles = ctx.createBufferSource();
+  bubbles.buffer = noiseBuffer(ctx);
+  bubbles.loop = true;
+  const bubbleFilter = ctx.createBiquadFilter();
+  bubbleFilter.type = "bandpass";
+  bubbleFilter.frequency.value = 1900;
+  bubbleFilter.Q.value = 1.6;
+  const bubbleChop = ctx.createGain();
+  bubbleChop.gain.value = 0.5;
+  const chop = ctx.createOscillator();
+  chop.type = "square";
+  chop.frequency.value = 23;
+  const chopDepth = ctx.createGain();
+  chopDepth.gain.value = 0.5;
+  chop.connect(chopDepth);
+  chopDepth.connect(bubbleChop.gain);
+  const bubbleLevel = ctx.createGain();
+  bubbleLevel.gain.setValueAtTime(0, t0);
+  bubbleLevel.gain.linearRampToValueAtTime(0.5, t0 + 0.03);
+  bubbleLevel.gain.linearRampToValueAtTime(0, t0 + 0.4);
+
+  const envelope = ctx.createGain();
+  envelope.gain.setValueAtTime(0.0001, t0);
+  envelope.gain.exponentialRampToValueAtTime(0.22, t0 + 0.05);
+  envelope.gain.setValueAtTime(0.22, end - 0.3);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, end);
+
+  voice.connect(formant);
+  formant.connect(tremolo);
+  tremolo.connect(envelope);
+  bubbles.connect(bubbleFilter);
+  bubbleFilter.connect(bubbleChop);
+  bubbleChop.connect(bubbleLevel);
+  bubbleLevel.connect(envelope);
+  envelope.connect(ctx.destination);
+
+  const sources: AudioScheduledSourceNode[] = [voice, wobble, bubbles, chop];
+  for (const source of sources) {
+    source.start(t0);
+    source.stop(end + 0.05);
+  }
+
+  voice.onended = () =>
+    disconnectAll([
+      voice,
+      wobble,
+      wobbleDepth,
+      tremolo,
+      tremoloDepth,
+      formant,
+      bubbles,
+      bubbleFilter,
+      bubbleChop,
+      chop,
+      chopDepth,
+      bubbleLevel,
+      envelope,
+    ]);
+  return true;
+}

@@ -1,8 +1,11 @@
 /* A pale band in the drawings' palette: a soft tint wash, a large blob like the
-   ones behind the illustrations, and a faint dot grid that fades out. */
+   ones behind the illustrations, and a faint dot grid that fades out. Only the
+   sides are clipped, so the murloc can peek up over the top edge. */
 .footer {
   position: relative;
-  overflow: hidden;
+  /* Above the sections' content layer, so the murloc is drawn over it. */
+  z-index: 1;
+  overflow-x: clip;
   isolation: isolate;
   border-top: 1px solid var(--rule);
   padding-block: 2.5rem 3rem;

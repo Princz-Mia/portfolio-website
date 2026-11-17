@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   closeAudio,
   getAudioContext,
+  GURGLE_SECONDS,
   isHornSounding,
   playHordeHorn,
   playPurr,
   canPlayRecording,
+  playMurlocGurgle,
 } from "./sound";
 
 type Created = { kind: string; node: Record<string, unknown> };
@@ -78,6 +80,7 @@ describe("sound effects without the Web Audio API", () => {
     expect(playPurr()).toBe(false);
     expect(playHordeHorn()).toBe(false);
     expect(isHornSounding()).toBe(false);
+    expect(playMurlocGurgle()).toBe(false);
   });
 });
 
@@ -169,5 +172,60 @@ describe("sound effects with the Web Audio API", () => {
     expect(canPlayRecording("/audio/horn.ogg")).toBe(false);
     expect(playHordeHorn("/audio/horn.ogg")).toBe(true);
     expect(created.length).toBeGreaterThan(0);
+  });
+});
+
+describe("the murloc gurgle", () => {
+  it("warbles a filtered square tone with a fast wobble and a noise burst", () => {
+    const created = installFakeAudio();
+    expect(playMurlocGurgle()).toBe(true);
+    const oscillators = created.filter((entry) => entry.kind === "oscillator");
+    expect(oscillators.some(({ node }) => node.type === "square")).toBe(true);
+    const wobble = oscillators.find(({ node }) => node.type === "sine");
+    const rate = (wobble?.node.frequency as ReturnType<typeof param>).setValueAtTime.mock
+      .calls[0][0];
+    expect(rate).toBeGreaterThanOrEqual(12);
+    expect(rate).toBeLessThanOrEqual(18);
+    expect(created.some(({ kind, node }) => kind === "filter" && node.type === "bandpass")).toBe(
+      true,
+    );
+    expect(created.some((entry) => entry.kind === "buffer")).toBe(true);
+    for (const { node } of created.filter((entry) => "start" in entry.node)) {
+      expect(node.start).toHaveBeenCalled();
+    }
+  });
+
+  it("stays at a modest level and skips a call made right after another", () => {
+    const created = installFakeAudio();
+    expect(playMurlocGurgle()).toBe(true);
+    const ctx = getAudioContext() as unknown as { destination: unknown };
+    const output = created.find(
+      ({ kind, node }) =>
+        kind === "gain" &&
+        (node.connect as ReturnType<typeof vi.fn>).mock.calls.some(
+          ([target]) => target === ctx.destination,
+        ),
+    );
+    const gain = output?.node.gain as ReturnType<typeof param>;
+    for (const call of [
+      ...gain.setValueAtTime.mock.calls,
+      ...gain.exponentialRampToValueAtTime.mock.calls,
+    ]) {
+      expect(call[0]).toBeLessThanOrEqual(0.35);
+    }
+
+    const count = created.length;
+    expect(playMurlocGurgle()).toBe(false);
+    expect(created.length).toBe(count);
+  });
+
+  it("starts a new call only once the previous one has finished", () => {
+    installFakeAudio();
+    const ctx = getAudioContext() as unknown as { currentTime: number };
+    expect(playMurlocGurgle()).toBe(true);
+    ctx.currentTime = GURGLE_SECONDS / 2;
+    expect(playMurlocGurgle()).toBe(false);
+    ctx.currentTime = GURGLE_SECONDS + 0.01;
+    expect(playMurlocGurgle()).toBe(true);
   });
 });
