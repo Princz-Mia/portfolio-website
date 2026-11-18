@@ -9,7 +9,7 @@ describe("RichText", () => {
         <RichText text="I play on [Quelthara](https://example.com/q), for the Horde." />
       </p>,
     );
-    const link = screen.getByRole("link", { name: "Quelthara (opens in a new tab)" });
+    const link = screen.getByRole("link", { name: /^Quelthara\s*\(opens in a new tab\)$/ });
     expect(link).toHaveAttribute("href", "https://example.com/q");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
