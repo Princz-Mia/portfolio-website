@@ -1,5 +1,4 @@
 import type { SiteConfig } from "@/content";
-import { Murloc } from "./murloc/Murloc";
 import styles from "./SiteFooter.module.css";
 
 export function SiteFooter({ site }: { site: SiteConfig }) {
@@ -34,7 +33,6 @@ export function SiteFooter({ site }: { site: SiteConfig }) {
           </li>
         </ul>
       </div>
-      <Murloc />
     </footer>
   );
 }
