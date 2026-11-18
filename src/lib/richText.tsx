@@ -15,9 +15,12 @@ export function RichText({ text }: { text: string }): ReactNode {
     if (index > last) {
       parts.push(text.slice(last, index));
     }
+    // Links in running text lead off the site, so they open in a new tab and
+    // say so to screen readers.
     parts.push(
-      <a key={`${href}-${index}`} href={href}>
+      <a key={`${href}-${index}`} href={href} target="_blank" rel="noopener noreferrer">
         {label}
+        <span className="visually-hidden"> (opens in a new tab)</span>
       </a>,
     );
     last = index + whole.length;
