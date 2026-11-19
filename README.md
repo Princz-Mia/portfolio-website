@@ -30,9 +30,9 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 | `src/components/sections/` | One component per section of the page. |
 | `src/components/illustrations/` | The SVG line art: the clickable Bongo Cat in the hero and one drawing per section. Entrance animations key on `InView`. |
 | `src/components/laptop/` | The laptop terminal in the Work drawing: `commands.ts` (pure command table), real shareware Doom (`RealDoom.tsx`, `doomEngine.ts`) and the Duke runner (`DukeRun.tsx`, pure engine in `duke.ts`). |
-| `src/components/work/` | The desk easter eggs: the Lich King on its throne, the coffee mug window and the sticky note. |
+| `src/components/work/` | The desk easter eggs: the coffee mug window and the sticky note. |
 | `public/audio/` | The horn and Lich King recordings. |
-| `src/components/personal/` | The Off the clock easter eggs (popcorn, purring cat, war horn, Raider.IO link) and the cat photo surprise. |
+| `src/components/personal/` | The Off the clock easter eggs (popcorn, purring cat, war horn, Raider.IO link, the Lich King) and the cat photo surprise. |
 | `src/lib/sound.ts` | Synthesised sounds (war horn, purr) on one shared audio context. |
 | `src/content/sounds.ts` | Optional recordings that replace the synthesised sounds. |
 | `public/doom/` | The Doom engine build with the shareware episode, plus its licence; see `docs/LICENSES-THIRD-PARTY.md`. |
