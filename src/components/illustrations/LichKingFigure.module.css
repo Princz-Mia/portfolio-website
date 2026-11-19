@@ -1,0 +1,150 @@
+/*
+ * The Lich King figure's poses. LichKingFigure draws the seated and the
+ * standing parts with the classes below; an ancestor's data-lich ("rest" or
+ * "awake") and data-lich-poke ("a" or "b", alternating so each poke restarts
+ * the wobble) pick what shows. Without those attributes the figure sits still.
+ *
+ * Waking: the upper body rises as the full-length legs reach down to the dais,
+ * then the sword arm swings Frostmourne up about the shoulder. Settling plays
+ * it back the other way: the arm lowers first, then the figure sits down. The
+ * rules for the resting state carry the timings of the way back.
+ *
+ * Transform origins are in the figure's own units: the shoulder is at
+ * (57, 77) and the hips, where the standing legs start, at y 86.
+ */
+
+.figure {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Line widths that follow the parent's line factor (--lich-line). */
+.figure .l {
+  stroke-width: calc(1.7px * var(--lich-line, 1));
+}
+
+.figure .lt {
+  stroke-width: calc(1.1px * var(--lich-line, 1));
+}
+
+.glow {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.rise {
+  transition: transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s;
+}
+
+.arm {
+  transform-box: view-box;
+  transform-origin: 57px 77px;
+  transform: rotate(150deg);
+  transition: transform 0.55s cubic-bezier(0.45, 0, 0.4, 1);
+}
+
+/* Tucked up under the cape and hidden at rest. */
+.standLegs {
+  transform-box: view-box;
+  transform-origin: 35px 86px;
+  transform: scaleY(0.6);
+  opacity: 0;
+  transition:
+    transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s,
+    opacity 0.15s linear 0.85s;
+}
+
+/*
+ * Both ways, the bent and the straight legs cross-fade while the straight ones
+ * still show below the cape, so the figure never floats legless.
+ */
+.sitLegs,
+.sitOnly {
+  transition: opacity 0.15s linear 0.7s;
+}
+
+[data-lich-poke="a"] .figure {
+  animation: lichWobbleA 0.45s ease-out;
+}
+
+[data-lich-poke="b"] .figure {
+  animation: lichWobbleB 0.45s ease-out;
+}
+
+/* Awake: stand up, then raise the sword. */
+
+[data-lich="awake"] .rise {
+  transform: translateY(-8px);
+  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08);
+}
+
+[data-lich="awake"] .standLegs {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08),
+    opacity 0.12s linear;
+}
+
+[data-lich="awake"] .sitLegs,
+[data-lich="awake"] .sitOnly {
+  opacity: 0;
+  transition: opacity 0.15s linear 0.4s;
+}
+
+[data-lich="awake"] .arm {
+  transform: none;
+  transition: transform 0.65s cubic-bezier(0.3, 0.85, 0.35, 1.12) 0.5s;
+}
+
+[data-lich="awake"] .glow {
+  opacity: 1;
+}
+
+@keyframes lichWobbleA {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-3deg);
+  }
+  65% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes lichWobbleB {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(3deg);
+  }
+  65% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* Without motion the poses simply switch. */
+@media (prefers-reduced-motion: reduce) {
+  [data-lich-poke] .figure {
+    animation: none;
+  }
+
+  .rise,
+  .arm,
+  .standLegs,
+  .sitLegs,
+  .sitOnly,
+  .glow,
+  [data-lich] .rise,
+  [data-lich] .arm,
+  [data-lich] .standLegs,
+  [data-lich] .sitLegs,
+  [data-lich] .sitOnly,
+  [data-lich] .glow {
+    transition: none;
+  }
+}

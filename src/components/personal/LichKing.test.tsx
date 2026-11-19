@@ -1,10 +1,10 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DeskScene } from "./DeskScene";
-import { AWAKE_MS, LICH_QUOTE, MAX_AWAKE_MS } from "./LichKingEgg";
+import { PersonalArt } from "@/components/illustrations/PersonalArt";
+import { PersonalScene } from "./PersonalScene";
+import { AWAKE_MS, LICH_QUOTE, MAX_AWAKE_MS, POKES_TO_WAKE } from "./useLichKing";
 import { pickVoice, speak } from "./speech";
-import { ART_SCREEN, ART_VIEWBOX, LICH_BOX } from "@/components/illustrations/WorkArt";
 
 const RECORDING = "/audio/lich-king.wav";
 
@@ -75,14 +75,17 @@ const advance = (ms: number) =>
     vi.advanceTimersByTime(ms);
   });
 
-const stateOf = (container: HTMLElement) =>
-  container.querySelector("[data-lich]")?.getAttribute("data-lich");
+const sceneOf = (container: HTMLElement) => container.querySelector('[data-scene="personal"]');
+
+const stateOf = (container: HTMLElement) => sceneOf(container)?.getAttribute("data-lich");
+
+const bubbleOf = (container: HTMLElement) => container.querySelector("[data-lich-bubble]");
 
 const renderScene = () =>
   render(
-    <DeskScene>
-      <svg data-testid="drawing" />
-    </DeskScene>,
+    <PersonalScene catPhotos={[]} hornSrc={null}>
+      <PersonalArt />
+    </PersonalScene>,
   );
 
 describe("Lich King figure", () => {
@@ -108,35 +111,38 @@ describe("Lich King figure", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders its children and a poke button, seated", () => {
+  it("draws the figure on its throne in the drawing, with a poke button over it, seated", () => {
     const { container } = renderScene();
 
-    expect(screen.getByTestId("drawing")).toBeInTheDocument();
+    expect(container.querySelector('[data-part="lich"]')).not.toBeNull();
     expect(pokeButton().tagName).toBe("BUTTON");
     expect(stateOf(container)).toBe("rest");
-    expect(screen.getByRole("status")).toHaveTextContent("");
+    expect(bubbleOf(container)).toHaveTextContent("");
+    expect(bubbleOf(container)).not.toHaveAttribute("data-show");
   });
 
-  it("renders only the drawing on the server", () => {
+  it("renders only the still, seated drawing on the server", () => {
     const html = renderToString(
-      <DeskScene>
-        <svg />
-      </DeskScene>,
+      <PersonalScene catPhotos={[]} hornSrc={null}>
+        <PersonalArt />
+      </PersonalScene>,
     );
 
     expect(html).toContain("<svg");
+    expect(html).toContain('data-part="lich"');
     expect(html).not.toContain("<button");
-    expect(html).not.toContain("<dialog");
-    expect(html).toContain('data-lich="rest"');
+    expect(html).not.toContain("data-lich=");
   });
 
   it("wobbles on a poke but stays seated after fewer than five", () => {
     const { container } = renderScene();
 
     poke(1);
-    expect(container.querySelector("[data-poke]")).not.toBeNull();
+    expect(sceneOf(container)).toHaveAttribute("data-lich-poke", "a");
+    poke(1);
+    expect(sceneOf(container)).toHaveAttribute("data-lich-poke", "b");
 
-    poke(3);
+    poke(POKES_TO_WAKE - 3);
     expect(stateOf(container)).toBe("rest");
     expect(FakeAudio.instances).toHaveLength(0);
   });
@@ -158,6 +164,8 @@ describe("Lich King figure", () => {
     poke(5);
 
     expect(stateOf(container)).toBe("awake");
+    expect(bubbleOf(container)).toHaveTextContent(LICH_QUOTE);
+    expect(bubbleOf(container)).toHaveAttribute("data-show");
     expect(screen.getByRole("status")).toHaveTextContent(LICH_QUOTE);
     expect(FakeAudio.instances).toHaveLength(1);
     const [audio] = FakeAudio.instances;
@@ -184,7 +192,8 @@ describe("Lich King figure", () => {
 
     advance(AWAKE_MS - 6670);
     expect(stateOf(container)).toBe("rest");
-    expect(screen.getByRole("status")).toHaveTextContent("");
+    expect(bubbleOf(container)).toHaveTextContent("");
+    expect(sceneOf(container)).not.toHaveAttribute("data-lich-poke");
   });
 
   it("waits for a recording that ends late instead of cutting it off", () => {
@@ -247,7 +256,7 @@ describe("Lich King figure", () => {
 
     expect(() => poke(5)).not.toThrow();
     expect(stateOf(container)).toBe("awake");
-    expect(screen.getByRole("status")).toHaveTextContent(LICH_QUOTE);
+    expect(bubbleOf(container)).toHaveTextContent(LICH_QUOTE);
     expect(speak("hello")).toBe(false);
   });
 
@@ -294,17 +303,5 @@ describe("pickVoice", () => {
       "UK Female",
     );
     expect(pickVoice([voice("Amélie", "fr-FR")])).toBeUndefined();
-  });
-});
-
-describe("Lich King figure placement", () => {
-  it("keeps the throne out of the drawing's left-most strip, which lies under the text on wide screens", () => {
-    // On wide screens up to about 13% of the drawing's width sits under the
-    // section's text column, where clicks land on the text instead.
-    expect((LICH_BOX.x - ART_VIEWBOX.x) / ART_VIEWBOX.w).toBeGreaterThan(0.14);
-  });
-
-  it("keeps the poke target clear of the laptop's screen", () => {
-    expect(LICH_BOX.x + LICH_BOX.w).toBeLessThanOrEqual(ART_SCREEN.x);
   });
 });

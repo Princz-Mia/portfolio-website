@@ -3,9 +3,7 @@
 import { useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { ART_VIEWBOX, MUG_BOX, NOTE_BOX } from "@/components/illustrations/WorkArt";
 import { CoffeeWindow } from "./CoffeeWindow";
-import { LichKingEgg, useLichKing } from "./LichKingEgg";
 import { StickyNoteWindow } from "./StickyNoteWindow";
-import egg from "./LichKingEgg.module.css";
 import styles from "./DeskScene.module.css";
 
 /** Said, in turn, by the mug when it is touched. */
@@ -44,16 +42,14 @@ const HOT_STYLE: CSSProperties = {
 const subscribeNever = () => () => {};
 
 /**
- * Wraps the Work drawing and makes three of its objects touchable: the Lich
- * King figure (five quick pokes wake it), the coffee mug (hot! every third
- * touch opens a little coffee window) and the sticky note on the laptop (it
- * opens up close, with a password on it). The scene's data attributes drive
- * the drawing's reactions. Until the page is hydrated only the drawing
- * renders.
+ * Wraps the Work drawing and makes two of its objects touchable: the coffee
+ * mug (hot! every third touch opens a little coffee window) and the sticky
+ * note on the laptop (it opens up close, with a password on it). The scene's
+ * data attributes drive the drawing's reactions. Until the page is hydrated
+ * only the drawing renders.
  */
 export function DeskScene({ children }: { children: ReactNode }) {
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
-  const lich = useLichKing();
   const [touches, setTouches] = useState(0);
   const [coffeeOpen, setCoffeeOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -68,17 +64,14 @@ export function DeskScene({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`${egg.wrap} ${styles.scene}`}
-      data-lich={lich.state}
-      data-poke={lich.poke ?? undefined}
+      className={styles.scene}
+      data-scene="desk"
       data-mug={touches === 0 ? undefined : touches % 2 === 1 ? "a" : "b"}
     >
       {children}
       {mounted ? (
         <>
-          <LichKingEgg state={lich.state} onPoke={lich.onPoke} />
-
-          {/* In the drawing's order: the figure, the note on the lid, the mug. */}
+          {/* In the drawing's order: the note on the lid, then the mug. */}
           <button
             ref={noteRef}
             type="button"

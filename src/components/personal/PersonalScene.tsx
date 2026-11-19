@@ -17,6 +17,7 @@ import {
 } from "@/components/illustrations/PersonalArt";
 import { HORN_SECONDS, playHordeHorn, playPurr } from "@/lib/sound";
 import { CatPhotos } from "./CatPhotos";
+import { LICH_QUOTE, useLichKing } from "./useLichKing";
 import styles from "./PersonalScene.module.css";
 
 /** Used only if the personal text ever stops linking the character. */
@@ -69,6 +70,17 @@ function place(box: ArtBox): CSSProperties {
     height: percent(box.height / PERSONAL_VIEW.height),
   };
 }
+
+/**
+ * The Lich King's speech bubble: its bottom just above the standing figure's
+ * helm and its left edge at the figure's left, so it stays inside the drawing,
+ * with its tail (in container units of the drawing's width) over the helm.
+ */
+const LICH_BUBBLE = {
+  left: percent(PERSONAL_BOXES.lich.x / PERSONAL_VIEW.width),
+  bottom: percent(1 - (PERSONAL_POINTS.lichHead.y - 8) / PERSONAL_VIEW.height),
+  "--tail": `${(((PERSONAL_POINTS.lichHead.x - PERSONAL_BOXES.lich.x) / PERSONAL_VIEW.width) * 100).toFixed(2)}cqw`,
+} as CSSProperties;
 
 const between = (min: number, max: number) => min + Math.random() * (max - min);
 const px = (value: number) => `${value.toFixed(1)}px`;
@@ -177,8 +189,10 @@ type PersonalSceneProps = {
  * Makes the "Off the clock" drawing playful. Over the still drawing it lays a
  * few real controls: grab a handful of popcorn, pet the cat (it purrs, and
  * enough petting shows photos of the cats when there are any), sound the
- * Horde war horn, and the controller links to the World of Warcraft character
- * on Raider.IO. Until the page is hydrated only the drawing renders.
+ * Horde war horn, poke the Lich King figure (five quick pokes and it stands
+ * up, raises Frostmourne and speaks its line), and the controller links to the
+ * World of Warcraft character on Raider.IO. Until the page is hydrated only
+ * the drawing renders.
  */
 export function PersonalScene({
   children,
@@ -193,6 +207,7 @@ export function PersonalScene({
   const purrTimer = useRef<number | undefined>(undefined);
   const hornTimer = useRef<number | undefined>(undefined);
   const hornOn = useRef(false);
+  const lich = useLichKing();
 
   const [touched, setTouched] = useState(false);
   const [tip, setTip] = useState<"a" | "b" | null>(null);
@@ -303,6 +318,11 @@ export function PersonalScene({
     }, HORN_SECONDS * 1000);
   }
 
+  function pokeLichKing() {
+    setTouched(true);
+    if (lich.onPoke()) setStatus(`The Lich King figure rises from its throne: "${LICH_QUOTE}"`);
+  }
+
   if (!mounted) {
     return (
       <div className={styles.wrap} data-scene="personal">
@@ -319,6 +339,8 @@ export function PersonalScene({
       data-pet={pet ?? undefined}
       data-purring={purring ? "true" : undefined}
       data-horn={horn ? "true" : undefined}
+      data-lich={lich.state}
+      data-lich-poke={lich.poke ?? undefined}
     >
       {children}
 
@@ -385,12 +407,32 @@ export function PersonalScene({
 
       <button
         type="button"
+        className={`${styles.hit} ${styles.lich}`}
+        style={place(PERSONAL_BOXES.lich)}
+        onClick={pokeLichKing}
+      >
+        <span className="visually-hidden">Poke the Lich King figure</span>
+      </button>
+
+      <button
+        type="button"
         className={`${styles.hit} ${styles.popcorn}`}
         style={place(PERSONAL_BOXES.popcorn)}
         onClick={grabPopcorn}
       >
         <span className="visually-hidden">Grab a handful of popcorn</span>
       </button>
+
+      <div className={styles.bubbleLayer} aria-hidden="true">
+        <p
+          className={styles.bubble}
+          style={LICH_BUBBLE}
+          data-lich-bubble=""
+          data-show={lich.state === "awake" ? "" : undefined}
+        >
+          {lich.state === "awake" ? LICH_QUOTE : ""}
+        </p>
+      </div>
 
       <p className={styles.hint} data-hidden={touched ? "true" : undefined} aria-hidden="true">
         psst: everything here is clickable

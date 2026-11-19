@@ -1,3 +1,4 @@
+import { LICH_FIGURE, LICH_HEAD, LICH_TARGET, LichKingFigure } from "./LichKingFigure";
 import { Sparkle, Tube, delay, origin, s } from "./parts";
 
 /** Centre line of the war standard: the pole, hub and emblem sit on it. */
@@ -41,6 +42,24 @@ const CONTROLLER =
   "M206 374 C192 374 186 388 190 398 C193 405 202 405 208 399 L216 392 H248 L256 399 C262 405 271 405 274 398 C278 388 272 374 258 374 Z";
 const BUCKET = "M444 324 L508 324 L498 400 H454 Z";
 
+/** The top of the little wall shelf the Lich King figure stands on. */
+const SHELF_Y = 240;
+const SHELF = "M248 240 H334 C335.1 240 336 240.9 336 242 V245 C336 246.1 335.1 247 334 247 H248 C246.9 247 246 246.1 246 245 V242 C246 240.9 246.9 240 248 240 Z";
+const BRACKET = "M256 247 H264 C264 252.5 261 256.5 256 258 Z";
+
+/**
+ * Where the Lich King figure on its Frozen Throne stands, and its scale: on
+ * the shelf, between the banner's cord and the sleeping cat's ears, sized like
+ * a collectible next to the other props.
+ */
+const LICH_K = 0.62;
+const LICH_AT = {
+  x: 291 - (LICH_FIGURE.x + LICH_FIGURE.w / 2) * LICH_K,
+  y: SHELF_Y - (LICH_FIGURE.y + LICH_FIGURE.h) * LICH_K,
+};
+/** The figure's line factor, so its lines keep the drawing's weight. */
+const LICH_LINE = 1.3;
+
 /** The drawing's coordinate system, for overlays that line up with it. */
 export const PERSONAL_VIEW = { width: 520, height: 420 } as const;
 
@@ -49,14 +68,21 @@ export type ArtBox = { x: number; y: number; width: number; height: number };
 
 /**
  * Boxes around the parts a viewer can interact with, in drawing units: the
- * banner cloth, the sleeping cat with its cushion top, the popcorn bucket and
- * the controller on the floor. They do not overlap.
+ * banner cloth, the sleeping cat with its cushion top, the popcorn bucket, the
+ * controller on the floor and the Lich King figure on its shelf. They do not
+ * overlap.
  */
 export const PERSONAL_BOXES = {
   banner: { x: 88, y: 80, width: 144, height: 274 },
   cat: { x: 276, y: 276, width: 156, height: 96 },
   popcorn: { x: 436, y: 288, width: 80, height: 118 },
   controller: { x: 184, y: 368, width: 92, height: 42 },
+  lich: {
+    x: LICH_AT.x + LICH_TARGET.x * LICH_K,
+    y: LICH_AT.y + LICH_TARGET.y * LICH_K,
+    width: LICH_TARGET.w * LICH_K,
+    height: LICH_TARGET.h * LICH_K,
+  },
 } as const satisfies Record<string, ArtBox>;
 
 /** Points that effects start from or land on, in drawing units. */
@@ -67,6 +93,11 @@ export const PERSONAL_POINTS = {
   catHead: { x: 308, y: 290 },
   /** The floor line the bucket, controller and pole stand on. */
   floorY: 404,
+  /** Above the standing Lich King figure's helm, where its speech bubble points. */
+  lichHead: {
+    x: LICH_AT.x + LICH_HEAD.x * LICH_K,
+    y: LICH_AT.y + LICH_HEAD.top * LICH_K,
+  },
 } as const;
 
 /**
@@ -131,11 +162,13 @@ function Clasp() {
  * finial, tattered red cloth with the emblem in black), drawn as a fan-art
  * homage. At its foot a grey cat sleeps curled on a cushion, with a game
  * controller on the floor and a striped bucket of popcorn, under a crescent
- * moon.
+ * moon; above the cat a vinyl Lich King on the Frozen Throne stands on a small
+ * wall shelf.
  *
  * The parts that react to the viewer carry `data-part` (cloth, cat, cat-ear,
- * zzz, controller, bucket) so a wrapper can animate them without the drawing
- * itself needing any script.
+ * zzz, controller, bucket, lich) so a wrapper can animate them without the
+ * drawing itself needing any script; the figure's poses follow the wrapper's
+ * data-lich and data-lich-poke attributes.
  */
 export function PersonalArt({ className }: { className?: string }) {
   return (
@@ -150,8 +183,9 @@ export function PersonalArt({ className }: { className?: string }) {
     >
       <title id="personal-art-title">
         Illustration of a red Horde war banner with curved horns and the Horde
-        emblem, a grey cat asleep on a cushion at its foot, a game controller
-        and a bucket of popcorn under a crescent moon
+        emblem, a grey cat asleep on a cushion at its foot, a Lich King figure
+        on its throne on a small shelf, a game controller and a bucket of
+        popcorn under a crescent moon
       </title>
 
       <defs>
@@ -288,6 +322,22 @@ export function PersonalArt({ className }: { className?: string }) {
       <circle cx="160" cy="391" r="3.5" className={`${s.line} ${s.strong} ${s.paper}`} />
       <circle cx="147" cy="374" r="1.4" className={s.inkFill} />
       <circle cx="173" cy="374" r="1.4" className={s.inkFill} />
+
+      {/* ---------- shelf with the Lich King figure ---------- */}
+      <g className={s.tint} transform="translate(6 5)">
+        <path d={SHELF} />
+        <path d={BRACKET} />
+        <path d={BRACKET} transform="translate(582 0) scale(-1 1)" />
+      </g>
+      <path d={BRACKET} className={`${s.line} ${s.shade}`} />
+      <path d={BRACKET} className={`${s.line} ${s.shade}`} transform="translate(582 0) scale(-1 1)" />
+      <path d={SHELF} className={`${s.line} ${s.fur}`} />
+      <path d="M256 243.5 H276 M300 243.6 H326" className={`${s.line} ${s.thin}`} />
+      <g data-part="lich">
+        <g transform={`translate(${LICH_AT.x.toFixed(2)} ${LICH_AT.y.toFixed(2)}) scale(${LICH_K})`}>
+          <LichKingFigure line={LICH_LINE} />
+        </g>
+      </g>
 
       {/* ---------- cushion ---------- */}
       <path d={CUSHION} className={s.shade} transform="translate(7 6)" />

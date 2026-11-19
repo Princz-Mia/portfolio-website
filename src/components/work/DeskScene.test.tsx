@@ -2,7 +2,14 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskScene, HOT_WORDS } from "./DeskScene";
 import { BREW, BREW_MS } from "./CoffeeWindow";
-import { ART_SCREEN, LICH_BOX, MUG_BOX, NOTE_BOX } from "@/components/illustrations/WorkArt";
+import {
+  ART_SCREEN,
+  ART_VIEWBOX,
+  BONSAI_BOX,
+  MUG_BOX,
+  NOTE_BOX,
+  WorkArt,
+} from "@/components/illustrations/WorkArt";
 
 // The windows read the desk content when they render, so a test can set a
 // support page.
@@ -57,7 +64,7 @@ describe("coffee mug", () => {
 
   it("gets hot on each touch, saying a word in turn", () => {
     const { container } = renderScene();
-    const scene = container.querySelector("[data-lich]");
+    const scene = container.querySelector('[data-scene="desk"]');
 
     touchMug(1);
     expect(scene).toHaveAttribute("data-mug", "a");
@@ -200,7 +207,6 @@ describe("desk touch targets", () => {
     box.y + box.h > ART_SCREEN.y;
 
   it("keep clear of the laptop's screen, which opens the terminal", () => {
-    expect(overlapsScreen(LICH_BOX)).toBe(false);
     expect(overlapsScreen(MUG_BOX)).toBe(false);
   });
 
@@ -219,5 +225,29 @@ describe("desk touch targets", () => {
     });
 
     expect(Math.max(...corners)).toBeLessThan(ART_SCREEN.y);
+  });
+});
+
+describe("desk drawing", () => {
+  it("has a bonsai on the desk and no Lich King", () => {
+    const { container } = render(
+      <DeskScene>
+        <WorkArt />
+      </DeskScene>,
+    );
+
+    expect(container.querySelector('[data-part="bonsai"]')).not.toBeNull();
+    expect(container.querySelector('[data-part="lich"]')).toBeNull();
+    expect(screen.queryByRole("button", { name: /Lich King/ })).toBeNull();
+    expect(container.querySelector("[data-lich]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Read the sticky note" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Touch the coffee mug" })).toBeInTheDocument();
+  });
+
+  it("keeps the bonsai out of the strip under the text column and clear of the screen", () => {
+    // On wide screens up to about 13% of the drawing's width sits under the
+    // section's text column.
+    expect((BONSAI_BOX.x - ART_VIEWBOX.x) / ART_VIEWBOX.w).toBeGreaterThan(0.14);
+    expect(BONSAI_BOX.x + BONSAI_BOX.w).toBeLessThanOrEqual(ART_SCREEN.x);
   });
 });

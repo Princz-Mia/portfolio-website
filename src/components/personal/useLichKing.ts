@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { sounds } from "@/content";
-import { ART_VIEWBOX, LICH_BOX, LICH_HEAD_X } from "@/components/illustrations/WorkArt";
 import { sayLichKingLine } from "./speech";
-import styles from "./LichKingEgg.module.css";
 
 export const LICH_QUOTE = "Warriors of the frozen wastes, rise!";
 
 /** Pokes needed, close together, to wake the figure. */
-const POKES_TO_WAKE = 5;
+export const POKES_TO_WAKE = 5;
 /** How close together the pokes must be, in milliseconds. */
 const POKE_WINDOW_MS = 3000;
 /**
@@ -26,34 +24,15 @@ export type LichKing = {
   state: LichState;
   /** Alternates on every poke, to restart the wobble. */
   poke: "a" | "b" | null;
-  onPoke: () => void;
+  /** Counts a poke; returns true when this poke woke the figure. */
+  onPoke: () => boolean;
 };
-
-const pct = (value: number) => `${(value * 100).toFixed(3)}%`;
-
-/** The figure's place in the drawing, as percentages of the drawing's box. */
-const POKE_BOX: CSSProperties = {
-  left: pct((LICH_BOX.x - ART_VIEWBOX.x) / ART_VIEWBOX.w),
-  top: pct((LICH_BOX.y - ART_VIEWBOX.y) / ART_VIEWBOX.h),
-  width: pct(LICH_BOX.w / ART_VIEWBOX.w),
-  height: pct(LICH_BOX.h / ART_VIEWBOX.h),
-};
-
-/**
- * The bubble sits just above the throne, starting at its left edge so it stays
- * clear of the strip of the drawing that lies under the text column on wide
- * screens, with its tail over the helm.
- */
-const BUBBLE_BOX = {
-  left: POKE_BOX.left,
-  bottom: pct(1 - (LICH_BOX.y - 4 - ART_VIEWBOX.y) / ART_VIEWBOX.h),
-  "--tail": `${((LICH_HEAD_X / ART_VIEWBOX.w) * 100).toFixed(3)}cqw`,
-} as CSSProperties;
 
 /**
  * The Lich King figure's state. Each poke wobbles it; five quick pokes wake
- * it: it stands up from the throne, raises Frostmourne and says its line, then
- * sits back down once both the line and at least AWAKE_MS are over.
+ * it: it stands up from the throne, raises Frostmourne and says its line (the
+ * recording, or the browser's voice where there is none), then sits back down
+ * once both the line and at least AWAKE_MS are over, or after MAX_AWAKE_MS.
  */
 export function useLichKing(): LichKing {
   const [state, setState] = useState<LichState>("rest");
@@ -97,13 +76,13 @@ export function useLichKing(): LichKing {
 
   const onPoke = () => {
     setPoke((current) => (current === "a" ? "b" : "a"));
-    if (awakeRef.current) return;
+    if (awakeRef.current) return false;
 
     const now = Date.now();
     const recent = pokesRef.current.filter((at) => now - at < POKE_WINDOW_MS);
     recent.push(now);
     pokesRef.current = recent;
-    if (recent.length < POKES_TO_WAKE) return;
+    if (recent.length < POKES_TO_WAKE) return false;
 
     pokesRef.current = [];
     awakeRef.current = true;
@@ -131,26 +110,8 @@ export function useLichKing(): LichKing {
       soundDoneRef.current = true;
       settleIfDone();
     });
+    return true;
   };
 
   return { state, poke, onPoke };
-}
-
-/** The poke target over the figure and the speech bubble above it. */
-export function LichKingEgg({ state, onPoke }: Pick<LichKing, "state" | "onPoke">) {
-  const awake = state === "awake";
-  return (
-    <>
-      <button
-        type="button"
-        className={styles.poke}
-        style={POKE_BOX}
-        aria-label="Poke the Lich King figure"
-        onClick={onPoke}
-      />
-      <p className={styles.bubble} style={BUBBLE_BOX} role="status" data-show={awake ? "" : undefined}>
-        {awake ? LICH_QUOTE : ""}
-      </p>
-    </>
-  );
 }

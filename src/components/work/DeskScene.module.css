@@ -6,8 +6,10 @@
  * the mug's reaction. Without JavaScript nothing here moves.
  */
 
+/* A size container, so the mug's word can scale with the drawing. */
 .scene {
   position: relative;
+  container-type: inline-size;
 }
 
 .mugLift,

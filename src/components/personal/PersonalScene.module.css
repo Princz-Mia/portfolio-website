@@ -2,7 +2,8 @@
  * Interactive layer over the "Off the clock" drawing. The drawing's parts carry
  * `data-part`; this wrapper sets data attributes while something is happening
  * (data-tip, data-pet, data-purring, data-horn) and the rules below animate the
- * matching parts. Effects (popcorn, hearts) live in an overlay SVG with the
+ * matching parts. The Lich King figure's poses follow data-lich and
+ * data-lich-poke through the figure's own styles. Effects (popcorn, hearts) live in an overlay SVG with the
  * drawing's viewBox and are moved by keyframes fed with per-item custom
  * properties. Without script the wrapper holds only the still drawing.
  */
@@ -35,6 +36,71 @@
 
 .cat {
   border-radius: 48% 48% 40% 40%;
+}
+
+.lich {
+  border-radius: 10px;
+}
+
+/* The Lich King's quote, in a speech bubble above the figure. The layer is a
+   size container over the drawing, so the bubble scales with it. */
+.bubbleLayer {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  z-index: 2;
+  max-width: 46%;
+  margin: 0;
+  padding: 0.35em 0.7em 0.4em;
+  border: 1.5px solid var(--art-ink);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(11px, 3.2cqw, 15px);
+  font-style: italic;
+  line-height: 1.3;
+  box-shadow: 3px 3px 0 var(--art-tint);
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.25s ease-out;
+}
+
+.bubble:empty {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.bubble[data-show] {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.6s;
+}
+
+/* The tail points down at the figure's helm. */
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: var(--tail, 2rem);
+  width: 10px;
+  height: 10px;
+  border-right: 1.5px solid var(--art-ink);
+  border-bottom: 1.5px solid var(--art-ink);
+  background: var(--paper);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.bubble:empty::after {
+  display: none;
 }
 
 /* The controller's tooltip shows on hover and keyboard focus. */
@@ -96,7 +162,8 @@
 .wrap [data-part="cloth"],
 .wrap [data-part="bucket"],
 .wrap [data-part="controller"],
-.wrap [data-part="cat-ear"] {
+.wrap [data-part="cat-ear"],
+.wrap [data-part="lich"] {
   transform-box: fill-box;
 }
 
@@ -105,7 +172,8 @@
 }
 
 .wrap [data-part="bucket"],
-.wrap [data-part="controller"] {
+.wrap [data-part="controller"],
+.wrap [data-part="lich"] {
   transform-origin: 50% 100%;
   transition: translate 0.2s ease;
 }
@@ -121,7 +189,8 @@
 
 /* Hover and focus lift the part a little; no box is drawn around it. */
 .wrap:has(.popcorn:hover, .popcorn:focus-visible) [data-part="bucket"],
-.wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"] {
+.wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"],
+.wrap:has(.lich:hover, .lich:focus-visible) [data-part="lich"] {
   translate: 0 -3px;
 }
 
@@ -403,8 +472,15 @@
   }
 
   .wrap:has(.popcorn:hover, .popcorn:focus-visible) [data-part="bucket"],
-  .wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"] {
+  .wrap:has(.controller:hover, .controller:focus-visible) [data-part="controller"],
+  .wrap:has(.lich:hover, .lich:focus-visible) [data-part="lich"] {
     translate: none;
+  }
+
+  .bubble,
+  .bubble[data-show] {
+    transform: none;
+    transition: none;
   }
 
   .wrap:has(.cat:hover, .cat:focus-visible) [data-part="cat-ear"] {

@@ -1,7 +1,13 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatPhoto } from "@/content";
-import { PersonalArt } from "@/components/illustrations/PersonalArt";
+import {
+  PERSONAL_BOXES,
+  PERSONAL_POINTS,
+  PERSONAL_VIEW,
+  PersonalArt,
+  type ArtBox,
+} from "@/components/illustrations/PersonalArt";
 import { PersonalScene, PETS_FOR_SURPRISE } from "./PersonalScene";
 
 const sound = vi.hoisted(() => ({
@@ -38,9 +44,10 @@ afterEach(() => {
 });
 
 describe("PersonalScene", () => {
-  it("offers the four interactions once mounted", () => {
+  it("offers the five interactions once mounted", () => {
     renderScene();
     expect(screen.getByRole("button", { name: "Grab a handful of popcorn" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Poke the Lich King figure" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pet the cat" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sound the Horde war horn" })).toBeInTheDocument();
 
@@ -156,6 +163,49 @@ describe("PersonalScene", () => {
     const hint = screen.getByText("psst: everything here is clickable");
     expect(hint).not.toHaveAttribute("data-hidden");
     fireEvent.click(screen.getByRole("button", { name: "Pet the cat" }));
+    expect(hint).toHaveAttribute("data-hidden", "true");
+  });
+});
+
+describe("PersonalScene hotspots", () => {
+  const boxes = Object.entries(PERSONAL_BOXES) as [string, ArtBox][];
+  const overlaps = (a: ArtBox, b: ArtBox) =>
+    a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+
+  it("do not overlap one another", () => {
+    for (const [i, [nameA, a]] of boxes.entries()) {
+      for (const [nameB, b] of boxes.slice(i + 1)) {
+        expect(overlaps(a, b), `${nameA} and ${nameB}`).toBe(false);
+      }
+    }
+  });
+
+  it("stay inside the drawing", () => {
+    for (const [, box] of boxes) {
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(PERSONAL_VIEW.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(PERSONAL_VIEW.height);
+    }
+  });
+
+  it("keep the Lich King figure out of the strip under the text column, large enough to tap", () => {
+    // On wide screens up to about 13% of the drawing's width sits under the
+    // section's text column.
+    const { lich } = PERSONAL_BOXES;
+    expect(lich.x / PERSONAL_VIEW.width).toBeGreaterThan(0.14);
+    // At the smallest drawing, about 290px wide, the target is still 24px wide.
+    expect((lich.width / PERSONAL_VIEW.width) * 290).toBeGreaterThanOrEqual(24);
+    // The speech bubble points at the helm from inside the drawing.
+    expect(PERSONAL_POINTS.lichHead.x).toBeGreaterThan(lich.x);
+    expect(PERSONAL_POINTS.lichHead.x).toBeLessThan(lich.x + lich.width);
+    expect(PERSONAL_POINTS.lichHead.y).toBeGreaterThan(60);
+  });
+
+  it("hides the hint after the figure is poked", () => {
+    renderScene();
+    const hint = screen.getByText("psst: everything here is clickable");
+    fireEvent.click(screen.getByRole("button", { name: "Poke the Lich King figure" }));
     expect(hint).toHaveAttribute("data-hidden", "true");
   });
 });
