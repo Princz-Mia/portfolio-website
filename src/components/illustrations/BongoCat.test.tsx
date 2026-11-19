@@ -31,6 +31,12 @@ const inset = ([x, y]: Point) =>
     }),
   );
 
+/** Distance of a point from the line through one screen edge. */
+const distanceToEdge =
+  ([ax, ay]: Point, [bx, by]: Point) =>
+  ([x, y]: Point) =>
+    Math.abs((bx - ax) * (y - ay) - (by - ay) * (x - ax)) / Math.hypot(bx - ax, by - ay);
+
 const slope = ([ax, ay]: Point, [bx, by]: Point) => (by - ay) / (bx - ax);
 
 const shown = (spots: TokenSpot[]) =>
@@ -270,6 +276,61 @@ describe("BongoCat", () => {
     );
   });
 
+  it("tucks both band ends under the speakers, which are drawn over them", () => {
+    const { container } = render(<BongoCat />);
+    const headset = container.querySelector("[data-part='ear']")?.parentElement;
+    expect(headset).toBeTruthy();
+    const bands = Array.from(headset!.querySelectorAll(":scope > path"));
+    expect(bands).toHaveLength(2);
+    // Each speaker is a print shadow, a shell, a cushion and an outer face.
+    const speakers = Array.from(headset!.querySelectorAll("g")).filter(
+      (group) => group.querySelectorAll(":scope > path").length === 4,
+    );
+    expect(speakers).toHaveLength(2);
+    speakers.forEach((speaker) =>
+      bands.forEach((band) =>
+        expect(band.compareDocumentPosition(speaker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(),
+      ),
+    );
+  });
+
+  it("puts each speaker over the base of the ears, not an ear across a speaker", () => {
+    const { container } = render(<BongoCat />);
+    const ears = Array.from(container.querySelectorAll("[data-part='ear']"));
+    const speakers = Array.from(container.querySelectorAll("[data-part='speaker']"));
+
+    expect(speakers.map((speaker) => speaker.getAttribute("data-side"))).toEqual(["far", "near"]);
+    speakers.forEach((speaker) =>
+      ears.forEach((ear) =>
+        expect(ear.compareDocumentPosition(speaker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(),
+      ),
+    );
+  });
+
+  it("swings the near half of the band round the near ear with clear air", () => {
+    const { container } = render(<BongoCat />);
+    const headset = container.querySelector("[data-part='ear']")?.parentElement;
+    const near = Array.from(headset!.querySelectorAll(":scope > path"))
+      .map((band) => band.getAttribute("d") ?? "")
+      .find((d) => /^M6\d\d/.test(d));
+    expect(near).toBeTruthy();
+
+    // The swing down to the speaker is one cubic: M p0 C p1 p2 p3.
+    const n = near!.match(/-?\d+(?:\.\d+)?/g)!.slice(0, 8).map(Number);
+    const at = (t: number) => {
+      const k = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3];
+      return [0, 1].map((axis) => k.reduce((sum, w, i) => sum + w * n[i * 2 + axis], 0));
+    };
+    const tip = [629.5, 118.8];
+    let closest = Infinity;
+    for (let i = 0; i <= 200; i++) {
+      const [x, y] = at(i / 200);
+      closest = Math.min(closest, Math.hypot(x - tip[0], y - tip[1]));
+    }
+    // Half the band plus half the ear outline is about 3.4; leave a visible gap past that.
+    expect(closest).toBeGreaterThan(8);
+  });
+
   it("can be petted again once it has calmed down", () => {
     render(<BongoCat />);
 
@@ -338,7 +399,7 @@ describe("BongoCat", () => {
         expect(inset([x1, y1])).toBeGreaterThan(-10);
         expect(inset([x2, y2])).toBeGreaterThan(-10);
         // Each line runs between the slopes of the screen's top and bottom edges.
-        if (x2 - x1 > 3) {
+        if (Math.abs(x2 - x1) > 3) {
           const s = slope([x1, y1], [x2, y2]);
           expect(s).toBeGreaterThanOrEqual(top - 1e-3);
           expect(s).toBeLessThanOrEqual(bottom + 1e-3);
@@ -361,20 +422,51 @@ describe("BongoCat", () => {
     expect(slope([last.x1, last.y1], [last.x2, last.y2])).toBeCloseTo(bottom, 1);
   });
 
-  it("indents lines from the screen's left edge with a consistent margin", () => {
+  it("starts every line at the screen's right edge and indents it from there", () => {
     const rest = shown(screenAt(SCREEN_LOOP.openS));
-    const [p0, p3] = [CORNERS[0], CORNERS[3]];
-    const [ex, ey] = [p3[0] - p0[0], p3[1] - p0[1]];
-    // Distance of each line's first token from the left edge.
-    const starts = rest
-      .filter((spot) => !rest.some((other) => other !== spot && Math.abs(other.y1 - spot.y1) < 4 && other.x1 < spot.x1))
-      .map(({ x1, y1 }) => Math.abs(ex * (y1 - p0[1]) - ey * (x1 - p0[0])) / Math.hypot(ex, ey));
+    const fromRight = distanceToEdge(CORNERS[1], CORNERS[2]);
+    const fromLeft = distanceToEdge(CORNERS[0], CORNERS[3]);
+
+    // Every token starts at its right end and runs towards the left.
+    rest.forEach(({ x1, x2 }) => expect(x2).toBeLessThan(x1));
+
+    // Distance of each line's first token, its rightmost one, from the right edge.
+    const sameLine = (a: NonNullable<TokenSpot>, b: NonNullable<TokenSpot>) =>
+      Math.abs(a.y1 - b.y1) < 4;
+    const firsts = rest.filter(
+      (spot) => !rest.some((other) => other !== spot && sameLine(other, spot) && other.x1 > spot.x1),
+    );
+    const starts = firsts.map(({ x1, y1 }) => fromRight([x1, y1]));
     expect(starts.length).toBeGreaterThan(5);
     expect(Math.min(...starts)).toBeGreaterThan(8);
     expect(Math.min(...starts)).toBeLessThan(16);
+    // Indented lines start further left, by whole indent steps.
+    expect(Math.max(...starts)).toBeGreaterThan(Math.min(...starts) + 20);
+    // The ragged ends of the lines are on the left, well away from the left edge.
+    const ends = rest.filter(
+      (spot) => !rest.some((other) => other !== spot && sameLine(other, spot) && other.x2 < spot.x2),
+    );
+    ends.forEach(({ x2, y2 }) => expect(fromLeft([x2, y2])).toBeGreaterThan(20));
   });
 
-  it("opens the loop on the still drawing and types each new line from its start", () => {
+  it("puts the highlighted keywords at the start of their lines, on the right", () => {
+    const { container } = render(<BongoCat />);
+    const lines = Array.from(container.querySelectorAll("[data-loop='screen'] line")).filter(
+      (line) => !line.hasAttribute("visibility"),
+    );
+    const accents = lines.filter((line) => /codeAccent/.test(line.getAttribute("class") ?? ""));
+    expect(accents.length).toBeGreaterThan(0);
+    const x1 = (line: Element) => Number(line.getAttribute("x1"));
+    const y1 = (line: Element) => Number(line.getAttribute("y1"));
+    accents.forEach((accent) => {
+      const row = lines.filter((line) => Math.abs(y1(line) - y1(accent)) < 4);
+      // At most one plain token comes before the keyword, to its right.
+      expect(row.filter((line) => x1(line) > x1(accent)).length).toBeLessThanOrEqual(1);
+      expect(row.length).toBeGreaterThan(1);
+    });
+  });
+
+  it("opens the loop on the still drawing and types each new line from its right end", () => {
     const { container } = render(<BongoCat />);
     const { rows, stepS, scrollS, openS } = SCREEN_LOOP;
     const lines = Array.from(container.querySelectorAll("[data-loop='screen'] line"));
@@ -400,7 +492,8 @@ describe("BongoCat", () => {
     expect(heights.size).toBeGreaterThanOrEqual(rows - 2);
 
     // Early in the next step only the first token of the new bottom line has
-    // started, and it grows from its start.
+    // started: it is anchored at its start near the right edge and grows
+    // leftwards, towards the left edge.
     const early = screenAt(stepS + scrollS + 0.05);
     const later = screenAt(stepS + scrollS + 0.1);
     const typing = early
@@ -409,7 +502,24 @@ describe("BongoCat", () => {
     expect(typing).toHaveLength(1);
     const [{ spot, next }] = typing;
     expect(next!.x1).toBeCloseTo(spot!.x1, 1);
-    expect(next!.x2).toBeGreaterThan(spot!.x2);
+    expect(next!.y1).toBeCloseTo(spot!.y1, 1);
+    expect(next!.x2).toBeLessThan(spot!.x2);
+    expect(spot!.x2).toBeLessThan(spot!.x1);
+    // It starts much nearer the right edge than the left one.
+    const start: Point = [spot!.x1, spot!.y1];
+    expect(distanceToEdge(CORNERS[1], CORNERS[2])(start) * 2).toBeLessThan(
+      distanceToEdge(CORNERS[0], CORNERS[3])(start),
+    );
+
+    // Once the line is done, its later tokens sit further left than its first.
+    const done = screenAt(2 * stepS - 0.05);
+    const row = done
+      .map((spot, index) => ({ spot, index }))
+      .filter(({ spot, index }) => spot && !still[index] && Math.abs(spot.y1 - next!.y1) < 12);
+    expect(row.length).toBeGreaterThan(1);
+    for (let i = 1; i < row.length; i += 1) {
+      expect(row[i].spot!.x1).toBeLessThan(row[i - 1].spot!.x2);
+    }
   });
 
   it("loops seamlessly", () => {

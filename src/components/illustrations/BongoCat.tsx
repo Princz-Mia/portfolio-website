@@ -124,8 +124,9 @@ const KEYS = [
 /**
  * The two pointed ears, traced from the head outline so they line up with it
  * exactly. They are drawn again on top of the headband, so the band passes
- * behind them and both ears stay in full view. Each has a closed shape for the
- * fill (closed along its base, inside the head) and an open outline.
+ * behind them and both ears stay in full view; the speakers go over their
+ * bases. Each has a closed shape for the fill (closed along its base, inside the
+ * head) and an open outline.
  */
 const EARS = [
   {
@@ -142,94 +143,49 @@ const EARS = [
   },
 ] as const;
 
-/**
- * The headphone cups, each pressed against the side of the head just below an
- * ear and tilted with it. `turn` is in degrees: the far cup peeks out past the
- * head on the left, the near cup sits on the side of the head facing the viewer.
- */
-type Cup = { x: number; y: number; rx: number; ry: number; turn: number };
-const FAR_CUP: Cup = { x: 360, y: 116, rx: 18, ry: 26, turn: -20 };
-const NEAR_CUP: Cup = { x: 612, y: 184, rx: 25, ry: 33, turn: 8 };
-
-/** The yoke on top of each cup, in the cup's own tilted frame. */
-const YOKE = { width: 15, height: 17, rise: 11 };
-
 type Point = [number, number];
 
-/** A cup's "up" direction, along its tilted axis. */
-const axis = ({ turn }: Cup): Point => {
-  const angle = (turn * Math.PI) / 180;
-  return [Math.sin(angle), -Math.cos(angle)];
-};
-
-/** The centre of a cup's yoke, where the band ends out of sight. */
-function bandEnd(cup: Cup): Point {
-  const [ux, uy] = axis(cup);
-  const reach = cup.ry + YOKE.rise - YOKE.height / 2;
-  return [cup.x + reach * ux, cup.y + reach * uy];
-}
-
-const along = ([x, y]: Point, [dx, dy]: Point, length: number): Point => [
-  x + dx * length,
-  y + dy * length,
-];
+/**
+ * The headset from the old site, traced from its drawing: two speakers, each
+ * three nested shapes (the shell, the cushion and the outer face, which turns
+ * towards the outside of the head), and a band in two strokes that meet over the
+ * middle of the head. The far speaker sits against the head at the base of the
+ * far ear, the near one on the side of the head below the near ear.
+ */
+const FAR_SPEAKER = [
+  "M400.7,80.2c-14.1-20.8-40.2.3-50.7,15-8.7,12.2-9.7,30.3,2.8,37.3,5.4-9,11.8-15.6,21-26.2A214.1,214.1,0,0,1,400.7,80.2Z",
+  "M381.5,79.4c-6.6-7.5-9.6-5.8-12.3-5.5-16.3,1.3-32,20.3-27.8,33.9a21.8,21.8,0,0,0,5.9,8.5c1.7-2.6,3.5-5.1,5.4-7.7A150.7,150.7,0,0,1,381.5,79.4Z",
+  "M367.3,77.8a13.1,13.1,0,0,0-5.1-1.8c-8.5-.9-18.7,7.5-18.4,16.1a12.8,12.8,0,0,0,2.6,7c3.1-3.3,6.3-6.8,9.6-10.2S363.6,81.3,367.3,77.8Z",
+] as const;
+const NEAR_SPEAKER = [
+  "M609.5,137.3c-17.1,6.3-20.7,51.4-4.5,67.3,1.4,1.5,5.5,5.5,11.3,5.9,8.2.5,14.5-6.3,16.9-8.9,10.1-11,11.5-27.5,8.1-40.1-1.4-4.8-3.9-14-12.7-19.9C627.4,140.8,617.7,134.3,609.5,137.3Z",
+  "M626.5,196.1c2.7-.4,5.9-2.6,9.3-6,6.6-6.6,6.8-16.6,5.8-24s-4.2-16.1-11.3-19.7a18.7,18.7,0,0,0-10.9-1.9C614,149.3,615.3,192.6,626.5,196.1Z",
+  "M631.6,151c-4.5,3.3-.5,27.1,3.8,28.2s6.9-6.6,6.2-13.1S637.4,153.5,631.6,151Z",
+] as const;
 
 /**
- * The crown of the head between the ears, from the far ear's inner base to the
- * near ear's, lifted about half the band's width off the outline: the band's
- * lower edge lies along the head's outline, so it rests on the head instead of
- * floating above it. Both ends are lifted a little further, so where the band
- * meets an ear its lower edge stays above that ear's base and none of it peeks
- * out underneath.
+ * How far the far speaker is moved from its traced spot, so it rests snugly
+ * against the head at the base of the far ear instead of standing off beside it.
  */
-const CROWN: [Point, Point, Point, Point] = [
-  [431, 81.5],
-  [498.4, 79],
-  [567.3, 107.7],
-  [588.9, 127.2],
-];
-
-const cubicAt = ([p0, p1, p2, p3]: [Point, Point, Point, Point], t: number): Point => {
-  const u = 1 - t;
-  const w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
-  return [
-    w[0] * p0[0] + w[1] * p1[0] + w[2] * p2[0] + w[3] * p3[0],
-    w[0] * p0[1] + w[1] * p1[1] + w[2] * p2[1] + w[3] * p3[1],
-  ];
-};
+const FAR_NUDGE: Point = [4, 4];
 
 /**
- * One continuous band from yoke to yoke: up out of the far yoke along the cup's
- * axis, behind the far ear, over the crown, on behind the near ear and down into
- * the near yoke along that cup's axis. Both ends sit inside the yokes, which are
- * drawn on top, so the joins are clean.
+ * The band, traced too. The far half ends on top of the far speaker, following
+ * it wherever it is nudged. The near half used to run down the outer face of the
+ * near speaker and stop on its rim. It now keeps the traced arc over the crown,
+ * joins it without a kink, swings out round the near ear with clear air between
+ * the two lines (about nine units, centre to centre, at the closest), and drops
+ * onto the shoulder at the top of the speaker's shell, ending just inside its
+ * outline, so the speaker, drawn over it, closes the join with no gap and no
+ * overshoot.
  */
-const BAND = (() => {
-  const far = bandEnd(FAR_CUP);
-  const near = bandEnd(NEAR_CUP);
-  const [c0, c1, c2, c3] = CROWN;
-  // Leave the crown along its own direction so the curve has no corner.
-  const inTangent: Point = [c0[0] - c1[0], c0[1] - c1[1]];
-  const inLength = Math.hypot(...inTangent);
-  const a1 = along(far, axis(FAR_CUP), 24);
-  const a2 = along(c0, [inTangent[0] / inLength, inTangent[1] / inLength], 40);
-  // Behind the near ear the band turns along under its tip, out of sight, so
-  // none of it shows below the ear, then drops straight down into the yoke, so
-  // it stays clear of the yoke's rounded corners.
-  const b1 = along(c3, [0.99, -0.1], 13);
-  const b2 = along(near, axis(NEAR_CUP), 24);
-  const pts = (...points: Point[]) => points.map(([x, y]) => `${round(x)} ${round(y)}`).join(" ");
+const BAND = [
+  `M527,43.6c-15.9-4.6-57-14.1-104,2.3a166.9,166.9,0,0,0,${round(-60.9 + FAR_NUDGE[0])},${round(37.3 + FAR_NUDGE[1])}`,
+  "M636.2,154C658,114 637.7,112.5 563.6,62.4A155.5,155.5,0,0,0,515,40.6",
+] as const;
 
-  // The accent pad sits on the crown, turned with the band.
-  const [px, py] = cubicAt(CROWN, 0.32);
-  const [qx, qy] = cubicAt(CROWN, 0.34);
-  const angle = (Math.atan2(qy - py, qx - px) * 180) / Math.PI;
-
-  return {
-    d: `M${pts(far)} C${pts(a1, a2, c0)} C${pts(c1, c2, c3)} C${pts(b1, b2, near)}`,
-    pad: { x: round(px), y: round(py), angle: round(angle) },
-  };
-})();
+/** The accent pad on the crown of the band, turned with it. */
+const PAD = { x: 486.7, y: 36.9, angle: 2.8 };
 
 /** The laptop screen's corners: far top, near top, near bottom, far bottom. */
 const SCREEN_CORNERS: readonly Point[] = [
@@ -242,11 +198,12 @@ const SCREEN = SCREEN_CORNERS.map(([x, y]) => `${x},${y}`).join(" ");
 
 /**
  * Code is laid out in a flat grid of 100 by 100 units, u along a line from the
- * screen's left edge and v down from its top edge. The screen is drawn in
- * perspective, so this is the projective map that takes the grid's corners
- * exactly onto the screen's corners: lines of equal v fan from the slope of the
- * top edge to the slope of the bottom edge, and every point of the grid lands
- * inside the screen.
+ * screen's left edge and v down from its top edge. Lines start at the right edge
+ * (u = 100), the side the cat reads from, and run towards the left. The screen
+ * is drawn in perspective, so this is the projective map that takes the grid's
+ * corners exactly onto the screen's corners: lines of equal v fan from the slope
+ * of the top edge to the slope of the bottom edge, and every point of the grid
+ * lands inside the screen.
  */
 const toScreen = (() => {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = SCREEN_CORNERS;
@@ -271,7 +228,7 @@ const toScreen = (() => {
   };
 })();
 
-/** Line spacing, first line, margin before each line, indent and token gap, in grid units. */
+/** Line spacing, first line, margin before each line (from the right edge), indent and token gap, in grid units. */
 const LINE_GAP = 9;
 const FIRST_LINE = 9.5;
 const MARGIN = 7;
@@ -338,9 +295,13 @@ export const SCREEN_LOOP = {
   openS: OPEN_S,
 } as const;
 
-/** Every token of the program, laid out once along its line in grid units. */
+/**
+ * Every token of the program, laid out once along its line in grid units. A line
+ * starts at the right margin, indented leftwards, and its tokens follow one
+ * another towards the left edge; `u` is where a token starts, its right end.
+ */
 const TOKENS = LINES.flatMap(({ indent, tokens, accent }, row) => {
-  const start = MARGIN + indent * INDENT;
+  const start = 100 - MARGIN - indent * INDENT;
   let u = start;
   return tokens.map((length, index) => {
     const token = {
@@ -349,15 +310,19 @@ const TOKENS = LINES.flatMap(({ indent, tokens, accent }, row) => {
       u: u,
       length,
       /** Grid units typed on the line before this token begins. */
-      after: u - start,
+      after: start - u,
       accent: index === accent,
     };
-    u += length + TOKEN_GAP;
+    u -= length + TOKEN_GAP;
     return token;
   });
 });
 
-/** Where one token is on screen at some moment; `null` while it is not shown. */
+/**
+ * Where one token is on screen at some moment: (x1, y1) is where it starts, at
+ * its right end, and (x2, y2) the end it grows towards while typed; `null` while
+ * it is not shown.
+ */
 export type TokenSpot = { x1: number; y1: number; x2: number; y2: number } | null;
 
 const easeOut = (x: number) => 1 - (1 - x) ** 3;
@@ -366,9 +331,9 @@ const mod = (n: number, m: number) => ((n % m) + m) % m;
 /**
  * The screen at `t` seconds into the loop. Each step the lines scroll up by one
  * (eased), the top line slides out past the top edge, and the new bottom line
- * types itself from its start at a steady pace. A line's slot counts from the
- * top: slot ROWS is the line being typed this step, lower slots are finished and
- * higher ones have not been reached yet.
+ * types itself from its start at the right edge towards the left, at a steady
+ * pace. A line's slot counts from the top: slot ROWS is the line being typed
+ * this step, lower slots are finished and higher ones have not been reached yet.
  */
 export function screenAt(t: number): TokenSpot[] {
   const time = mod(t, LOOP_S);
@@ -389,7 +354,7 @@ export function screenAt(t: number): TokenSpot[] {
     }
     const v = FIRST_LINE + position * LINE_GAP;
     const [x1, y1] = toScreen(u, v);
-    const [x2, y2] = toScreen(u + shown, v);
+    const [x2, y2] = toScreen(u - shown, v);
     const r = (n: number) => Math.round(n * 100) / 100;
     return { x1: r(x1), y1: r(y1), x2: r(x2), y2: r(y2) };
   });
@@ -797,81 +762,54 @@ export function BongoCat() {
   );
 }
 
-/** One headphone cup with its yoke, tilted with the head. */
-function CupShape({ cup, outward }: { cup: Cup; outward: 1 | -1 }) {
-  const { x, y, rx, ry, turn } = cup;
+/** One speaker: shell, cushion and outer face, over a tinted print shadow. */
+function Speaker({ paths }: { paths: readonly [string, string, string] }) {
+  const [shell, cushion, face] = paths;
   return (
-    <g transform={`rotate(${turn} ${x} ${y})`}>
-      {/* the yoke the band slides into */}
-      <rect
-        x={x - YOKE.width / 2}
-        y={y - ry - YOKE.rise}
-        width={YOKE.width}
-        height={YOKE.height}
-        rx="5"
-        className={cx(strong, s.shade)}
-      />
-      <ellipse cx={x} cy={y} rx={rx} ry={ry} className={cx(strong, s.dark)} />
-      {/* the outer face, turned towards the outside of the head */}
-      <ellipse
-        cx={x + outward * rx * 0.3}
-        cy={y}
-        rx={rx * 0.58}
-        ry={ry * 0.78}
-        className={cx(line, s.shade)}
-      />
-      <ellipse
-        cx={x + outward * rx * 0.5}
-        cy={y - ry * 0.08}
-        rx={rx * 0.16}
-        ry={ry * 0.4}
-        className={cx(thin, s.tint)}
-      />
+    <g>
+      <path d={shell} className={s.tint} transform="translate(6 5)" />
+      <path d={shell} className={cx(strong, s.dark)} />
+      <path d={cushion} className={cx(line, s.shade)} />
+      <path d={face} className={cx(thin, s.paper)} />
     </g>
   );
 }
 
 /**
- * Over-ear headphones the way a cat wears them: one band resting on the crown
- * between the ears, passing behind both ears, its ends tucked into the yokes on
- * top of the cups, which press against the sides of the head below the ears.
+ * The headset from the old site: the band arcs over the head and passes behind
+ * both ears, which stay in full view, and ends on top of each speaker. The
+ * speakers are drawn last, over the band ends and over the base of each ear, as
+ * on the old site: the far speaker's tip covers the foot of the far ear rather
+ * than the ear cutting across the speaker.
  */
 function Headset() {
-  const { pad } = BAND;
   return (
     <g>
-      {[FAR_CUP, NEAR_CUP].map(({ x, y, rx, ry, turn }) => (
-        <ellipse
-          key={x}
-          cx={x}
-          cy={y}
-          rx={rx}
-          ry={ry}
-          transform={`translate(6 5) rotate(${turn} ${x} ${y})`}
-          className={s.tint}
-        />
+      {BAND.map((d) => (
+        <path key={d} d={d} className={b.band} />
       ))}
-      <path d={BAND.d} className={b.band} />
-      <path d={BAND.d} className={b.bandFill} />
       <rect
-        x={pad.x - 12}
-        y={pad.y - 5}
-        width="24"
-        height="10"
-        rx="5"
-        transform={`rotate(${pad.angle} ${pad.x} ${pad.y})`}
+        x={PAD.x - 11}
+        y={PAD.y - 4.5}
+        width="22"
+        height="9"
+        rx="4.5"
+        transform={`rotate(${PAD.angle} ${PAD.x} ${PAD.y})`}
         className={cx(strong, s.accent)}
       />
-      {/* the near yoke tucks up under its ear, like the band it holds */}
-      <CupShape cup={NEAR_CUP} outward={1} />
       {EARS.map(({ side, fill, edge, inner }) => (
-        <g key={side} data-part="ear">
+        <g key={side} data-part="ear" data-side={side}>
           <path d={fill} className={s.fur} />
           <path d={inner} className={s.tint} />
           <path d={edge} className={line} />
         </g>
       ))}
-      <CupShape cup={FAR_CUP} outward={-1} />
+      <g data-part="speaker" data-side="far" transform={`translate(${FAR_NUDGE[0]} ${FAR_NUDGE[1]})`}>
+        <Speaker paths={FAR_SPEAKER} />
+      </g>
+      <g data-part="speaker" data-side="near">
+        <Speaker paths={NEAR_SPEAKER} />
+      </g>
     </g>
   );
 }
@@ -879,12 +817,12 @@ function Headset() {
 /**
  * Code on the laptop screen, scrolling like a terminal: each step the lines move
  * up by one, the top line slides out past the top margin and the new bottom line
- * types itself from its start. The screen is in perspective, which a CSS or SVG
- * transform cannot follow, so while the drawing is in view a small frame loop
- * places each token with `screenAt`. It only writes attributes that changed,
- * holds its place while paused, and stops when the drawing is off screen, the
- * tab is hidden or motion is reduced. Without it the screen keeps the still
- * frame rendered on the server.
+ * types itself from its start at the right edge towards the left. The screen is
+ * in perspective, which a CSS or SVG transform cannot follow, so while the
+ * drawing is in view a small frame loop places each token with `screenAt`. It
+ * only writes attributes that changed, holds its place while paused, and stops
+ * when the drawing is off screen, the tab is hidden or motion is reduced.
+ * Without it the screen keeps the still frame rendered on the server.
  */
 function Screen({ paused }: { paused: boolean }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
