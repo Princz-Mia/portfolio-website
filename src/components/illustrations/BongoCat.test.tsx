@@ -307,7 +307,7 @@ describe("BongoCat", () => {
     );
   });
 
-  it("swings the near half of the band round the near ear with clear air", () => {
+  it("bends the near half of the band down the side of the head, behind the near ear", () => {
     const { container } = render(<BongoCat />);
     const headset = container.querySelector("[data-part='ear']")?.parentElement;
     const near = Array.from(headset!.querySelectorAll(":scope > path"))
@@ -315,20 +315,55 @@ describe("BongoCat", () => {
       .find((d) => /^M6\d\d/.test(d));
     expect(near).toBeTruthy();
 
-    // The swing down to the speaker is one cubic: M p0 C p1 p2 p3.
-    const n = near!.match(/-?\d+(?:\.\d+)?/g)!.slice(0, 8).map(Number);
-    const at = (t: number) => {
+    // The drop to the speaker is one cubic, then the arc over the crown:
+    // M p0 C p1 p2 p3 A r r rotation large sweep end.
+    const n = near!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+    const cubic = (p: number[]) => (t: number): Point => {
       const k = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3];
-      return [0, 1].map((axis) => k.reduce((sum, w, i) => sum + w * n[i * 2 + axis], 0));
+      return [0, 1].map((axis) => k.reduce((sum, w, i) => sum + w * p[i * 2 + axis], 0)) as Point;
     };
-    const tip = [629.5, 118.8];
-    let closest = Infinity;
-    for (let i = 0; i <= 200; i++) {
-      const [x, y] = at(i / 200);
-      closest = Math.min(closest, Math.hypot(x - tip[0], y - tip[1]));
-    }
-    // Half the band plus half the ear outline is about 3.4; leave a visible gap past that.
-    expect(closest).toBeGreaterThan(8);
+    const drop = cubic(n.slice(0, 8));
+    const samples = Array.from({ length: 201 }, (_, i) => drop(i / 200));
+
+    // Centre of the crown arc, on the side the head is (below the arc).
+    const [x1, y1, r, , , , , x2, y2] = n.slice(6, 15);
+    const [mx, my] = [(x1 + x2) / 2, (y1 + y2) / 2];
+    const chord = Math.hypot(x2 - x1, y2 - y1);
+    const h = Math.sqrt(r * r - (chord / 2) ** 2);
+    const centre: Point = [mx + ((y2 - y1) / chord) * h, my - ((x2 - x1) / chord) * h];
+    expect(centre[1]).toBeGreaterThan(y1);
+
+    // It leaves the crown arc without a kink: the last handle runs along the arc.
+    const handle: Point = [n[6] - n[4], n[7] - n[5]];
+    const radius: Point = [x1 - centre[0], y1 - centre[1]];
+    const cosine =
+      (handle[0] * radius[0] + handle[1] * radius[1]) /
+      (Math.hypot(...handle) * Math.hypot(...radius));
+    expect(Math.abs(cosine)).toBeLessThan(0.01);
+
+    // It follows the head's curve at a near constant offset instead of bulging out.
+    samples.forEach(([x, y]) => {
+      expect(Math.abs(Math.hypot(x - centre[0], y - centre[1]) - r)).toBeLessThan(9);
+    });
+
+    // It never gets out past the near ear, whose tip is the head's outermost point there.
+    const tip: Point = [629.5, 118.8];
+    samples.forEach(([x]) => expect(x).toBeLessThan(tip[0] - 8));
+
+    // It crosses the inner edge of the near ear, so it goes behind the ear, not round it.
+    const earEdge = cubic([629.5, 118.8, 617.9, 116.9, 587.5, 133, 585, 136.3]);
+    const edge = Array.from({ length: 201 }, (_, i) => earEdge(i / 200));
+    const gap = Math.min(
+      ...samples.flatMap(([x, y]) => edge.map(([ex, ey]) => Math.hypot(x - ex, y - ey))),
+    );
+    expect(gap).toBeLessThan(1);
+
+    // It ends on top of the near speaker's shell, below the base of the ear.
+    const [endX, endY] = samples[0];
+    expect(endX).toBeGreaterThan(605);
+    expect(endX).toBeLessThan(630);
+    expect(endY).toBeGreaterThan(136);
+    expect(endY).toBeLessThan(146);
   });
 
   it("can be petted again once it has calmed down", () => {

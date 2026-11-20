@@ -171,17 +171,16 @@ const FAR_NUDGE: Point = [4, 4];
 
 /**
  * The band, traced too. The far half ends on top of the far speaker, following
- * it wherever it is nudged. The near half used to run down the outer face of the
- * near speaker and stop on its rim. It now keeps the traced arc over the crown,
- * joins it without a kink, swings out round the near ear with clear air between
- * the two lines (about nine units, centre to centre, at the closest), and drops
- * onto the shoulder at the top of the speaker's shell, ending just inside its
- * outline, so the speaker, drawn over it, closes the join with no gap and no
- * overshoot.
+ * it wherever it is nudged. The near half keeps the traced arc over the crown and
+ * carries on down the side of the head the way a real band bends: it leaves the
+ * arc without a kink, follows the same curve, drawing in a little as the head
+ * narrows towards its side, and slips behind the near ear (drawn over it) to end
+ * on top of the speaker's shell, just inside its outline, so the ear and the
+ * speaker together cover the join with no gap and no overshoot.
  */
 const BAND = [
   `M527,43.6c-15.9-4.6-57-14.1-104,2.3a166.9,166.9,0,0,0,${round(-60.9 + FAR_NUDGE[0])},${round(37.3 + FAR_NUDGE[1])}`,
-  "M636.2,154C658,114 637.7,112.5 563.6,62.4A155.5,155.5,0,0,0,515,40.6",
+  "M616,141C607,117 593.4,82.5 563.6,62.4A155.5,155.5,0,0,0,515,40.6",
 ] as const;
 
 /** The accent pad on the crown of the band, turned with it. */
