@@ -10,7 +10,6 @@ import { academic, personal, profile, projects, roles, site, teaching, technical
 const everyText = [
   profile.headline,
   ...profile.intro,
-  ...profile.facts.map((f) => `${f.label} ${f.value}`),
   ...roles.flatMap((r) => [
     r.summary,
     ...r.chapters.flatMap((c) => [c.name, c.summary, ...c.highlights]),

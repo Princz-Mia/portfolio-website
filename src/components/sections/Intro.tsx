@@ -55,18 +55,12 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
           </InView>
         </div>
 
-        <dl className={styles.facts}>
-          {profile.facts.map((fact, index) => (
-            <div
-              key={fact.label}
-              className={`${styles.fact} ${styles.item}`}
-              style={order(5 + index)}
-            >
-              <dt>{fact.label}</dt>
-              <dd>{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <a href="#work" className={`${styles.scrollCue} ${styles.item}`} style={order(6)}>
+          <span className={styles.cueTrack} aria-hidden="true">
+            <span className={styles.cueDot} />
+          </span>
+          <span className={styles.cueLabel}>Scroll to my work</span>
+        </a>
       </div>
     </section>
   );

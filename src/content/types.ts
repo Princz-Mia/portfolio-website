@@ -35,8 +35,6 @@ export type Profile = {
   headline: string;
   /** Opening paragraph(s). First person, plain language. */
   intro: string[];
-  /** Short labelled facts shown next to the introduction. */
-  facts: { label: string; value: string }[];
 };
 
 /** A phase within one role, for example one platform or team. */
