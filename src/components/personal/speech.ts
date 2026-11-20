@@ -3,6 +3,12 @@
  * the line spoken by the browser's speech synthesiser over a short icy drone
  * made with the Web Audio API. Every helper does nothing where its API is
  * missing, and each returns a function that stops what it started.
+ *
+ * The recording is loaded before it is needed (when the figure is hovered,
+ * focused or first poked) into one audio element that every play reuses.
+ * Starting a freshly created element straight away makes the browser begin
+ * playback while the file is still arriving, which can stall and stutter at
+ * the start.
  */
 
 type Stop = () => void;
@@ -189,56 +195,112 @@ export function frostDrone(seconds = 4): Stop {
 }
 
 /**
- * Plays an audio file once at a modest volume. `onEnd` is called once, when
- * the recording finishes or cannot be played; never after the returned stop
- * function has been called.
+ * A recording loaded ahead of time, so that it plays from a full buffer
+ * instead of starting while its first bytes are still arriving.
  */
-export function playRecording(src: string, onEnd?: () => void): Stop {
-  let ended = false;
-  const finish = () => {
-    if (ended) return;
-    ended = true;
-    onEnd?.();
-  };
-  if (typeof window === "undefined" || typeof window.Audio !== "function") {
-    finish();
-    return noop;
-  }
+export type Recording = {
+  /** The file it plays. */
+  readonly src: string;
+  /**
+   * Plays the recording once from the start at a modest volume. `onEnd` is
+   * called once, when it finishes or cannot be played, and never after the
+   * returned stop function has been called. While a play is still running a
+   * second call does not restart it; it returns a function that does nothing.
+   */
+  play: (onEnd?: () => void) => Stop;
+  /** Stops it and lets the browser drop the loaded audio. */
+  dispose: () => void;
+};
+
+/**
+ * Starts loading the audio file at `src` into one audio element that later
+ * plays reuse. Returns null where the browser has no audio element.
+ */
+export function loadRecording(src: string): Recording | null {
+  if (typeof window === "undefined" || typeof window.Audio !== "function") return null;
+  let audio: HTMLAudioElement;
   try {
-    const audio = new window.Audio(src);
+    audio = new window.Audio(src);
+    audio.preload = "auto";
     audio.volume = 0.6;
-    audio.addEventListener("ended", finish);
-    audio.addEventListener("error", finish);
-    const playing = audio.play();
-    if (playing && typeof playing.catch === "function") {
-      playing.catch(finish);
-    }
-    return () => {
-      ended = true;
-      audio.removeEventListener("ended", finish);
-      audio.removeEventListener("error", finish);
-      audio.pause();
-      audio.removeAttribute("src");
-      audio.load();
-    };
+    audio.load();
   } catch {
-    finish();
-    return noop;
+    return null;
   }
+
+  /** Detaches the listeners of the play that is running, if any. */
+  let detach: (() => void) | null = null;
+
+  const halt = () => {
+    detach?.();
+    detach = null;
+    try {
+      audio.pause();
+    } catch {
+      // Nothing to pause.
+    }
+  };
+
+  return {
+    src,
+    play(onEnd) {
+      if (detach) return noop;
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        detach?.();
+        detach = null;
+        onEnd?.();
+      };
+      audio.addEventListener("ended", finish);
+      audio.addEventListener("error", finish);
+      detach = () => {
+        audio.removeEventListener("ended", finish);
+        audio.removeEventListener("error", finish);
+      };
+      try {
+        if (audio.currentTime > 0) audio.currentTime = 0;
+        const playing = audio.play();
+        if (playing && typeof playing.catch === "function") playing.catch(finish);
+      } catch {
+        finish();
+      }
+      return () => {
+        if (done) return;
+        done = true;
+        halt();
+        try {
+          audio.currentTime = 0;
+        } catch {
+          // Not seekable yet; the next play starts from the beginning anyway.
+        }
+      };
+    },
+    dispose() {
+      halt();
+      try {
+        audio.removeAttribute("src");
+        audio.load();
+      } catch {
+        // Already released.
+      }
+    },
+  };
 }
 
 /**
- * Says the Lich King's line: the recording at `src` when set, otherwise the
- * speech synthesiser with a frosty drone underneath. `onEnd` is called when a
- * recording finishes or fails; the spoken fallback calls it straight away.
- * Call it only from a click, tap or key press.
+ * Says the Lich King's line: the loaded recording when there is one,
+ * otherwise the speech synthesiser with a frosty drone underneath. `onEnd` is
+ * called when the recording finishes or fails; the spoken fallback calls it
+ * straight away. Call it only from a click, tap or key press.
  */
 export function sayLichKingLine(
   text: string,
-  src: string | null,
+  recording: Recording | null,
   onEnd?: () => void,
 ): Stop {
-  if (src) return playRecording(src, onEnd);
+  if (recording) return recording.play(onEnd);
   const spoke = speak(text);
   const stopDrone = frostDrone();
   onEnd?.();

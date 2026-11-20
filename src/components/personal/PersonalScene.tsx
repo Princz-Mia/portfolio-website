@@ -73,8 +73,10 @@ function place(box: ArtBox): CSSProperties {
 
 /**
  * The Lich King's speech bubble: its bottom just above the standing figure's
- * helm and its left edge at the figure's left, so it stays inside the drawing,
- * with its tail (in container units of the drawing's width) over the helm.
+ * helm and its left edge at the figure's left, so it stays inside the drawing
+ * (and clear of the strip that can sit under the text column), with its tail
+ * (in container units of the drawing's width) over the helm. The figure
+ * stands on the floor, so the bubble opens over the banner's lower half.
  */
 const LICH_BUBBLE = {
   left: percent(PERSONAL_BOXES.lich.x / PERSONAL_VIEW.width),
@@ -190,7 +192,8 @@ type PersonalSceneProps = {
  * few real controls: grab a handful of popcorn, pet the cat (it purrs, and
  * enough petting shows photos of the cats when there are any), sound the
  * Horde war horn, poke the Lich King figure (five quick pokes and it stands
- * up, raises Frostmourne and speaks its line), and the controller links to the
+ * up, raises Frostmourne and speaks its line; hovering or focusing it loads
+ * the recording beforehand), and the controller links to the
  * World of Warcraft character on Raider.IO. Until the page is hydrated only
  * the drawing renders.
  */
@@ -409,6 +412,8 @@ export function PersonalScene({
         type="button"
         className={`${styles.hit} ${styles.lich}`}
         style={place(PERSONAL_BOXES.lich)}
+        onPointerEnter={lich.prepare}
+        onFocus={lich.prepare}
         onClick={pokeLichKing}
       >
         <span className="visually-hidden">Poke the Lich King figure</span>

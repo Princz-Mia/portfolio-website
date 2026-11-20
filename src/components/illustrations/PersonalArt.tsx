@@ -16,9 +16,11 @@ const HORN = "M72 87 C38 92 16 64 27 18 C36 46 50 60 72 61 Z";
 /**
  * Banner cloth: a straight top hung from the clasps, a nick torn into each
  * side and a ragged bottom edge whose longest shred sits just right of centre.
+ * Left of the pole the cloth is torn shorter, so its hem stays well clear of
+ * the Lich King figure standing beneath it (even as the cloth sways).
  */
 const CLOTH =
-  "M92 86 H228 V194 L221 199 L228 205 V312 L222 330 L215 320 L206 346 L198 328 L190 334 L184 322 L172 352 L164 330 L152 340 L146 324 L134 338 L126 320 L114 330 L106 318 L98 326 L92 312 V258 L99 253 L92 248 Z";
+  "M92 86 H228 V194 L221 199 L228 205 V312 L222 330 L215 320 L206 346 L198 328 L190 334 L184 322 L172 352 L164 330 L154 336 L148 318 L140 324 L134 304 L126 294 L118 298 L110 286 L102 294 L92 282 V258 L99 253 L92 248 Z";
 
 /**
  * The Horde emblem in a 100 x 100 box: one outline (crown, side hooks, two
@@ -42,23 +44,26 @@ const CONTROLLER =
   "M206 374 C192 374 186 388 190 398 C193 405 202 405 208 399 L216 392 H248 L256 399 C262 405 271 405 274 398 C278 388 272 374 258 374 Z";
 const BUCKET = "M444 324 L508 324 L498 400 H454 Z";
 
-/** The top of the little wall shelf the Lich King figure stands on. */
-const SHELF_Y = 240;
-const SHELF = "M248 240 H334 C335.1 240 336 240.9 336 242 V245 C336 246.1 335.1 247 334 247 H248 C246.9 247 246 246.1 246 245 V242 C246 240.9 246.9 240 248 240 Z";
-const BRACKET = "M256 247 H264 C264 252.5 261 256.5 256 258 Z";
+/** The floor line the pole socket, the controller, the cushion and the figure stand on. */
+const FLOOR_Y = 404;
 
 /**
  * Where the Lich King figure on its Frozen Throne stands, and its scale: on
- * the shelf, between the banner's cord and the sleeping cat's ears, sized like
- * a collectible next to the other props.
+ * the floor left of the banner pole, its dais on the floor line beside the
+ * pole's socket and under the short left half of the cloth's hem, sized like
+ * a collectible next to the banner and the cat. Its left edge stays clear of
+ * the strip of the drawing that can sit under the section's text column.
  */
-const LICH_K = 0.62;
+const LICH_K = 0.56;
+const LICH_LEFT = 78;
 const LICH_AT = {
-  x: 291 - (LICH_FIGURE.x + LICH_FIGURE.w / 2) * LICH_K,
-  y: SHELF_Y - (LICH_FIGURE.y + LICH_FIGURE.h) * LICH_K,
+  x: LICH_LEFT - LICH_FIGURE.x * LICH_K,
+  y: FLOOR_Y - (LICH_FIGURE.y + LICH_FIGURE.h) * LICH_K,
 };
-/** The figure's line factor, so its lines keep the drawing's weight. */
-const LICH_LINE = 1.3;
+/** The figure's line factor, so its lines keep about the drawing's weight. */
+const LICH_LINE = 1.45;
+/** Centre of the figure's throne, where its ground shadow sits. */
+const LICH_MID_X = LICH_AT.x + (LICH_FIGURE.x + LICH_FIGURE.w / 2) * LICH_K;
 
 /** The drawing's coordinate system, for overlays that line up with it. */
 export const PERSONAL_VIEW = { width: 520, height: 420 } as const;
@@ -66,23 +71,27 @@ export const PERSONAL_VIEW = { width: 520, height: 420 } as const;
 /** A rectangle in drawing units. */
 export type ArtBox = { x: number; y: number; width: number; height: number };
 
+/** The Lich King figure's hit area: from its helm and shards down to its dais. */
+const LICH_BOX: ArtBox = {
+  x: LICH_AT.x + LICH_TARGET.x * LICH_K,
+  y: LICH_AT.y + LICH_TARGET.y * LICH_K,
+  width: LICH_TARGET.w * LICH_K,
+  height: LICH_TARGET.h * LICH_K,
+};
+
 /**
  * Boxes around the parts a viewer can interact with, in drawing units: the
- * banner cloth, the sleeping cat with its cushion top, the popcorn bucket, the
- * controller on the floor and the Lich King figure on its shelf. They do not
+ * banner cloth (down to the top of the Lich King figure, which stands under
+ * its hem), the sleeping cat with its cushion top, the popcorn bucket, the
+ * controller on the floor and the Lich King figure on its throne. They do not
  * overlap.
  */
 export const PERSONAL_BOXES = {
-  banner: { x: 88, y: 80, width: 144, height: 274 },
+  banner: { x: 88, y: 80, width: 144, height: Math.floor(LICH_BOX.y) - 80 },
   cat: { x: 276, y: 276, width: 156, height: 96 },
   popcorn: { x: 436, y: 288, width: 80, height: 118 },
   controller: { x: 184, y: 368, width: 92, height: 42 },
-  lich: {
-    x: LICH_AT.x + LICH_TARGET.x * LICH_K,
-    y: LICH_AT.y + LICH_TARGET.y * LICH_K,
-    width: LICH_TARGET.w * LICH_K,
-    height: LICH_TARGET.h * LICH_K,
-  },
+  lich: LICH_BOX,
 } as const satisfies Record<string, ArtBox>;
 
 /** Points that effects start from or land on, in drawing units. */
@@ -91,8 +100,8 @@ export const PERSONAL_POINTS = {
   popcorn: { x: 476, y: 306 },
   /** Between the cat's ears. */
   catHead: { x: 308, y: 290 },
-  /** The floor line the bucket, controller and pole stand on. */
-  floorY: 404,
+  /** The floor line the bucket, controller, pole and Lich King figure stand on. */
+  floorY: FLOOR_Y,
   /** Above the standing Lich King figure's helm, where its speech bubble points. */
   lichHead: {
     x: LICH_AT.x + LICH_HEAD.x * LICH_K,
@@ -162,8 +171,8 @@ function Clasp() {
  * finial, tattered red cloth with the emblem in black), drawn as a fan-art
  * homage. At its foot a grey cat sleeps curled on a cushion, with a game
  * controller on the floor and a striped bucket of popcorn, under a crescent
- * moon; above the cat a vinyl Lich King on the Frozen Throne stands on a small
- * wall shelf.
+ * moon; left of the pole a vinyl Lich King on the Frozen Throne stands on the
+ * floor.
  *
  * The parts that react to the viewer carry `data-part` (cloth, cat, cat-ear,
  * zzz, controller, bucket, lich) so a wrapper can animate them without the
@@ -184,8 +193,8 @@ export function PersonalArt({ className }: { className?: string }) {
       <title id="personal-art-title">
         Illustration of a red Horde war banner with curved horns and the Horde
         emblem, a grey cat asleep on a cushion at its foot, a Lich King figure
-        on its throne on a small shelf, a game controller and a bucket of
-        popcorn under a crescent moon
+        on its throne standing on the floor beside the banner pole, a game
+        controller and a bucket of popcorn under a crescent moon
       </title>
 
       <defs>
@@ -261,7 +270,7 @@ export function PersonalArt({ className }: { className?: string }) {
             opacity={0.7}
           />
           <path
-            d="M98 304 V262 M98 244 V92 H222 V190 M222 210 V304"
+            d="M98 276 V262 M98 244 V92 H222 V190 M222 210 V304"
             fill="none"
             stroke="var(--accent)"
             strokeWidth={1.5}
@@ -286,7 +295,7 @@ export function PersonalArt({ className }: { className?: string }) {
           </g>
           {/* small rips through the cloth */}
           <path d="M186 262 L193 272 L190 273 Z" className={s.tint} />
-          <path d="M122 284 L126 296 L123.5 296 Z" className={s.tint} />
+          <path d="M126 262 L130 274 L127.5 274 Z" className={s.tint} />
         </g>
       </g>
 
@@ -323,16 +332,15 @@ export function PersonalArt({ className }: { className?: string }) {
       <circle cx="147" cy="374" r="1.4" className={s.inkFill} />
       <circle cx="173" cy="374" r="1.4" className={s.inkFill} />
 
-      {/* ---------- shelf with the Lich King figure ---------- */}
-      <g className={s.tint} transform="translate(6 5)">
-        <path d={SHELF} />
-        <path d={BRACKET} />
-        <path d={BRACKET} transform="translate(582 0) scale(-1 1)" />
-      </g>
-      <path d={BRACKET} className={`${s.line} ${s.shade}`} />
-      <path d={BRACKET} className={`${s.line} ${s.shade}`} transform="translate(582 0) scale(-1 1)" />
-      <path d={SHELF} className={`${s.line} ${s.fur}`} />
-      <path d="M256 243.5 H276 M300 243.6 H326" className={`${s.line} ${s.thin}`} />
+      {/* ---------- Lich King figure on the floor, left of the pole ---------- */}
+      <ellipse
+        cx={LICH_MID_X.toFixed(2)}
+        cy={FLOOR_Y + 1}
+        rx={(LICH_FIGURE.w * LICH_K * 0.58).toFixed(2)}
+        ry="4.5"
+        className={s.inkFill}
+        opacity={0.16}
+      />
       <g data-part="lich">
         <g transform={`translate(${LICH_AT.x.toFixed(2)} ${LICH_AT.y.toFixed(2)}) scale(${LICH_K})`}>
           <LichKingFigure line={LICH_LINE} />

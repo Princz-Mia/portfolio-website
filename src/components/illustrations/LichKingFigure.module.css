@@ -4,13 +4,17 @@
  * "awake") and data-lich-poke ("a" or "b", alternating so each poke restarts
  * the wobble) pick what shows. Without those attributes the figure sits still.
  *
- * Waking: the upper body rises as the full-length legs reach down to the dais,
- * then the sword arm swings Frostmourne up about the shoulder. Settling plays
- * it back the other way: the arm lowers first, then the figure sits down. The
- * rules for the resting state carry the timings of the way back.
+ * Waking: the upper body rises as the bent legs give way to straight ones
+ * standing on the dais, then the sword arm swings Frostmourne up about the
+ * shoulder. Settling plays it back the other way: the arm lowers first, then
+ * the figure sits down. The rules for the resting state carry the timings of
+ * the way back.
  *
- * Transform origins are in the figure's own units: the shoulder is at
- * (57, 77) and the hips, where the standing legs start, at y 86.
+ * Nothing here scales: both poses share one head, body, cape, arms and sword
+ * at the same size, and only move or cross-fade, so standing up never reads as
+ * the figure growing. The rise matches LICH_POSE.rise in LichKingFigure.tsx.
+ *
+ * Transform origins are in the figure's own units: the shoulder is at (57, 77).
  */
 
 .figure {
@@ -33,7 +37,7 @@
 }
 
 .rise {
-  transition: transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s;
+  transition: transform 0.6s cubic-bezier(0.45, 0, 0.3, 1) 0.45s;
 }
 
 .arm {
@@ -43,20 +47,15 @@
   transition: transform 0.55s cubic-bezier(0.45, 0, 0.4, 1);
 }
 
-/* Tucked up under the cape and hidden at rest. */
+/* Hidden at rest, behind the risen body's place. */
 .standLegs {
-  transform-box: view-box;
-  transform-origin: 35px 86px;
-  transform: scaleY(0.6);
   opacity: 0;
-  transition:
-    transform 0.7s cubic-bezier(0.45, 0, 0.3, 1) 0.45s,
-    opacity 0.15s linear 0.85s;
+  transition: opacity 0.15s linear 0.8s;
 }
 
 /*
- * Both ways, the bent and the straight legs cross-fade while the straight ones
- * still show below the cape, so the figure never floats legless.
+ * Both ways, the bent and the straight legs cross-fade while the body is on
+ * its way, so the figure never floats legless.
  */
 .sitLegs,
 .sitOnly {
@@ -74,27 +73,24 @@
 /* Awake: stand up, then raise the sword. */
 
 [data-lich="awake"] .rise {
-  transform: translateY(-8px);
-  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08);
+  transform: translateY(-5px);
+  transition: transform 0.5s cubic-bezier(0.3, 0.7, 0.3, 1);
 }
 
 [data-lich="awake"] .standLegs {
-  transform: none;
   opacity: 1;
-  transition:
-    transform 0.7s cubic-bezier(0.3, 0.7, 0.3, 1.08),
-    opacity 0.12s linear;
+  transition: opacity 0.12s linear 0.08s;
 }
 
 [data-lich="awake"] .sitLegs,
 [data-lich="awake"] .sitOnly {
   opacity: 0;
-  transition: opacity 0.15s linear 0.4s;
+  transition: opacity 0.12s linear 0.18s;
 }
 
 [data-lich="awake"] .arm {
   transform: none;
-  transition: transform 0.65s cubic-bezier(0.3, 0.85, 0.35, 1.12) 0.5s;
+  transition: transform 0.65s cubic-bezier(0.3, 0.85, 0.35, 1.12) 0.45s;
 }
 
 [data-lich="awake"] .glow {

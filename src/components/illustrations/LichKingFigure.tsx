@@ -4,10 +4,10 @@ import f from "./LichKingFigure.module.css";
 
 /**
  * The figure's own coordinate box: the throne runs from -14 to 88 across and
- * from -30 (the tallest ice shard) to 152 (the foot of the dais) down. A parent
+ * from -20 (the tallest ice shard) to 152 (the foot of the dais) down. A parent
  * places it with a `translate(x y) scale(k)` group.
  */
-export const LICH_FIGURE = { x: -14, y: -30, w: 102, h: 182 } as const;
+export const LICH_FIGURE = { x: -14, y: -20, w: 102, h: 172 } as const;
 
 /**
  * The part a viewer pokes, in the figure's units: from the shoulders of the
@@ -15,8 +15,24 @@ export const LICH_FIGURE = { x: -14, y: -30, w: 102, h: 182 } as const;
  */
 export const LICH_TARGET = { x: -12, y: -12, w: 98, h: 164 } as const;
 
+/**
+ * The two poses' proportions, in the figure's units. Both poses share one
+ * head, body, cape top, arms and sword at the same size; only the legs differ.
+ * Standing, the upper body rises by `rise` and the straightened legs reach
+ * from the hips down to the dais.
+ *
+ * - `headTop`: the tips of the helm's prongs, seated.
+ * - `seatedSole`: the soles of the boots hanging in front of the seat.
+ * - `standingSole`: the soles of the boots standing on the dais.
+ * - `rise`: how far the upper body rises when the figure stands.
+ */
+export const LICH_POSE = { headTop: -0.5, seatedSole: 123, standingSole: 138.5, rise: 5 } as const;
+
 /** The helm's centre line and the top of the standing figure, in the figure's units. */
-export const LICH_HEAD = { x: 35, top: -9 } as const;
+export const LICH_HEAD = { x: 35, top: LICH_POSE.headTop - LICH_POSE.rise } as const;
+
+/** The hips of the standing figure: the bottom of the risen body. */
+const STAND_HIP = 98 - LICH_POSE.rise;
 
 /** Ice blue, used only while the figure is awake. */
 const ICE = "#bfe6f2";
@@ -103,7 +119,7 @@ function Frostmourne() {
  */
 function Throne() {
   const back =
-    "M-6 106 L-12 34 L-3 44 L-1 6 L8 22 L16 -14 L25 8 L35 -30 L45 8 L54 -14 L62 22 L71 6 L73 44 L82 34 L76 106 Z";
+    "M-6 106 L-12 34 L-3 44 L-1 10 L8 24 L16 -6 L25 10 L35 -20 L45 10 L54 -6 L62 24 L71 10 L73 44 L82 34 L76 106 Z";
   const armL = "M-9 138 V80 L-5 70 L-1 77 L3 73 L5 80 V138 Z";
   const armR = "M65 138 V80 L67 73 L71 77 L75 70 L79 80 V138 Z";
   const seat = "M2 104 H68 V138 H2 Z";
@@ -123,11 +139,11 @@ function Throne() {
       {/* the back: a fan of ice shards with pale facets */}
       <path d={back} className={L} style={{ fill: ICE_FACE }} />
       <path
-        d="M16 -14 L18.5 20 M35 -30 L35 12 M54 -14 L51.5 20 M-1 6 L2 38 M71 6 L68 38 M-12 34 L-4 70 M82 34 L74 70"
+        d="M16 -6 L18.5 24 M35 -20 L35 14 M54 -6 L51.5 24 M-1 10 L2 40 M71 10 L68 40 M-12 34 L-4 70 M82 34 L74 70"
         className={PLT}
         style={{ opacity: 1, ...sw(1.6) }}
       />
-      <path d="M8 22 L11 50 M62 22 L59 50" className={LT} />
+      <path d="M8 24 L11 50 M62 24 L59 50" className={LT} />
 
       {/* dais */}
       <path d={dais} className={`${L} ${s.shade}`} />
@@ -151,19 +167,65 @@ function Throne() {
   );
 }
 
-/** One standing leg, the figure's right: thigh, knee guard, greave and boot. */
-function StandingLeg() {
+/** A boot, the figure's right, with its sole at y `sole`; both poses wear the same one. */
+function Boot({ sole }: { sole: number }) {
+  const top = sole - 8.5;
   return (
     <>
-      <path d="M20.5 86 H33.5 L33 110 H21 Z" className={`${L} ${s.dark}`} />
-      <path d="M21.3 112.5 H32.7 L32.2 128.5 H21.8 Z" className={`${L} ${s.dark}`} />
-      <path d="M27 116 V125.5" className={PLT} />
-      <circle cx="27" cy="111" r="3.4" className={`${L} ${s.tint}`} />
       <path
-        d="M19.5 127 H33.5 V136.5 C33.5 138.4 32 140 30 140 H23 C21.1 140 19.5 138.4 19.5 136.5 Z"
+        d={`M19.5 ${top} H33.5 V${top + 5} C33.5 ${top + 6.9} 32 ${sole} 30 ${sole} H23 C21.1 ${sole} 19.5 ${top + 6.9} 19.5 ${top + 5} Z`}
         className={`${L} ${s.dark}`}
       />
-      <path d="M20.5 130.5 H32.5" className={PLT} />
+      <path d={`M20.5 ${top + 2.5} H32.5`} className={PLT} />
+    </>
+  );
+}
+
+/**
+ * One standing leg, the figure's right: the seated leg's thigh, knee, shin and
+ * boot at the same widths, straightened from the hips down to the dais.
+ */
+function StandingLeg() {
+  const knee = STAND_HIP + 17;
+  const sole = LICH_POSE.standingSole;
+  return (
+    <>
+      <path d={`M20 ${STAND_HIP - 2} H33 L32.6 ${knee} H20.4 Z`} className={`${L} ${s.dark}`} />
+      <path d={`M21.5 ${knee} H31.5 V${sole - 7} H21.5 Z`} className={`${L} ${s.dark}`} />
+      <path d={`M26.5 ${knee + 5} V${sole - 11}`} className={PLT} />
+      <Boot sole={sole} />
+      <circle cx="26.5" cy={knee} r="3" className={`${L} ${s.tint}`} />
+    </>
+  );
+}
+
+/** The cape, behind the body; seated it rests on the seat, standing it hangs to the boots. */
+function Cape({
+  top,
+  hem,
+  hanging = false,
+}: {
+  top: number;
+  hem: number;
+  /** Standing, the cape hangs in a deeper tone so it reads as cloth behind the legs, not a pale panel. */
+  hanging?: boolean;
+}) {
+  const mid = (top + hem) / 2;
+  // Hanging, the hem draws in a little, as cloth does when it falls straight.
+  const left = hanging ? 14.5 : 11;
+  const right = hanging ? 55.5 : 59;
+  const fill: CSSProperties | undefined = hanging ? { fill: "var(--art-ink-strong)" } : undefined;
+  return (
+    <>
+      <path
+        d={`M13 ${top} C11 ${top + 12} ${left - 0.5} ${mid + 8} ${left + 0.5} ${hem + 1} H${right - 0.5} C${right + 0.5} ${mid + 8} 59 ${top + 12} 57 ${top} Z`}
+        className={`${L} ${s.shade}`}
+        style={fill}
+      />
+      <path
+        d={`M${left} ${hem} C${left + 6} ${hem - 2} 22 ${hem + 1} 28 ${hem - 1} C34 ${hem + 1} 38 ${hem - 2} 44 ${hem} C50 ${hem - 2} ${right - 5} ${hem + 1} ${right} ${hem - 1} L${right} ${hem + 3} C${right - 5} ${hem + 6} 50 ${hem + 3} 44 ${hem + 5} C38 ${hem + 3} 34 ${hem + 6} 28 ${hem + 4} C22 ${hem + 6} ${left + 6} ${hem + 3} ${left} ${hem + 5} Z`}
+        className={`${L} ${s.fur}`}
+      />
     </>
   );
 }
@@ -180,11 +242,12 @@ function StandingLeg() {
  * The right arm and the sword are one group, drawn raised to the sky and
  * turned down about the shoulder at rest, so the sword never leaves the hand.
  * When an ancestor carries data-lich="awake", the figure stands up: the upper
- * body rises, full-length armoured legs (thighs, knee guards, greaves and
- * boots) reach down to the dais in front of the seat, the pale seated cape
- * gives way to a dark one hanging behind the legs, the arm swings
- * Frostmourne straight up and the eyes burn ice blue; with data-lich-poke ("a" or "b") it wobbles.
- * Without those attributes it sits still.
+ * body rises a little (LICH_POSE.rise), the bent legs straighten down to the
+ * dais in front of the seat, the cape unfolds from the seat to hang behind
+ * them, the arm swings Frostmourne straight up and the eyes burn ice blue;
+ * with data-lich-poke ("a" or "b") it wobbles. Head, body, arms, cape and
+ * sword keep one size in both poses, so standing only adds the length of the
+ * straightened legs. Without those attributes it sits still.
  *
  * `line` scales the line widths, so a parent that shrinks the figure can keep
  * its lines as heavy as the rest of the drawing.
@@ -208,39 +271,31 @@ export function LichKingFigure({ line = 1 }: { line?: number }) {
     <g className={f.figure} style={{ "--lich-line": line } as CSSProperties}>
       <Throne />
 
-      {/* awake: the cape hangs down behind full-length legs that stand on
-          the dais in front of the seat (no print shadow, like the seated
-          legs, so nothing pale shows between the legs or under the boots) */}
-      <g className={f.standLegs}>
-        <path
-          d="M14 62 C12.5 82 12 110 13.5 137 C24 138.8 46 138.8 56.5 137 C58 110 57.5 82 56 62 Z"
-          className={`${L} ${s.dark}`}
-        />
+      {/* awake: the same cape, no longer folded on the seat, hangs behind
+          the straightened legs, which stand on the dais in front of the
+          seat. Nothing here is scaled: the legs are as wide and the cape as
+          broad as in the seated pose. */}
+      <g className={f.standLegs} data-lich-pose="standing">
+        <Cape top={70 - LICH_POSE.rise} hem={LICH_POSE.standingSole - 10} hanging />
         <Pair>
           <StandingLeg />
         </Pair>
       </g>
 
-      {/* the upper body, which rises when the figure stands */}
-      <g className={f.rise}>
+      {/* the upper body, the same in both poses, which rises when the figure stands */}
+      <g className={f.rise} data-lich-pose="body">
         {/* print shadow (the body's only while seated: standing, it would
-            show as a pale band over the dark cape) */}
+            show as a pale band over the cape) */}
         <g transform="translate(5 4)" className={s.tint}>
           <path d={helm} />
           <path d={body} className={f.sitOnly} />
         </g>
 
-        {/* cape behind, with its fur hem resting on the seat (both hidden
-            when the figure stands, as they would end at its hips; the
-            standing cape above hangs to the boots instead) */}
-        <path
-          d="M13 70 C11 82 10.5 93 11.5 101 H58.5 C59.5 93 59 82 57 70 Z"
-          className={`${L} ${s.shade} ${f.sitOnly}`}
-        />
-        <path
-          d="M11 100 C17 98 22 101 28 99 C34 101 38 98 44 100 C50 98 54 101 59 99 L59 103 C54 106 50 103 44 105 C38 103 34 106 28 104 C22 106 17 103 11 105 Z"
-          className={`${L} ${s.fur} ${f.sitOnly}`}
-        />
+        {/* cape behind, with its fur hem resting on the seat (hidden when the
+            figure stands, where the hanging cape above takes its place) */}
+        <g className={f.sitOnly}>
+          <Cape top={70} hem={100} />
+        </g>
 
         {/* the armoured body */}
         <path d={body} className={`${L} ${s.dark}`} />
@@ -356,14 +411,10 @@ export function LichKingFigure({ line = 1 }: { line?: number }) {
       </g>
 
       {/* at rest: knees bent over the seat, boots hanging in front of it */}
-      <g className={f.sitLegs}>
+      <g className={f.sitLegs} data-lich-pose="seated">
         <Pair>
           <path d="M21.5 103 H31.5 V116 H21.5 Z" className={`${L} ${s.dark}`} />
-          <path
-            d="M19.5 114.5 H33.5 V119.5 C33.5 121.4 32 123 30 123 H23 C21.1 123 19.5 121.4 19.5 119.5 Z"
-            className={`${L} ${s.dark}`}
-          />
-          <path d="M20.5 117 H32.5" className={PLT} />
+          <Boot sole={LICH_POSE.seatedSole} />
           <path
             d="M19 92 H33.5 V102.5 C33.5 104.4 32 106 30 106 H22.5 C20.6 106 19 104.4 19 102.5 Z"
             className={`${L} ${s.dark}`}

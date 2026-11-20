@@ -1,6 +1,10 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { LICH_HEAD, LICH_POSE, LichKingFigure } from "@/components/illustrations/LichKingFigure";
 import { PersonalArt } from "@/components/illustrations/PersonalArt";
 import { PersonalScene } from "./PersonalScene";
 import { AWAKE_MS, LICH_QUOTE, MAX_AWAKE_MS, POKES_TO_WAKE } from "./useLichKing";
@@ -24,6 +28,8 @@ class FakeAudio {
   static failToPlay = false;
   src: string;
   volume = 1;
+  preload = "";
+  currentTime = 0;
   private listeners = new Map<string, Set<() => void>>();
   play = vi.fn(() => (FakeAudio.failToPlay ? Promise.reject(new Error("blocked")) : Promise.resolve()));
   pause = vi.fn();
@@ -144,7 +150,9 @@ describe("Lich King figure", () => {
 
     poke(POKES_TO_WAKE - 3);
     expect(stateOf(container)).toBe("rest");
-    expect(FakeAudio.instances).toHaveLength(0);
+    // The first poke loads the recording; nothing plays yet.
+    expect(FakeAudio.instances).toHaveLength(1);
+    expect(FakeAudio.instances[0].play).not.toHaveBeenCalled();
   });
 
   it("does not count pokes spread far apart", () => {
@@ -260,6 +268,83 @@ describe("Lich King figure", () => {
     expect(speak("hello")).toBe(false);
   });
 
+  it("loads the recording when the figure is hovered or focused, without playing it", () => {
+    renderScene();
+
+    fireEvent.pointerEnter(pokeButton());
+    expect(FakeAudio.instances).toHaveLength(1);
+    const [audio] = FakeAudio.instances;
+    expect(audio.src).toBe(RECORDING);
+    expect(audio.preload).toBe("auto");
+    expect(audio.load).toHaveBeenCalled();
+    expect(audio.play).not.toHaveBeenCalled();
+
+    // Loading happens once, however often the figure is hovered or focused.
+    fireEvent.focus(pokeButton());
+    fireEvent.pointerEnter(pokeButton());
+    expect(FakeAudio.instances).toHaveLength(1);
+  });
+
+  it("plays the element loaded on the first poke when the fifth wakes the figure", () => {
+    renderScene();
+
+    poke(1);
+    expect(FakeAudio.instances).toHaveLength(1);
+    const [audio] = FakeAudio.instances;
+    expect(audio.preload).toBe("auto");
+    expect(audio.play).not.toHaveBeenCalled();
+
+    poke(POKES_TO_WAKE - 1);
+    expect(FakeAudio.instances).toHaveLength(1);
+    expect(audio.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("plays the line exactly once per awakening and never stops it before it ends", () => {
+    const { container } = renderScene();
+    poke(5);
+    const [audio] = FakeAudio.instances;
+
+    // Pokes while awake, and the shortest awake time passing, neither
+    // restart nor stop the line.
+    for (let i = 0; i < 4; i += 1) {
+      poke(5);
+      advance(2000);
+    }
+    expect(2000 * 4).toBeGreaterThan(AWAKE_MS);
+    expect(stateOf(container)).toBe("awake");
+    expect(audio.play).toHaveBeenCalledTimes(1);
+    expect(audio.pause).not.toHaveBeenCalled();
+    expect(audio.load).toHaveBeenCalledTimes(1);
+    expect(audio.removeAttribute).not.toHaveBeenCalled();
+
+    act(() => audio.emit("ended"));
+    expect(stateOf(container)).toBe("rest");
+
+    // The next awakening plays the same, already loaded element from the start.
+    audio.currentTime = 6.67;
+    poke(5);
+    expect(stateOf(container)).toBe("awake");
+    expect(FakeAudio.instances).toHaveLength(1);
+    expect(audio.play).toHaveBeenCalledTimes(2);
+    expect(audio.currentTime).toBe(0);
+  });
+
+  it("stops the line only when it gives up waiting, and does not hear its end afterwards", () => {
+    const { container } = renderScene();
+    poke(5);
+    const [audio] = FakeAudio.instances;
+
+    advance(MAX_AWAKE_MS - 1);
+    expect(audio.pause).not.toHaveBeenCalled();
+    advance(1);
+    expect(stateOf(container)).toBe("rest");
+    expect(audio.pause).toHaveBeenCalledTimes(1);
+
+    // A late end of the stopped line does not affect the figure.
+    act(() => audio.emit("ended"));
+    expect(stateOf(container)).toBe("rest");
+  });
+
   it("clears its timers and stops the recording when unmounted while awake", () => {
     const { unmount } = renderScene();
     poke(5);
@@ -303,5 +388,89 @@ describe("pickVoice", () => {
       "UK Female",
     );
     expect(pickVoice([voice("Amélie", "fr-FR")])).toBeUndefined();
+  });
+});
+
+describe("Lich King figure poses", () => {
+  const css = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../illustrations/LichKingFigure.module.css"),
+    "utf8",
+  );
+
+  /** The CSS rules whose selectors name one of the pose classes, as [selector, body]. */
+  const poseRules = () =>
+    Array.from(css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g))
+      .map(([, selector, body]) => [selector.trim(), body] as const)
+      .filter(([selector]) => /\.(figure|rise|standLegs|sitLegs|sitOnly|arm)\b/.test(selector));
+
+  const renderFigure = () =>
+    render(
+      <svg viewBox="-20 -40 120 200">
+        <LichKingFigure />
+      </svg>,
+    );
+
+  const pose = (container: HTMLElement, name: string) =>
+    container.querySelector(`[data-lich-pose="${name}"]`) as SVGGElement;
+
+  it("never scales a pose: no scale in the pose styles or on the pose groups", () => {
+    const rules = poseRules();
+    expect(rules.length).toBeGreaterThan(0);
+    for (const [selector, body] of rules) {
+      expect(body, selector).not.toMatch(/scale/i);
+    }
+
+    const { container } = renderFigure();
+    for (const name of ["body", "standing", "seated"]) {
+      let node: Element | null = pose(container, name);
+      expect(node, name).not.toBeNull();
+      // Neither the group nor anything above it inside the figure is scaled.
+      while (node && node.tagName.toLowerCase() !== "svg") {
+        expect(node.getAttribute("transform") ?? "", name).not.toMatch(/scale|matrix/);
+        node = node.parentElement;
+      }
+    }
+  });
+
+  it("shares one head, body and arms between the poses, so only the legs change", () => {
+    const { container } = renderFigure();
+    const body = pose(container, "body");
+    const standing = pose(container, "standing");
+    const seated = pose(container, "seated");
+
+    // The helm (and its print shadow) is drawn once, in the shared upper body.
+    const helms = container.querySelectorAll('path[d^="M8 35"]');
+    expect(helms).toHaveLength(2);
+    helms.forEach((helm) => expect(body.contains(helm)).toBe(true));
+    expect(standing.querySelector('path[d^="M8 35"]')).toBeNull();
+    expect(seated.querySelector('path[d^="M8 35"]')).toBeNull();
+
+    // Both poses wear the same boot: the standing one is the seated one moved
+    // down to the dais, every coordinate either equal or shifted by the drop.
+    const boot = (group: Element) =>
+      Array.from(group.querySelectorAll("path"))
+        .map((path) => path.getAttribute("d") ?? "")
+        .find((d) => /^M19\.5 [\d.]+ H33\.5/.test(d));
+    const numbers = (d = "") => Array.from(d.matchAll(/-?\d+(?:\.\d+)?/g), (m) => Number(m[0]));
+    const seatedBoot = numbers(boot(seated));
+    const standingBoot = numbers(boot(standing));
+    const drop = LICH_POSE.standingSole - LICH_POSE.seatedSole;
+    expect(seatedBoot.length).toBeGreaterThan(0);
+    expect(standingBoot).toHaveLength(seatedBoot.length);
+    standingBoot.forEach((value, i) => {
+      const moved = value - seatedBoot[i];
+      expect(Math.abs(moved) < 1e-9 || Math.abs(moved - drop) < 1e-9, `coordinate ${i}`).toBe(true);
+    });
+  });
+
+  it("stands only as much taller as the straightened legs make it", () => {
+    const seatedHeight = LICH_POSE.seatedSole - LICH_POSE.headTop;
+    const standingHeight = LICH_POSE.standingSole - LICH_HEAD.top;
+    expect(standingHeight / seatedHeight).toBeGreaterThanOrEqual(1.15);
+    expect(standingHeight / seatedHeight).toBeLessThanOrEqual(1.25);
+
+    // The rise in the styles is the one the figure's geometry is drawn for.
+    const awakeRise = poseRules().find(([selector]) => /awake"\]\s*\.rise$/.test(selector));
+    expect(awakeRise?.[1]).toContain(`translateY(-${LICH_POSE.rise}px)`);
   });
 });
