@@ -20,6 +20,8 @@
   --art-accent: #a14d59;
   --art-dark: #3f3532;
   --art-banner: #9b3443;
+  --art-sage: #dfe6d6;
+  --art-moss: #c4cfb8;
 
   /* Time the intro curtain takes before the page settles in. */
   --intro-delay: 1.35s;
@@ -41,7 +43,101 @@
   --gutter: clamp(1rem, 4vw, 2.5rem);
   --radius: 10px;
 
+  /* Shadow under a lifted button, and the paper grain (see body::before). */
+  --button-shadow: rgb(78 21 33 / 0.45);
+  --grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.33 0 0 0 0 0.28 0 0 0 0 0.24 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.9 0 0 0 0 0.84 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: var(--grain-light);
+
   color-scheme: light;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark theme: warm and low-glare. The inline script in the layout sets */
+/* data-theme before the first paint; without script the system        */
+/* preference decides. Drawings fill with the same tokens, so they turn */
+/* into light lines on dark fills on their own.                        */
+/* ------------------------------------------------------------------ */
+
+html[data-theme="dark"] {
+  --paper: #1c1917;
+  --paper-2: #24201d;
+  --ink: #f1ebe3;
+  --ink-2: #cfc5ba;
+  --ink-3: #a49a90;
+  --rule: #3a332e;
+  --rule-strong: #504640;
+  --accent: #e0899a;
+  --accent-deep: #f0a9b6;
+  --accent-tint: #3b262a;
+
+  --art-ink: #b9ada2;
+  --art-ink-strong: #ddd2c6;
+  --art-fur: #4a423c;
+  --art-shade: #332d29;
+  --art-tint: #3d2c2d;
+  --art-accent: #e0899a;
+  --art-dark: #0f0d0c;
+  --art-banner: #a3384a;
+  --art-sage: #3d4a3b;
+  --art-moss: #4f5c49;
+
+  --button-shadow: rgb(0 0 0 / 0.55);
+  --grain: var(--grain-dark);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --paper: #1c1917;
+    --paper-2: #24201d;
+    --ink: #f1ebe3;
+    --ink-2: #cfc5ba;
+    --ink-3: #a49a90;
+    --rule: #3a332e;
+    --rule-strong: #504640;
+    --accent: #e0899a;
+    --accent-deep: #f0a9b6;
+    --accent-tint: #3b262a;
+
+    --art-ink: #b9ada2;
+    --art-ink-strong: #ddd2c6;
+    --art-fur: #4a423c;
+    --art-shade: #332d29;
+    --art-tint: #3d2c2d;
+    --art-accent: #e0899a;
+    --art-dark: #0f0d0c;
+    --art-banner: #a3384a;
+    --art-sage: #3d4a3b;
+    --art-moss: #4f5c49;
+
+    --button-shadow: rgb(0 0 0 / 0.55);
+    --grain: var(--grain-dark);
+
+    color-scheme: dark;
+  }
+}
+
+/* A quick cross-fade while the theme is switched (the toggle adds the class
+   for a moment). Never on the first paint, never with reduced motion.
+   Movement and fades are listed too, so anything that happens to be moving
+   during those few hundred milliseconds still eases instead of snapping. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition:
+      background-color 280ms ease,
+      border-color 280ms ease,
+      color 280ms ease,
+      fill 280ms ease,
+      stroke 280ms ease,
+      box-shadow 280ms ease,
+      opacity 300ms ease,
+      transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+  }
 }
 
 *,
@@ -284,7 +380,7 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.33 0 0 0 0 0.28 0 0 0 0 0.24 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: var(--grain);
 }
 
 /* ------------------------------------------------------------------ */
@@ -498,5 +594,5 @@ html.intro-seen {
 
 .button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px -10px rgba(78, 21, 33, 0.45);
+  box-shadow: 0 6px 18px -10px var(--button-shadow);
 }

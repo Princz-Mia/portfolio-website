@@ -22,7 +22,7 @@ import {
   writeBest,
   type DukeState,
 } from "./duke";
-import { drawFrame } from "./dukeDraw";
+import { drawFrame, LIGHT_PALETTE, readPalette } from "./dukeDraw";
 import styles from "./LaptopScreen.module.css";
 
 /** Where the high score is kept in this browser. */
@@ -149,12 +149,13 @@ export function DukeRun({ ref, onExit, onStatus }: DukeRunProps) {
     let acc = 0;
     let overAt = 0;
     let font = "monospace";
+    let palette = LIGHT_PALETTE;
 
     const draw = () => {
       if (!ctx) return;
       const scale = canvas.width / WORLD_W;
       ctx.setTransform(scale, 0, 0, scale, 0, 0);
-      drawFrame(ctx, state, { best: bestNow, font, still: mode !== "playing" || reduced });
+      drawFrame(ctx, state, { best: bestNow, font, still: mode !== "playing" || reduced, palette });
     };
 
     const fit = () => {
@@ -165,6 +166,13 @@ export function DukeRun({ ref, onExit, onStatus }: DukeRunProps) {
       if (canvas.width !== width) canvas.width = width;
       if (canvas.height !== height) canvas.height = height;
       font = getComputedStyle(canvas).fontFamily || "monospace";
+      palette = readPalette(canvas);
+      draw();
+    };
+
+    // The page switched themes: the next frame (or this still one) uses its colours.
+    const onTheme = () => {
+      palette = readPalette(canvas);
       draw();
     };
 
@@ -286,6 +294,7 @@ export function DukeRun({ ref, onExit, onStatus }: DukeRunProps) {
     const observer = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
     observer?.observe(canvas);
     window.addEventListener("resize", fit);
+    window.addEventListener("themechange", onTheme);
     document.addEventListener("visibilitychange", onVisibility);
     fit();
     canvas.focus({ preventScroll: true });
@@ -300,6 +309,7 @@ export function DukeRun({ ref, onExit, onStatus }: DukeRunProps) {
       halt();
       observer?.disconnect();
       window.removeEventListener("resize", fit);
+      window.removeEventListener("themechange", onTheme);
       document.removeEventListener("visibilitychange", onVisibility);
       for (const timer of taps) clearTimeout(timer);
       taps.clear();

@@ -36,9 +36,14 @@ export const metadata: Metadata = {
   },
 };
 
-// Shows the intro curtain only on the first page view of a visit. Runs before
-// paint so the curtain never flashes on later views.
-const introScript = `try{if(sessionStorage.getItem("intro-seen")){document.documentElement.classList.add("intro-seen")}else{sessionStorage.setItem("intro-seen","1")}}catch(e){}`;
+// Runs before the first paint. Sets the theme (the visitor's stored choice, or
+// the system preference) so the page never flashes the other palette, and shows
+// the intro curtain only on the first page view of a visit. Each part has its
+// own try so blocked storage cannot stop the other.
+const headScript = [
+  `try{var t=null;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)}catch(e){}`,
+  `try{if(sessionStorage.getItem("intro-seen")){document.documentElement.classList.add("intro-seen")}else{sessionStorage.setItem("intro-seen","1")}}catch(e){}`,
+].join("");
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -48,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: introScript }} />
+        <script dangerouslySetInnerHTML={{ __html: headScript }} />
       </head>
       <body>
         <IntroCurtain name={site.name} />

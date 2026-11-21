@@ -18,7 +18,21 @@ import {
   type Thing,
 } from "./duke";
 
-const C = {
+export type DukePalette = {
+  paper: string;
+  ink: string;
+  inkStrong: string;
+  dark: string;
+  accent: string;
+  tint: string;
+  shade: string;
+  white: string;
+  /** The score. */
+  text: string;
+};
+
+/** The light theme's colours, used until the page's are read and where they cannot be. */
+export const LIGHT_PALETTE: DukePalette = {
   paper: "#f6f1ea",
   ink: "#8a7f76",
   inkStrong: "#6f655d",
@@ -27,7 +41,39 @@ const C = {
   tint: "#f1e2dd",
   shade: "#ebe4da",
   white: "#ffffff",
+  text: "#3f3532",
 };
+
+/** Custom properties each colour is read from (set on the canvas or inherited). */
+const PALETTE_VARS: Record<keyof DukePalette, string> = {
+  paper: "--paper",
+  ink: "--art-ink",
+  inkStrong: "--art-ink-strong",
+  dark: "--art-dark",
+  accent: "--art-accent",
+  tint: "--art-tint",
+  shade: "--art-shade",
+  white: "--duke-white",
+  text: "--duke-text",
+};
+
+/**
+ * Reads the drawing colours from the page's theme tokens as they apply to `el`,
+ * so the runner follows the light and dark themes. Missing ones keep the light
+ * colours.
+ */
+export function readPalette(el: Element): DukePalette {
+  const style = getComputedStyle(el);
+  const palette = { ...LIGHT_PALETTE };
+  for (const key of Object.keys(PALETTE_VARS) as (keyof DukePalette)[]) {
+    const value = style.getPropertyValue(PALETTE_VARS[key]).trim();
+    if (value) palette[key] = value;
+  }
+  return palette;
+}
+
+/** The palette of the frame being drawn; drawFrame sets it before anything else. */
+let C: DukePalette = LIGHT_PALETTE;
 
 const LINE = 1.7;
 const SHADOW = { x: 2.5, y: 2 };
@@ -38,6 +84,8 @@ export type DrawOptions = {
   font: string;
   /** Still frame: no bobbing or leg swing. */
   still: boolean;
+  /** Colours to draw in (see readPalette); the light theme's when left out. */
+  palette?: DukePalette;
 };
 
 const pad = (n: number) => String(n).padStart(5, "0");
@@ -407,6 +455,7 @@ function drawThing(ctx: CanvasRenderingContext2D, t: Thing, state: DukeState, o:
 
 /** Draws one whole frame. */
 export function drawFrame(ctx: CanvasRenderingContext2D, state: DukeState, o: DrawOptions) {
+  C = o.palette ?? LIGHT_PALETTE;
   ctx.fillStyle = C.paper;
   ctx.fillRect(0, 0, WORLD_W, WORLD_H);
   ctx.lineCap = "round";
@@ -424,7 +473,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, state: DukeState, o: Dr
   ctx.fillStyle = C.ink;
   const best = Math.max(o.best, state.phase === "over" ? score(state) : 0);
   ctx.fillText(`HI ${pad(best)}`, WORLD_W - 84, 12);
-  ctx.fillStyle = C.dark;
+  ctx.fillStyle = C.text;
   ctx.fillText(pad(score(state)), WORLD_W - 16, 12);
   if (state.beans > 0) {
     ctx.fillStyle = C.accent;

@@ -40,8 +40,8 @@ export const MUG_BOX: Box = { x: 376, y: 219, w: 57, h: 73 };
 export const NOTE_BOX = { x: 337, y: 52, w: 40, h: 36, rotate: 7 };
 
 /** The bonsai's leaves: a soft muted sage, the drawing's one green. */
-const SAGE = "#dfe6d6";
-const MOSS = "#c4cfb8";
+const SAGE = "var(--art-sage)";
+const MOSS = "var(--art-moss)";
 
 /** A line width given in drawing units, for a line drawn in the bonsai's scaled units. */
 const bw = (width: number): CSSProperties => ({ strokeWidth: width / BONSAI_K });

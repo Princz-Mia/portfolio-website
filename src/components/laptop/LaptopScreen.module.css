@@ -1,6 +1,24 @@
 /* The Work drawing with a door over its laptop screen, and the terminal it opens:
-   the same screen up close, in the drawing's palette. The palette is written out
-   because the site has a single (light) theme. */
+   the same screen up close, in the drawing's palette. Every colour comes from the
+   theme tokens; --term-text is the terminal's own text colour, which is the
+   drawing's dark ink in the light theme and the page ink in the dark one. */
+
+.frame,
+.dialog {
+  --term-text: var(--art-dark);
+}
+
+:global(html[data-theme="dark"]) .frame,
+:global(html[data-theme="dark"]) .dialog {
+  --term-text: var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .frame,
+  :global(html:not([data-theme])) .dialog {
+    --term-text: var(--ink);
+  }
+}
 
 .frame {
   position: relative;
@@ -33,10 +51,10 @@
   right: 4%;
   bottom: 6%;
   padding: 0.15em 0.6em;
-  border: 1px solid #8a7f76;
+  border: 1px solid var(--art-ink);
   border-radius: 4px;
-  background: rgb(246 241 234 / 0.9);
-  color: #a14d59;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--art-accent);
   font-family: var(--font-mono);
   font-size: clamp(9px, 2.6cqw, 12px);
   line-height: 1.4;
@@ -62,11 +80,11 @@
   max-height: none;
   padding: 0;
   overflow: hidden;
-  border: 1.7px solid #8a7f76;
+  border: 1.7px solid var(--art-ink);
   border-radius: 12px;
-  background: #f6f1ea;
-  box-shadow: 8px 7px 0 #f1e2dd;
-  color: #3f3532;
+  background: var(--paper);
+  box-shadow: 8px 7px 0 var(--art-tint);
+  color: var(--term-text);
   font-family: var(--font-mono);
   font-size: 16px;
   line-height: 1.4;
@@ -77,8 +95,19 @@
   animation: zoomIn 180ms ease-out;
 }
 
+/* Written out per theme: a backdrop does not inherit custom properties everywhere. */
 .dialog::backdrop {
   background: rgb(63 53 50 / 0.35);
+}
+
+:global(html[data-theme="dark"]) .dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .dialog::backdrop {
+    background: rgb(0 0 0 / 0.6);
+  }
 }
 
 /* Holds the page still behind the open terminal, so a swipe cannot scroll it away. */
@@ -101,7 +130,7 @@
   flex: none;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 1px solid #8a7f76;
+  border-bottom: 1px solid var(--art-ink);
 }
 
 .dots {
@@ -113,11 +142,11 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgb(138 127 118 / 0.5);
+  background: color-mix(in srgb, var(--art-ink) 50%, transparent);
 }
 
 .dots i:first-child {
-  background: #a14d59;
+  background: var(--art-accent);
 }
 
 .title {
@@ -182,7 +211,7 @@
 }
 
 .ps1 {
-  color: #a14d59;
+  color: var(--art-accent);
   white-space: nowrap;
 }
 
@@ -195,7 +224,7 @@
   background: transparent;
   font: inherit;
   color: inherit;
-  caret-color: #6f655d;
+  caret-color: var(--art-ink-strong);
 }
 
 /* The masked password: a little air between the dots. */
@@ -219,26 +248,26 @@
 .shortcut,
 .padButton {
   padding: 0 0.9rem;
-  border: 1px solid #8a7f76;
+  border: 1px solid var(--art-ink);
   border-radius: 6px;
-  background: #ebe4da;
+  background: var(--art-shade);
 }
 
 .shortcut:hover,
 .padButton:hover {
-  border-color: #a14d59;
+  border-color: var(--art-accent);
 }
 
 .doom {
-  border-color: #a14d59;
-  background: #a14d59;
-  color: #f6f1ea;
+  border-color: var(--art-accent);
+  background: var(--art-accent);
+  color: var(--paper);
 }
 
 /* Duke runner's button: outlined in the accent, beside the filled doom button. */
 .duke {
-  border-color: #a14d59;
-  color: #a14d59;
+  border-color: var(--art-accent);
+  color: var(--art-accent);
 }
 
 /* The game: the canvas fills the space left by the hint, pad and buttons. */
@@ -267,7 +296,7 @@
   width: min(100cqw, 100cqh * 4 / 3);
   height: auto;
   aspect-ratio: 4 / 3;
-  border: 1.7px solid #8a7f76;
+  border: 1.7px solid var(--art-ink);
   border-radius: 6px;
   background: #000;
   image-rendering: pixelated;
@@ -282,10 +311,10 @@
   translate: -50% -50%;
   margin: 0;
   padding: 0.15em 0.7em;
-  border: 1px solid #8a7f76;
+  border: 1px solid var(--art-ink);
   border-radius: 4px;
-  background: #f6f1ea;
-  color: #3f3532;
+  background: var(--paper);
+  color: var(--term-text);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -314,15 +343,30 @@
   width: min(100cqw, 100cqh * 3);
   height: auto;
   aspect-ratio: 3 / 1;
-  border: 1.7px solid #8a7f76;
+  border: 1.7px solid var(--art-ink);
   border-radius: 6px;
-  background: #f6f1ea;
-  box-shadow: 4px 3px 0 #f1e2dd;
+  background: var(--paper);
+  box-shadow: 4px 3px 0 var(--art-tint);
+  /* Read by the runner when it draws (see readPalette in dukeDraw.ts). */
+  --duke-white: #ffffff;
+  --duke-text: var(--art-dark);
   font-family: var(--font-mono);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+:global(html[data-theme="dark"]) .dukeCanvas {
+  --duke-white: #ece4da;
+  --duke-text: var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .dukeCanvas {
+    --duke-white: #ece4da;
+    --duke-text: var(--ink);
+  }
 }
 
 /* Start, pause and game over text, over the canvas; taps go through to it. */
@@ -333,10 +377,10 @@
   translate: -50% -50%;
   max-width: calc(100% - 2rem);
   padding: 0.35em 0.8em;
-  border: 1px solid #8a7f76;
+  border: 1px solid var(--art-ink);
   border-radius: 4px;
-  background: rgb(246 241 234 / 0.94);
-  color: #3f3532;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  color: var(--term-text);
   font-size: 0.8em;
   text-align: center;
   overflow-wrap: anywhere;
@@ -348,13 +392,13 @@
 }
 
 .dukeNote p:first-child:not(:only-child) {
-  color: #a14d59;
+  color: var(--art-accent);
 }
 
 .hint {
   flex: none;
   margin: 0;
-  color: #6f655d;
+  color: var(--art-ink-strong);
   font-size: 0.8em;
 }
 
@@ -375,7 +419,7 @@
 }
 
 .padButton:active {
-  background: #f1e2dd;
+  background: var(--art-tint);
 }
 
 .gameBar {
@@ -385,14 +429,14 @@
 
 .quit {
   padding: 0 0.9rem;
-  border: 1px solid #a14d59;
+  border: 1px solid var(--art-accent);
   border-radius: 6px;
-  background: #a14d59;
-  color: #f6f1ea;
+  background: var(--art-accent);
+  color: var(--paper);
 }
 
 .credit {
-  color: #6f655d;
+  color: var(--art-ink-strong);
   font-size: 0.75em;
 }
 
