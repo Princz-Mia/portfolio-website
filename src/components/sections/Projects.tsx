@@ -20,7 +20,8 @@ export function Projects({ projects }: ProjectsProps) {
     <Section
       id="projects"
       number="02"
-      title="Selected projects"
+      label="Selected projects"
+      title="Portfolio"
       lede="Work with public source, described as it stands."
       art={<ProjectsArt />}
       side="left"

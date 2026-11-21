@@ -5,6 +5,9 @@ import styles from "./Section.module.css";
 type SectionProps = {
   id: string;
   number: string;
+  /** Label in the eyebrow above the heading; the nav entry is a short form of it. */
+  label: string;
+  /** The big heading. */
   title: string;
   lede?: string;
   /** The section's illustration, shown large beside the content. */
@@ -23,6 +26,7 @@ type SectionProps = {
 export function Section({
   id,
   number,
+  label,
   title,
   lede,
   art,
@@ -48,7 +52,7 @@ export function Section({
             <p className={`eyebrow ${styles.eyebrow}`}>
               <span className="accent">{number}</span>
               <span className={styles.rule} aria-hidden="true" />
-              <span>{title}</span>
+              <span>{label}</span>
             </p>
             <h2 id={headingId} className={styles.title}>
               {title}

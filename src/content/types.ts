@@ -28,6 +28,11 @@ export type SiteConfig = {
    * exists: the teaching section then offers an email contact instead of a link.
    */
   teachingSiteUrl: string | null;
+  /**
+   * Path of the CV as a PDF under `public/`, for example "/cv/mia-princz-cv.pdf".
+   * Leave `null` until the file exists: the hero then shows no CV button.
+   */
+  cvUrl: string | null;
 };
 
 export type Profile = {

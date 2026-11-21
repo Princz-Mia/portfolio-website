@@ -4,12 +4,17 @@ import { buildNavItems } from "./nav";
 describe("buildNavItems", () => {
   it("includes the projects entry when there are projects", () => {
     const labels = buildNavItems({ hasProjects: true }).map((item) => item.label);
-    expect(labels).toEqual(["Work", "Projects", "Academic", "Teaching", "Contact"]);
+    expect(labels).toEqual(["Work", "Projects", "Academic", "Teaching", "Hobbies", "Contact"]);
   });
 
   it("omits the projects entry when there are none", () => {
     const labels = buildNavItems({ hasProjects: false }).map((item) => item.label);
-    expect(labels).toEqual(["Work", "Academic", "Teaching", "Contact"]);
+    expect(labels).toEqual(["Work", "Academic", "Teaching", "Hobbies", "Contact"]);
+  });
+
+  it("links Hobbies to the off the clock section", () => {
+    const hobbies = buildNavItems({ hasProjects: true }).find((item) => item.label === "Hobbies");
+    expect(hobbies?.href).toBe("#off-the-clock");
   });
 
   it("only produces in-page anchors", () => {

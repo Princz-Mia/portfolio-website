@@ -16,7 +16,8 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
     <Section
       id="teaching"
       number={number}
-      title="Teaching"
+      label="Teaching"
+      title="Tutoring"
       lede="Java for university students, and private tutoring."
       art={<Chalkboard />}
       side="left"

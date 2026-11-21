@@ -8,13 +8,83 @@ import styles from "./Intro.module.css";
 type IntroProps = {
   site: SiteConfig;
   profile: Profile;
-  hasProjects: boolean;
+  /** No longer used by the hero; accepted so existing callers keep compiling. */
+  hasProjects?: boolean;
 };
+
+type HeroLinkKey = "linkedin" | "github" | "teaching" | "cv";
+
+type HeroLink = { key: HeroLinkKey; label: string; href: string };
+
+/**
+ * The hero's links, in order. The teaching site and the CV appear only once
+ * their addresses are set, so the hero never shows a dead link.
+ */
+export function buildHeroLinks(site: SiteConfig): HeroLink[] {
+  const links: HeroLink[] = [
+    { key: "linkedin", label: site.linkedin.label, href: site.linkedin.href },
+    { key: "github", label: site.github.label, href: site.github.href },
+  ];
+  if (site.teachingSiteUrl) {
+    links.push({ key: "teaching", label: "Teaching site", href: site.teachingSiteUrl });
+  }
+  if (site.cvUrl) {
+    links.push({ key: "cv", label: "CV", href: site.cvUrl });
+  }
+  return links;
+}
+
+/** Small line glyphs for the hero links, drawn in the site's own hand. */
+function HeroIcon({ name }: { name: HeroLinkKey }) {
+  return (
+    <svg
+      className={styles.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {name === "linkedin" ? (
+        <>
+          {/* "in" in a rounded square */}
+          <rect x="3" y="3" width="18" height="18" rx="4" />
+          <path d="M8 10.5V16.5" />
+          <circle cx="8" cy="7.6" r="0.5" fill="currentColor" />
+          <path d="M11.5 16.5V10.5M11.5 13c0-1.6 1-2.6 2.4-2.6s2.1 1 2.1 2.5v3.6" />
+        </>
+      ) : name === "github" ? (
+        <>
+          {/* a branch leaving the main line and merging back */}
+          <circle cx="7" cy="5.5" r="2" />
+          <circle cx="7" cy="18.5" r="2" />
+          <circle cx="17" cy="8" r="2" />
+          <path d="M7 7.5v9M17 10c0 3.5-3 4.5-8.6 6.9" />
+        </>
+      ) : name === "teaching" ? (
+        <>
+          {/* a small chalkboard on its stand */}
+          <rect x="3.5" y="4" width="17" height="11.5" rx="1.5" />
+          <path d="M7 9.5h5M7 12h8M8.5 15.5 7 20M15.5 15.5 17 20" />
+        </>
+      ) : (
+        <>
+          {/* a page with a folded corner and a few lines */}
+          <path d="M6 3h8.5L19 7.5V21H6z" />
+          <path d="M14.5 3v4.5H19M9 12h7M9 15h7M9 18h4" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 /** Stagger index for the hero's entrance. */
 const order = (i: number) => ({ "--i": i }) as CSSProperties;
 
-export function Intro({ site, profile, hasProjects }: IntroProps) {
+export function Intro({ site, profile }: IntroProps) {
   return (
     <section className={styles.intro} aria-labelledby="intro-title">
       <div className={`container ${styles.grid}`}>
@@ -36,17 +106,28 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
               </p>
             ))}
           </div>
-          <div className={`${styles.actions} ${styles.item}`} style={order(3 + profile.intro.length)}>
-            <a className="button button--primary" href={hasProjects ? "#projects" : "#work"}>
-              {hasProjects ? "Selected projects" : "What I work on"}
-              <span className="button__arrow" aria-hidden="true">
-                →
-              </span>
-            </a>
-            <a className="button" href="#contact">
-              Get in touch
-            </a>
-          </div>
+          <ul
+            className={`plain-list ${styles.actions} ${styles.item}`}
+            style={order(3 + profile.intro.length)}
+            aria-label="Find me elsewhere"
+          >
+            {buildHeroLinks(site).map((link, index) => (
+              <li key={link.key}>
+                <a
+                  className={index === 0 ? "button button--primary" : "button"}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <HeroIcon name={link.key} />
+                  {link.label}{" "}
+                  <span className="visually-hidden">
+                    {link.key === "cv" ? "(PDF, opens in a new tab)" : "(opens in a new tab)"}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className={`${styles.artCol} ${styles.artItem}`}>
@@ -54,13 +135,6 @@ export function Intro({ site, profile, hasProjects }: IntroProps) {
             <BongoCat />
           </InView>
         </div>
-
-        <a href="#work" className={`${styles.scrollCue} ${styles.item}`} style={order(6)}>
-          <span className={styles.cueTrack} aria-hidden="true">
-            <span className={styles.cueDot} />
-          </span>
-          <span className={styles.cueLabel}>Scroll to my work</span>
-        </a>
       </div>
     </section>
   );

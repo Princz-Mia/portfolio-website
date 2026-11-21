@@ -88,6 +88,23 @@ describe("coffee mug", () => {
     expect(dialog).toHaveAttribute("open");
   });
 
+  it("keeps the coffee window one size, with the log scrolling inside it", () => {
+    renderScene();
+    touchMug(3);
+    const dialog = screen.getByRole("dialog", { name: "coffee.jar" });
+    expect(dialog).toHaveAttribute("data-size", "fixed");
+
+    brew();
+
+    // The log is the scrolling part, reachable by keyboard; the closing lines
+    // and the button come after it, outside the scrolling area.
+    const log = within(dialog).getByRole("log", { name: "coffee.jar output" });
+    expect(log).toHaveAttribute("tabindex", "0");
+    const close = within(dialog).getByRole("button", { name: "Close" });
+    expect(log.contains(close)).toBe(false);
+    expect(log.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("brews line by line, and offers no payment link without a support page", () => {
     renderScene();
     touchMug(3);

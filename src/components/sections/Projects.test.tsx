@@ -24,7 +24,8 @@ describe("Projects", () => {
   it("renders each project with its status and link", () => {
     render(<Projects projects={[project]} />);
 
-    expect(screen.getByRole("heading", { name: "Selected projects" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Portfolio" })).toBeInTheDocument();
+    expect(screen.getByText("Selected projects")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Example project" })).toBeInTheDocument();
     expect(screen.getByText("Early development")).toBeInTheDocument();
     expect(screen.getByText("Checked in November 2026.")).toBeInTheDocument();

@@ -15,6 +15,7 @@ export function Personal({ personal, number }: PersonalProps) {
     <Section
       id="off-the-clock"
       number={number}
+      label="Hobbies"
       title="Off the clock"
       lede="Movies, games, friends and cats."
       art={

@@ -43,6 +43,11 @@ describe("site content", () => {
     expect(site.email).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]+$/i);
   });
 
+  it("points the CV at a PDF under public/ when one is set", () => {
+    const cv = site.cvUrl;
+    expect(cv === null || /^\/\S+\.pdf$/i.test(cv)).toBe(true);
+  });
+
   it("contains no filler or inflated wording", () => {
     const forbidden = [
       /lorem ipsum/i,

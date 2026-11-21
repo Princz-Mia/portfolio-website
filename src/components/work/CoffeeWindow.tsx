@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { desk } from "@/content";
 import { DeskWindow } from "./DeskWindow";
 import styles from "./CoffeeWindow.module.css";
@@ -30,6 +30,7 @@ const prefersReducedMotion = () =>
 function Brew({ onClose }: { onClose: () => void }) {
   const [shown, setShown] = useState(() => (prefersReducedMotion() ? BREW.length : 0));
   const done = shown >= BREW.length;
+  const logRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     if (shown >= BREW.length) return;
@@ -37,11 +38,24 @@ function Brew({ onClose }: { onClose: () => void }) {
     return () => window.clearTimeout(timer);
   }, [shown]);
 
+  // Like a terminal, the log follows its newest line once it overflows.
+  useEffect(() => {
+    const log = logRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [shown]);
+
   const supportUrl = desk.supportUrl;
 
   return (
-    <>
-      <ol className={styles.log} role="log" aria-label="coffee.jar output">
+    <div className={styles.body}>
+      <ol
+        ref={logRef}
+        className={styles.log}
+        role="log"
+        aria-label="coffee.jar output"
+        // Scrolls when the text overflows, so it must be reachable by keyboard.
+        tabIndex={0}
+      >
         {BREW.slice(0, shown).map((step) => (
           <li key={step.text} className={step.kind ? styles[step.kind] : undefined}>
             {step.kind === "bar" ? (
@@ -84,7 +98,7 @@ function Brew({ onClose }: { onClose: () => void }) {
           )}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -104,7 +118,14 @@ export function CoffeeWindow({
   opener: RefObject<HTMLElement | null>;
 }) {
   return (
-    <DeskWindow open={open} onClose={onClose} opener={opener} title="coffee.jar" closeLabel="Close coffee.jar">
+    <DeskWindow
+      open={open}
+      onClose={onClose}
+      opener={opener}
+      title="coffee.jar"
+      closeLabel="Close coffee.jar"
+      size="fixed"
+    >
       {open ? <Brew onClose={onClose} /> : null}
     </DeskWindow>
   );

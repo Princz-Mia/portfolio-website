@@ -13,7 +13,8 @@ export function Contact({ site, number }: ContactProps) {
     <Section
       id="contact"
       number={number}
-      title="Contact"
+      label="Contact"
+      title="Reach out"
       lede="Email is the most reliable way to reach me."
       art={<ContactArt />}
       side="left"

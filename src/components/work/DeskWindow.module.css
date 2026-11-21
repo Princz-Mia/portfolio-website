@@ -24,7 +24,19 @@
 }
 
 .window::backdrop {
-  background: rgb(63 53 50 / 0.35);
+  background: color-mix(in srgb, var(--art-dark) 35%, transparent);
+}
+
+/* The terminal text is dark ink on paper; on the dark paper it turns light. */
+:global(html[data-theme="dark"]) .window {
+  color: var(--ink);
+}
+
+/* On dark paper a light dim barely shows, so the page behind goes much darker
+   and slightly soft, and the window clearly stands in front of it. */
+:global(html[data-theme="dark"]) .window::backdrop {
+  background: color-mix(in srgb, var(--art-dark) 82%, transparent);
+  backdrop-filter: blur(2px);
 }
 
 /* Holds the page still behind an open window, so a swipe cannot scroll it away. */
@@ -36,6 +48,25 @@
 
 .panel {
   padding: 0 1rem 1rem;
+}
+
+/* One size whatever the content: the title bar stays and the content area
+   below it takes the rest of the height, scrolling inside itself. */
+.fixed {
+  height: min(80dvh, 24rem);
+  max-height: none;
+  overflow: hidden;
+}
+
+.fixed .panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.fixed .titleBar {
+  flex: none;
 }
 
 .titleBar {
@@ -54,7 +85,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgb(138 127 118 / 0.5);
+  background: color-mix(in srgb, var(--art-ink) 50%, transparent);
 }
 
 .dots i:first-child {
@@ -102,8 +133,8 @@
   left: 50%;
   width: 6.5rem;
   height: 24px;
-  border: 1px solid rgb(138 127 118 / 0.35);
-  background: rgb(235 228 218 / 0.85);
+  border: 1px solid color-mix(in srgb, var(--art-ink) 35%, transparent);
+  background: color-mix(in srgb, var(--art-shade) 85%, transparent);
   translate: -50% 0;
   rotate: 3deg;
   pointer-events: none;

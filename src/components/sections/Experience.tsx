@@ -24,7 +24,8 @@ export function Experience({ roles, technical }: ExperienceProps) {
     <Section
       id="work"
       number="01"
-      title="Work"
+      label="Work"
+      title="Experience"
       lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
       art={
         <LaptopScreen>

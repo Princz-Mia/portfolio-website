@@ -14,6 +14,12 @@ type DeskWindowProps = {
   opener: RefObject<HTMLElement | null>;
   /** A window like the laptop's terminal, or a big sticky note. */
   variant?: "window" | "note";
+  /**
+   * "fixed" keeps the window one size whatever its content: the title bar stays
+   * put and the content fills the rest, scrolling inside it. "auto" (the
+   * default) fits the content up to a maximum height.
+   */
+  size?: "auto" | "fixed";
   children: ReactNode;
 };
 
@@ -30,6 +36,7 @@ export function DeskWindow({
   closeLabel,
   opener,
   variant = "window",
+  size = "auto",
   children,
 }: DeskWindowProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -46,7 +53,10 @@ export function DeskWindow({
   return (
     <dialog
       ref={dialogRef}
-      className={`${styles.window} ${variant === "note" ? styles.note : ""}`}
+      className={[styles.window, variant === "note" ? styles.note : "", size === "fixed" ? styles.fixed : ""]
+        .filter(Boolean)
+        .join(" ")}
+      data-size={size}
       aria-labelledby={titleId}
       onClose={() => {
         onClose();

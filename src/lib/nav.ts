@@ -4,8 +4,10 @@ export type NavItem = {
 };
 
 /**
- * Main navigation. The projects entry appears only when there is at least one
- * project to show, so the section and its link disappear together.
+ * Main navigation. Each label is a short form of its section's eyebrow (for
+ * example "Projects" for "Selected projects"). The projects entry appears
+ * only when there is at least one project to show, so the section and its link
+ * disappear together.
  */
 export function buildNavItems(options: { hasProjects: boolean }): NavItem[] {
   return [
@@ -15,6 +17,7 @@ export function buildNavItems(options: { hasProjects: boolean }): NavItem[] {
       : []),
     { label: "Academic", href: "#academic" },
     { label: "Teaching", href: "#teaching" },
+    { label: "Hobbies", href: "#off-the-clock" },
     { label: "Contact", href: "#contact" },
   ];
 }

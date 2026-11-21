@@ -16,4 +16,7 @@ export const site: SiteConfig = {
   // "https://teaching.example.com". Until then the teaching section shows an
   // email prompt instead of a link.
   teachingSiteUrl: null,
+  // CV as a PDF: path under public/, e.g. /cv/mia-princz-cv.pdf. While null the
+  // hero shows no CV button.
+  cvUrl: null,
 };

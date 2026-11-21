@@ -16,7 +16,8 @@ export function Academic({ academic, number }: AcademicProps) {
     <Section
       id="academic"
       number={number}
-      title="Academic work"
+      label="Academic work"
+      title="Education"
       lede="Master's studies at BME: software engineering and distributed systems, with an eye on modeling and verification."
       art={<AcademicArt />}
       side="right"
@@ -30,7 +31,7 @@ export function Academic({ academic, number }: AcademicProps) {
       </div>
 
       <div className={`${styles.education} reveal`}>
-        <h3 className={styles.educationTitle}>Education</h3>
+        <h3 className={styles.educationTitle}>Degrees</h3>
         <ol className={`plain-list ${styles.degrees}`}>
           {academic.education.map((entry) => (
             <li key={entry.degree} className={styles.degree}>
