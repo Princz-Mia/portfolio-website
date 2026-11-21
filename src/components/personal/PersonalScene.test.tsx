@@ -1,4 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatPhoto } from "@/content";
 import {
@@ -12,14 +15,25 @@ import { PersonalScene, PETS_FOR_SURPRISE } from "./PersonalScene";
 
 const sound = vi.hoisted(() => ({
   playPurr: vi.fn(() => true),
-  playHordeHorn: vi.fn(() => true),
+  playHordeHorn: vi.fn<(file?: string | null, onDone?: () => void) => boolean>(() => true),
+  getAudioContext: vi.fn((): unknown => ({})),
+  loadRecording: vi.fn<(url: string) => Promise<null>>(() => Promise.resolve(null)),
+  prefetchRecording: vi.fn<(url: string) => Promise<null>>(() => Promise.resolve(null)),
+  playRecording: vi.fn(() => null),
 }));
 
 vi.mock("@/lib/sound", () => ({
   HORN_SECONDS: 2.6,
   playPurr: sound.playPurr,
   playHordeHorn: sound.playHordeHorn,
+  getAudioContext: sound.getAudioContext,
+  loadRecording: sound.loadRecording,
+  prefetchRecording: sound.prefetchRecording,
+  playRecording: sound.playRecording,
 }));
+
+const HORN = "/audio/horde-horn.ogg";
+const LINE = "/audio/lich-king.wav";
 
 const photos: CatPhoto[] = [
   { src: "/cats/one.jpg", alt: "A grey cat on a sofa", width: 800, height: 600, caption: "Nap time" },
@@ -34,26 +48,9 @@ function renderScene(catPhotos: CatPhoto[] = []) {
   );
 }
 
-/** Stands in for the audio element, which the test environment cannot play or load. */
-class SilentAudio {
-  preload = "";
-  volume = 1;
-  currentTime = 0;
-  constructor(public src: string) {}
-  addEventListener() {}
-  removeEventListener() {}
-  removeAttribute() {}
-  load() {}
-  pause() {}
-  play() {
-    return Promise.resolve();
-  }
-}
-
 beforeEach(() => {
-  sound.playPurr.mockClear();
-  sound.playHordeHorn.mockClear();
-  vi.stubGlobal("Audio", SilentAudio);
+  for (const mock of Object.values(sound)) mock.mockClear();
+  sound.playHordeHorn.mockImplementation(() => true);
 });
 
 afterEach(() => {
@@ -158,22 +155,80 @@ describe("PersonalScene", () => {
     expect(cat).toHaveFocus();
   });
 
-  it("sounds the war horn once until it has finished", () => {
+  it("sounds the war horn once, and billows the cloth until the horn has finished", () => {
     vi.useFakeTimers();
     const { container } = renderScene();
+    const scene = container.querySelector('[data-scene="personal"]');
     const banner = screen.getByRole("button", { name: "Sound the Horde war horn" });
     fireEvent.click(banner);
     fireEvent.click(banner);
     expect(sound.playHordeHorn).toHaveBeenCalledTimes(1);
-    expect(sound.playHordeHorn).toHaveBeenCalledWith(null);
-    expect(container.querySelector('[data-scene="personal"]')).toHaveAttribute("data-horn", "true");
+    expect(sound.playHordeHorn).toHaveBeenCalledWith(null, expect.any(Function));
+    expect(scene).toHaveAttribute("data-horn", "true");
 
+    // However long the horn sounds, the scene waits for it.
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(5000);
     });
-    expect(container.querySelector('[data-scene="personal"]')).not.toHaveAttribute("data-horn");
+    expect(scene).toHaveAttribute("data-horn", "true");
+    fireEvent.click(banner);
+    expect(sound.playHordeHorn).toHaveBeenCalledTimes(1);
+
+    const onDone = sound.playHordeHorn.mock.calls[0][1];
+    act(() => onDone?.());
+    expect(scene).not.toHaveAttribute("data-horn");
     fireEvent.click(banner);
     expect(sound.playHordeHorn).toHaveBeenCalledTimes(2);
+  });
+
+  it("still billows the cloth for a while when no horn can sound", () => {
+    vi.useFakeTimers();
+    sound.playHordeHorn.mockImplementation(() => false);
+    const { container } = renderScene();
+    const scene = container.querySelector('[data-scene="personal"]');
+    fireEvent.click(screen.getByRole("button", { name: "Sound the Horde war horn" }));
+    expect(scene).toHaveAttribute("data-horn", "true");
+    act(() => {
+      vi.advanceTimersByTime(2600);
+    });
+    expect(scene).not.toHaveAttribute("data-horn");
+  });
+
+  it("fetches the recordings on hover or focus, and decodes them on the first press", () => {
+    const { container } = render(
+      <PersonalScene catPhotos={[]} hornSrc={HORN}>
+        <PersonalArt />
+      </PersonalScene>,
+    );
+    const scene = container.querySelector('[data-scene="personal"]') as HTMLElement;
+
+    // Hovering needs no audio context: only the bytes are fetched.
+    fireEvent.pointerEnter(scene);
+    expect(sound.prefetchRecording).toHaveBeenCalledWith(HORN);
+    expect(sound.prefetchRecording).toHaveBeenCalledWith(LINE);
+    expect(sound.getAudioContext).not.toHaveBeenCalled();
+    expect(sound.loadRecording).not.toHaveBeenCalled();
+
+    sound.prefetchRecording.mockClear();
+    fireEvent.focus(screen.getByRole("button", { name: "Pet the cat" }));
+    expect(sound.prefetchRecording).toHaveBeenCalledTimes(2);
+
+    // A press is a user gesture: the context starts first, then both decode.
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Poke the Lich King figure" }));
+    expect(sound.getAudioContext).toHaveBeenCalledTimes(1);
+    expect(sound.loadRecording).toHaveBeenCalledWith(HORN);
+    expect(sound.loadRecording).toHaveBeenCalledWith(LINE);
+    expect(sound.getAudioContext.mock.invocationCallOrder[0]).toBeLessThan(
+      sound.loadRecording.mock.invocationCallOrder[0],
+    );
+    expect(sound.playHordeHorn).not.toHaveBeenCalled();
+  });
+
+  it("does not decode anything where there is no audio", () => {
+    sound.getAudioContext.mockImplementationOnce(() => null);
+    const { container } = renderScene();
+    fireEvent.pointerDown(container.querySelector('[data-scene="personal"]') as HTMLElement);
+    expect(sound.loadRecording).not.toHaveBeenCalled();
   });
 
   it("hides the hint after the first interaction", () => {
@@ -300,5 +355,51 @@ describe("PersonalScene hotspots", () => {
     const hint = screen.getByText("psst: everything here is clickable");
     fireEvent.click(screen.getByRole("button", { name: "Poke the Lich King figure" }));
     expect(hint).toHaveAttribute("data-hidden", "true");
+  });
+});
+
+describe("PersonalScene by day and by night", () => {
+  const css = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../illustrations/PersonalArt.module.css"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("draws both a sun and a moon, and the cat both awake and asleep", () => {
+    const { container } = renderScene();
+    const art = container.querySelector('svg[aria-labelledby="personal-art-title"]');
+    expect(art?.querySelector('[data-part="sun"]')).not.toBeNull();
+    expect(art?.querySelector('[data-part="moon"]')).not.toBeNull();
+    expect(art?.querySelector('[data-part="cat-eyes"]')).not.toBeNull();
+    expect(art?.querySelector('[data-part="cat-eyes-happy"]')).not.toBeNull();
+    expect(art?.querySelector('[data-part="zzz"]')).not.toBeNull();
+    // The open eyes sit inside the cat, so purring moves them with it.
+    expect(art?.querySelector('[data-part="cat"] [data-part="cat-eyes"]')).not.toBeNull();
+  });
+
+  it("describes both states in the drawing's title", () => {
+    renderScene();
+    const title = screen.getByRole("img", { name: /Horde war banner/ }).querySelector("title");
+    expect(title?.textContent).toMatch(/sun/);
+    expect(title?.textContent).toMatch(/moon/);
+    expect(title?.textContent).toMatch(/awake/);
+    expect(title?.textContent).toMatch(/asleep/);
+  });
+
+  it("shows night only in the dark theme, or with a dark system theme and no choice made", () => {
+    // Day by default, night hidden.
+    expect(css).toMatch(/(^|\n)\.night\s*\{\s*display:\s*none;/);
+    expect(css).toMatch(/:global\(html\[data-theme="dark"\]\) \.day\s*\{\s*display:\s*none;/);
+    expect(css).toMatch(/:global\(html\[data-theme="dark"\]\) \.night\s*\{\s*display:\s*inline;/);
+    const fallback = css.slice(css.indexOf("@media (prefers-color-scheme: dark)"));
+    expect(fallback).toMatch(/:global\(html:not\(\[data-theme\]\)\) \.day\s*\{\s*display:\s*none;/);
+    expect(fallback).toMatch(/:global\(html:not\(\[data-theme\]\)\) \.night\s*\{\s*display:\s*inline;/);
+  });
+
+  it("never puts the turning rays or the blink on an element with a transform attribute", () => {
+    const { container } = renderScene();
+    const art = container.querySelector('svg[aria-labelledby="personal-art-title"]');
+    const animated = art?.querySelectorAll('[data-part="sun"] g, [data-part="cat-eyes"] g') ?? [];
+    expect(animated.length).toBeGreaterThan(0);
+    animated.forEach((node) => expect(node.hasAttribute("transform")).toBe(false));
   });
 });

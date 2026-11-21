@@ -1,0 +1,156 @@
+/*
+ * Day and night in the "Off the clock" drawing. PersonalArt draws both: the
+ * sun and the cat awake (`.day`), the moon, a few stars and the cat asleep
+ * with its zzz (`.night`). The page's theme picks one: the light theme is day
+ * and the dark theme is night. The theme is <html data-theme>, set before the
+ * first paint; without it (no script) the system colour scheme decides. So
+ * the drawing changes the moment the theme does, and needs no script itself.
+ */
+
+.night {
+  display: none;
+}
+
+:global(html[data-theme="dark"]) .day {
+  display: none;
+}
+
+:global(html[data-theme="dark"]) .night {
+  display: inline;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .day {
+    display: none;
+  }
+
+  :global(html:not([data-theme])) .night {
+    display: inline;
+  }
+}
+
+/* ---------- sky ---------- */
+
+/*
+ * A warm accent wash, so the disc stands out from the pale halo behind it;
+ * no offset shadow, so the outline and the rays carry its shape.
+ */
+.sunDisc {
+  fill: color-mix(in srgb, var(--art-accent) 40%, var(--paper));
+}
+
+.rays {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+[data-anim="in"] .rays {
+  animation: rays 48s linear infinite;
+}
+
+.rayPulse {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+[data-anim="in"] .rayPulse {
+  animation: rayPulse 4.8s ease-in-out infinite;
+}
+
+@keyframes rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rayPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.07);
+    opacity: 0.75;
+  }
+}
+
+.moon {
+  fill: var(--art-ink-strong);
+}
+
+.moonGlow {
+  fill: var(--art-ink-strong);
+  opacity: 0.1;
+}
+
+/* ---------- the cat ---------- */
+
+.eye {
+  fill: var(--art-dark);
+}
+
+/* The catch-light: paper in the light theme, pale ink on the dark paper. */
+.shine {
+  fill: var(--paper);
+}
+
+:global(html[data-theme="dark"]) .shine {
+  fill: var(--art-ink-strong);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .shine {
+    fill: var(--art-ink-strong);
+  }
+}
+
+/* ---------- the popcorn ---------- */
+
+/*
+ * Popcorn and the bucket's white stripes are paper in the light theme. On the
+ * dark paper that would make them look burnt, so there they are a pale cream
+ * (the bucket a little dimmer than the popcorn) with darker inner lines.
+ */
+.popcorn,
+.bucketWhite {
+  fill: var(--paper);
+}
+
+:global(html[data-theme="dark"]) .popcorn {
+  fill: var(--art-ink-strong);
+}
+
+:global(html[data-theme="dark"]) .bucketWhite {
+  fill: color-mix(in srgb, var(--art-ink-strong) 86%, var(--paper));
+}
+
+:global(html[data-theme="dark"]) .popcornLine {
+  stroke: var(--art-fur);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .popcorn {
+    fill: var(--art-ink-strong);
+  }
+
+  :global(html:not([data-theme])) .bucketWhite {
+    fill: color-mix(in srgb, var(--art-ink-strong) 86%, var(--paper));
+  }
+
+  :global(html:not([data-theme])) .popcornLine {
+    stroke: var(--art-fur);
+  }
+}
+
+/* Closed happily while it is petted; the scene shows these. */
+.happy {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim="in"] .rays,
+  [data-anim="in"] .rayPulse {
+    animation: none;
+  }
+}

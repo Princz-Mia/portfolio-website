@@ -1,5 +1,6 @@
 import { LICH_FIGURE, LICH_HEAD, LICH_TARGET, LichKingFigure } from "./LichKingFigure";
 import { Sparkle, Tube, delay, origin, s } from "./parts";
+import p from "./PersonalArt.module.css";
 
 /** Centre line of the war standard: the pole, hub and emblem sit on it. */
 const POLE_X = 160;
@@ -43,6 +44,19 @@ const CUSHION =
 const CONTROLLER =
   "M206 374 C192 374 186 388 190 398 C193 405 202 405 208 399 L216 392 H248 L256 399 C262 405 271 405 274 398 C278 388 272 374 258 374 Z";
 const BUCKET = "M444 324 L508 324 L498 400 H454 Z";
+
+/** Centre of the sky's light: the sun by day, the moon by night. */
+const SKY = { x: 450, y: 112 } as const;
+/** The sun's rays: twelve short strokes, long and short in turn, round its disc. */
+const RAYS = Array.from({ length: 12 }, (_, i) => {
+  const angle = (i * Math.PI) / 6;
+  const inner = 25;
+  const outer = i % 2 === 0 ? 33 : 29.5;
+  const at = (r: number) =>
+    `${(SKY.x + Math.cos(angle) * r).toFixed(2)} ${(SKY.y + Math.sin(angle) * r).toFixed(2)}`;
+  return `M${at(inner)} L${at(outer)}`;
+}).join(" ");
+const MOON = "M460.2 89.4 A24 24 0 1 0 460.2 134.6 A26 26 0 0 1 460.2 89.4 Z";
 
 /** The floor line the pole socket, the controller, the cushion and the figure stand on. */
 const FLOOR_Y = 404;
@@ -169,15 +183,19 @@ function Clasp() {
 /**
  * Off the clock: a Horde war standard from Durotar (horned crossbar, spiked
  * finial, tattered red cloth with the emblem in black), drawn as a fan-art
- * homage. At its foot a grey cat sleeps curled on a cushion, with a game
- * controller on the floor and a striped bucket of popcorn, under a crescent
- * moon; left of the pole a vinyl Lich King on the Frozen Throne stands on the
- * floor.
+ * homage. At its foot a grey cat lies curled on a cushion, with a game
+ * controller on the floor and a striped bucket of popcorn; left of the pole a
+ * vinyl Lich King on the Frozen Throne stands on the floor.
+ *
+ * It follows the page's theme: in the light theme it is day, with a sun whose
+ * rays turn slowly and the cat awake (eyes open, blinking now and then, ears
+ * up); in the dark theme it is night, with a crescent moon, a few stars and
+ * the cat asleep with its zzz. Both are drawn, and the stylesheet shows one.
  *
  * The parts that react to the viewer carry `data-part` (cloth, cat, cat-ear,
- * zzz, controller, bucket, lich) so a wrapper can animate them without the
- * drawing itself needing any script; the figure's poses follow the wrapper's
- * data-lich and data-lich-poke attributes.
+ * cat-eyes, cat-eyes-happy, zzz, controller, bucket, lich) so a wrapper can
+ * animate them without the drawing itself needing any script; the figure's
+ * poses follow the wrapper's data-lich and data-lich-poke attributes.
  */
 export function PersonalArt({ className }: { className?: string }) {
   return (
@@ -192,9 +210,10 @@ export function PersonalArt({ className }: { className?: string }) {
     >
       <title id="personal-art-title">
         Illustration of a red Horde war banner with curved horns and the Horde
-        emblem, a grey cat asleep on a cushion at its foot, a Lich King figure
-        on its throne standing on the floor beside the banner pole, a game
-        controller and a bucket of popcorn under a crescent moon
+        emblem, a grey cat on a cushion at its foot, a Lich King figure on its
+        throne standing on the floor beside the banner pole, a game controller
+        and a bucket of popcorn. By day the sun shines and the cat is awake; by
+        night a crescent moon is out and the cat is asleep
       </title>
 
       <defs>
@@ -205,11 +224,32 @@ export function PersonalArt({ className }: { className?: string }) {
 
       {/* ---------- backdrop ---------- */}
       <ellipse cx="270" cy="222" rx="240" ry="176" className={s.blob} />
-      <circle cx="450" cy="112" r="50" className={s.blobShade} />
-      <path
-        d="M460.2 89.4 A24 24 0 1 0 460.2 134.6 A26 26 0 0 1 460.2 89.4 Z"
-        className={`${s.line} ${s.paper}`}
-      />
+      <circle cx={SKY.x} cy={SKY.y} r="50" className={s.blobShade} />
+
+      {/* day: the sun, its rays turning slowly */}
+      <g className={p.day} data-part="sun">
+        <g className={p.rays}>
+          <g className={p.rayPulse}>
+            <path d={RAYS} className={`${s.accentLine} ${s.bold}`} />
+          </g>
+        </g>
+        <circle cx={SKY.x} cy={SKY.y} r="18" className={p.sunDisc} />
+        <circle cx={SKY.x} cy={SKY.y} r="18" className={s.line} />
+        <path
+          d={`M${SKY.x - 10} ${SKY.y - 4} A11 11 0 0 1 ${SKY.x - 3} ${SKY.y - 11}`}
+          className={`${s.line} ${s.thin}`}
+        />
+      </g>
+
+      {/* night: a crescent moon with a faint glow, and a few stars */}
+      <g className={p.night} data-part="moon">
+        <circle cx={SKY.x} cy={SKY.y} r="34" className={p.moonGlow} />
+        <path d={MOON} className={p.moon} />
+        <path d={MOON} className={s.line} />
+        <Sparkle x={404} y={78} size={4} wait={0.6} tone="ink" />
+        <Sparkle x={378} y={150} size={3.5} wait={2} tone="ink" />
+        <Sparkle x={500} y={170} size={4} wait={1.4} tone="ink" />
+      </g>
       <ellipse cx="300" cy="404" rx="226" ry="8" className={s.shade} />
 
       {/* ---------- war standard ---------- */}
@@ -375,18 +415,34 @@ export function PersonalArt({ className }: { className?: string }) {
           className={`${s.line} ${s.strong}`}
         />
 
-        {/* head */}
-        <path
-          d="M282 314 L278 284 Q279 278 285 281 L304 298 Z"
-          className={`${s.line} ${s.fur}`}
-        />
-        <path d="M284 306 L282 289 L296 299 Z" className={s.tint} />
-        <g data-part="cat-ear">
+        {/* head: the ears stand a little taller while it is awake */}
+        <g className={p.night}>
           <path
-            d="M334 314 L338 284 Q337 278 331 281 L312 298 Z"
+            d="M282 314 L278 284 Q279 278 285 281 L304 298 Z"
             className={`${s.line} ${s.fur}`}
           />
-          <path d="M332 306 L334 289 L320 299 Z" className={s.tint} />
+          <path d="M284 306 L282 289 L296 299 Z" className={s.tint} />
+          <g data-part="cat-ear">
+            <path
+              d="M334 314 L338 284 Q337 278 331 281 L312 298 Z"
+              className={`${s.line} ${s.fur}`}
+            />
+            <path d="M332 306 L334 289 L320 299 Z" className={s.tint} />
+          </g>
+        </g>
+        <g className={p.day}>
+          <path
+            d="M282 314 L276.5 279 Q277.5 273 283.5 276.5 L304 298 Z"
+            className={`${s.line} ${s.fur}`}
+          />
+          <path d="M284 306 L281 285 L296 299 Z" className={s.tint} />
+          <g data-part="cat-ear">
+            <path
+              d="M334 314 L339.5 279 Q338.5 273 332.5 276.5 L312 298 Z"
+              className={`${s.line} ${s.fur}`}
+            />
+            <path d="M332 306 L335 285 L320 299 Z" className={s.tint} />
+          </g>
         </g>
         <path
           d="M276 330 C276 308 290 296 308 296 C326 296 340 308 340 328 C340 346 326 356 308 356 C290 356 276 348 276 330 Z"
@@ -400,10 +456,28 @@ export function PersonalArt({ className }: { className?: string }) {
           d="M298 337 C298 331 303 329 308 332 C313 329 318 331 318 337 C318 343 313 347 308 347 C303 347 298 343 298 337 Z"
           className={s.paper}
         />
+        {/* asleep: eyes shut */}
         <path
           d="M288 326 Q295 332 302 326 M314 326 Q321 332 328 326"
-          className={`${s.line} ${s.strong} ${s.bold}`}
+          className={`${s.line} ${s.strong} ${s.bold} ${p.night}`}
         />
+        {/* awake: eyes open with a catch-light, blinking now and then, and
+            shut happily while it is petted */}
+        <g className={p.day}>
+          <g data-part="cat-eyes">
+            <g className={s.blink}>
+              <ellipse cx="295" cy="327.5" rx="4.6" ry="5.4" className={p.eye} />
+              <ellipse cx="321" cy="327.5" rx="4.6" ry="5.4" className={p.eye} />
+              <circle cx="293.4" cy="325.4" r="1.6" className={p.shine} />
+              <circle cx="319.4" cy="325.4" r="1.6" className={p.shine} />
+            </g>
+          </g>
+          <path
+            d="M288.5 330 Q295 323 301.5 330 M314.5 330 Q321 323 327.5 330"
+            className={`${s.line} ${s.strong} ${s.bold} ${p.happy}`}
+            data-part="cat-eyes-happy"
+          />
+        </g>
         <ellipse cx="290" cy="338" rx="6.5" ry="4" className={s.tint} />
         <ellipse cx="326" cy="338" rx="6.5" ry="4" className={s.tint} />
         <path d="M304 333 Q308 331 312 333 L308 338 Z" className={s.accent} />
@@ -425,8 +499,8 @@ export function PersonalArt({ className }: { className?: string }) {
         />
       </g>
 
-      {/* zzz */}
-      <g data-part="zzz">
+      {/* zzz, while it sleeps */}
+      <g data-part="zzz" className={p.night}>
         <g className={s.float} style={delay(0)}>
           <text x="346" y="272" className={s.script} fontSize="24">
             z
@@ -473,13 +547,13 @@ export function PersonalArt({ className }: { className?: string }) {
           <path d={BUCKET} className={s.tint} transform="translate(7 6)" />
           <path
             d="M446 318 C438 306 450 296 460 302 C462 290 478 290 481 300 C487 290 504 294 502 306 C512 306 512 318 506 318 Z"
-            className={`${s.line} ${s.paper}`}
+            className={`${s.line} ${p.popcorn}`}
           />
           <path
             d="M458 310 C462 306 468 308 468 312 M484 306 C488 302 494 304 494 308"
-            className={`${s.line} ${s.thin}`}
+            className={`${s.line} ${s.thin} ${p.popcornLine}`}
           />
-          <path d={BUCKET} className={s.paper} />
+          <path d={BUCKET} className={p.bucketWhite} />
           <path
             d="M460 324 H476 V400 H465 Z M492 324 H508 L498 400 H487 Z"
             className={s.accent}
@@ -491,7 +565,7 @@ export function PersonalArt({ className }: { className?: string }) {
             width="72"
             height="10"
             rx="3"
-            className={`${s.line} ${s.paper}`}
+            className={`${s.line} ${p.bucketWhite}`}
           />
         </g>
       </g>
@@ -499,7 +573,6 @@ export function PersonalArt({ className }: { className?: string }) {
       <Sparkle x={300} y={120} size={7} wait={0.4} />
       <Sparkle x={500} y={52} size={5} wait={1.1} tone="ink" />
       <Sparkle x={490} y={226} size={6} wait={1.8} />
-      <Sparkle x={26} y={250} size={6} wait={2.4} tone="ink" />
     </svg>
   );
 }

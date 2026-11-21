@@ -37,8 +37,6 @@ const STAND_HIP = 98 - LICH_POSE.rise;
 /** Ice blue, used only while the figure is awake. */
 const ICE = "#bfe6f2";
 const ICE_LINE = "#7fc8de";
-/** The throne's pale ice faces. */
-const ICE_FACE = "#e3eef1";
 
 /*
  * Line classes whose width follows the parent's `line` factor, so the figure
@@ -137,7 +135,7 @@ function Throne() {
       </g>
 
       {/* the back: a fan of ice shards with pale facets */}
-      <path d={back} className={L} style={{ fill: ICE_FACE }} />
+      <path d={back} className={`${L} ${f.ice}`} />
       <path
         d="M16 -6 L18.5 24 M35 -20 L35 14 M54 -6 L51.5 24 M-1 10 L2 40 M71 10 L68 40 M-12 34 L-4 70 M82 34 L74 70"
         className={PLT}
@@ -150,12 +148,12 @@ function Throne() {
       <path d="M-14 143 H88" className={LT} />
 
       {/* armrests */}
-      <path d={armL} className={L} style={{ fill: ICE_FACE }} />
-      <path d={armR} className={L} style={{ fill: ICE_FACE }} />
+      <path d={armL} className={`${L} ${f.ice}`} />
+      <path d={armR} className={`${L} ${f.ice}`} />
       <path d="M-5 70 V136 M75 70 V136" className={PLT} style={{ opacity: 1 }} />
 
       {/* seat */}
-      <path d={seat} className={L} style={{ fill: ICE_FACE }} />
+      <path d={seat} className={`${L} ${f.ice}`} />
       <path d={seatTop} className={`${L} ${s.paper}`} />
       <path
         d="M9 108 L15 134 M56 108 L62 132 M30 126 L40 136"
@@ -214,13 +212,11 @@ function Cape({
   // Hanging, the hem draws in a little, as cloth does when it falls straight.
   const left = hanging ? 14.5 : 11;
   const right = hanging ? 55.5 : 59;
-  const fill: CSSProperties | undefined = hanging ? { fill: "var(--art-ink-strong)" } : undefined;
   return (
     <>
       <path
         d={`M13 ${top} C11 ${top + 12} ${left - 0.5} ${mid + 8} ${left + 0.5} ${hem + 1} H${right - 0.5} C${right + 0.5} ${mid + 8} 59 ${top + 12} 57 ${top} Z`}
-        className={`${L} ${s.shade}`}
-        style={fill}
+        className={`${L} ${s.shade} ${hanging ? f.capeHanging : ""}`}
       />
       <path
         d={`M${left} ${hem} C${left + 6} ${hem - 2} 22 ${hem + 1} 28 ${hem - 1} C34 ${hem + 1} 38 ${hem - 2} 44 ${hem} C50 ${hem - 2} ${right - 5} ${hem + 1} ${right} ${hem - 1} L${right} ${hem + 3} C${right - 5} ${hem + 6} 50 ${hem + 3} 44 ${hem + 5} C38 ${hem + 3} 34 ${hem + 6} 28 ${hem + 4} C22 ${hem + 6} ${left + 6} ${hem + 3} ${left} ${hem + 5} Z`}
@@ -368,7 +364,7 @@ export function LichKingFigure({ line = 1 }: { line?: number }) {
               <circle cx={x} cy="41.5" r="8" className={`${s.paper} ${s.pulse}`} style={delay(i * 0.2)} />
             </g>
             <circle cx={x} cy="41.5" r="5.6" className={s.fur} />
-            <circle cx={x - 1.8} cy="39.7" r="1.5" className={s.paper} />
+            <circle cx={x - 1.8} cy="39.7" r="1.5" className={`${s.paper} ${f.shine}`} />
           </g>
         ))}
 

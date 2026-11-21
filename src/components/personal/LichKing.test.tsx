@@ -6,6 +6,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LICH_HEAD, LICH_POSE, LichKingFigure } from "@/components/illustrations/LichKingFigure";
 import { PersonalArt } from "@/components/illustrations/PersonalArt";
+import type { RecordingOptions } from "@/lib/sound";
 import { PersonalScene } from "./PersonalScene";
 import { AWAKE_MS, LICH_QUOTE, MAX_AWAKE_MS, POKES_TO_WAKE } from "./useLichKing";
 import { pickVoice, speak } from "./speech";
@@ -23,38 +24,57 @@ vi.mock("@/content", async (importOriginal) => {
   return { ...actual, sounds: content.sounds };
 });
 
-class FakeAudio {
-  static instances: FakeAudio[] = [];
-  static failToPlay = false;
-  src: string;
-  volume = 1;
-  preload = "";
-  currentTime = 0;
-  private listeners = new Map<string, Set<() => void>>();
-  play = vi.fn(() => (FakeAudio.failToPlay ? Promise.reject(new Error("blocked")) : Promise.resolve()));
-  pause = vi.fn();
-  load = vi.fn();
-  removeAttribute = vi.fn();
+/** A recording being played: the test ends it, or makes it fail, as the browser would. */
+type FakePlayback = {
+  url: string;
+  options: RecordingOptions;
+  stop: ReturnType<typeof vi.fn>;
+  end: () => void;
+  fail: () => void;
+};
 
-  constructor(src: string) {
-    this.src = src;
-    FakeAudio.instances.push(this);
-  }
+// Buffer playback stands in for the Web Audio API, which the test
+// environment lacks: each play is recorded and never stacks, like the real one.
+const audio = vi.hoisted(() => ({
+  plays: [] as FakePlayback[],
+  playing: new Set<string>(),
+}));
 
-  addEventListener(type: string, listener: () => void) {
-    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
-    this.listeners.get(type)?.add(listener);
-  }
-
-  removeEventListener(type: string, listener: () => void) {
-    this.listeners.get(type)?.delete(listener);
-  }
-
-  /** Fires an event at the element, as the browser would. */
-  emit(type: string) {
-    for (const listener of [...(this.listeners.get(type) ?? [])]) listener();
-  }
-}
+vi.mock("@/lib/sound", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/sound")>();
+  return {
+    ...actual,
+    getAudioContext: vi.fn(() => null),
+    loadRecording: vi.fn(() => Promise.resolve(null)),
+    prefetchRecording: vi.fn(() => Promise.resolve(null)),
+    playRecording: vi.fn((url: string, options: RecordingOptions = {}) => {
+      if (audio.playing.has(url)) return null;
+      audio.playing.add(url);
+      let done = false;
+      const finish = () => {
+        if (done) return false;
+        done = true;
+        audio.playing.delete(url);
+        return true;
+      };
+      const playback: FakePlayback = {
+        url,
+        options,
+        stop: vi.fn(() => {
+          finish();
+        }),
+        end: () => {
+          if (finish()) options.onEnd?.();
+        },
+        fail: () => {
+          if (finish()) options.onFail?.();
+        },
+      };
+      audio.plays.push(playback);
+      return { url, ended: Promise.resolve(), stop: playback.stop };
+    }),
+  };
+});
 
 class FakeUtterance {
   text: string;
@@ -100,10 +120,9 @@ describe("Lich King figure", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     speakSpy.mockReset();
-    FakeAudio.instances = [];
-    FakeAudio.failToPlay = false;
+    audio.plays = [];
+    audio.playing.clear();
     content.sounds.lichKingQuote = RECORDING;
-    vi.stubGlobal("Audio", FakeAudio);
     vi.stubGlobal("speechSynthesis", {
       speak: speakSpy,
       cancel: vi.fn(),
@@ -140,7 +159,7 @@ describe("Lich King figure", () => {
     expect(html).not.toContain("data-lich=");
   });
 
-  it("wobbles on a poke but stays seated after fewer than five", () => {
+  it("wobbles on a poke but stays seated, and silent, after fewer than five", () => {
     const { container } = renderScene();
 
     poke(1);
@@ -150,9 +169,7 @@ describe("Lich King figure", () => {
 
     poke(POKES_TO_WAKE - 3);
     expect(stateOf(container)).toBe("rest");
-    // The first poke loads the recording; nothing plays yet.
-    expect(FakeAudio.instances).toHaveLength(1);
-    expect(FakeAudio.instances[0].play).not.toHaveBeenCalled();
+    expect(audio.plays).toHaveLength(0);
   });
 
   it("does not count pokes spread far apart", () => {
@@ -175,27 +192,26 @@ describe("Lich King figure", () => {
     expect(bubbleOf(container)).toHaveTextContent(LICH_QUOTE);
     expect(bubbleOf(container)).toHaveAttribute("data-show");
     expect(screen.getByRole("status")).toHaveTextContent(LICH_QUOTE);
-    expect(FakeAudio.instances).toHaveLength(1);
-    const [audio] = FakeAudio.instances;
-    expect(audio.src).toBe(RECORDING);
-    expect(audio.play).toHaveBeenCalledTimes(1);
-    expect(audio.volume).toBeLessThan(1);
+    expect(audio.plays).toHaveLength(1);
+    const [line] = audio.plays;
+    expect(line.url).toBe(RECORDING);
+    expect(line.options.gain).toBeLessThanOrEqual(0.6);
     expect(speakSpy).not.toHaveBeenCalled();
 
     // More pokes while awake do not start the line again.
     poke(5);
-    expect(FakeAudio.instances).toHaveLength(1);
+    expect(audio.plays).toHaveLength(1);
   });
 
   it("stays awake until the recording has ended, then sits back down", () => {
     const { container } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     // The recording is 6.7 seconds long.
     advance(6670);
     expect(stateOf(container)).toBe("awake");
-    act(() => audio.emit("ended"));
+    act(() => line.end());
     expect(stateOf(container)).toBe("awake");
 
     advance(AWAKE_MS - 6670);
@@ -207,21 +223,24 @@ describe("Lich King figure", () => {
   it("waits for a recording that ends late instead of cutting it off", () => {
     const { container } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     advance(AWAKE_MS + 1500);
     expect(stateOf(container)).toBe("awake");
-    expect(audio.pause).not.toHaveBeenCalled();
+    expect(line.stop).not.toHaveBeenCalled();
 
-    act(() => audio.emit("ended"));
+    act(() => line.end());
     expect(stateOf(container)).toBe("rest");
   });
 
-  it("sits down after the shortest awake time when the recording cannot play", async () => {
-    FakeAudio.failToPlay = true;
+  it("speaks the line instead when the recording cannot be decoded, and sits down on time", () => {
     const { container } = renderScene();
     poke(5);
-    await act(async () => {});
+    const [line] = audio.plays;
+
+    act(() => line.fail());
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    expect((speakSpy.mock.calls[0][0] as FakeUtterance).text).toBe(LICH_QUOTE);
 
     advance(AWAKE_MS - 1);
     expect(stateOf(container)).toBe("awake");
@@ -232,12 +251,12 @@ describe("Lich King figure", () => {
   it("gives up on a recording that never ends", () => {
     const { container } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     advance(MAX_AWAKE_MS);
 
     expect(stateOf(container)).toBe("rest");
-    expect(audio.pause).toHaveBeenCalled();
+    expect(line.stop).toHaveBeenCalled();
   });
 
   it("speaks the line in a low voice when no recording is set", () => {
@@ -247,7 +266,7 @@ describe("Lich King figure", () => {
     poke(5);
 
     expect(stateOf(container)).toBe("awake");
-    expect(FakeAudio.instances).toHaveLength(0);
+    expect(audio.plays).toHaveLength(0);
     expect(speakSpy).toHaveBeenCalledTimes(1);
     const utterance = speakSpy.mock.calls[0][0] as FakeUtterance;
     expect(utterance.text).toBe(LICH_QUOTE);
@@ -268,41 +287,10 @@ describe("Lich King figure", () => {
     expect(speak("hello")).toBe(false);
   });
 
-  it("loads the recording when the figure is hovered or focused, without playing it", () => {
-    renderScene();
-
-    fireEvent.pointerEnter(pokeButton());
-    expect(FakeAudio.instances).toHaveLength(1);
-    const [audio] = FakeAudio.instances;
-    expect(audio.src).toBe(RECORDING);
-    expect(audio.preload).toBe("auto");
-    expect(audio.load).toHaveBeenCalled();
-    expect(audio.play).not.toHaveBeenCalled();
-
-    // Loading happens once, however often the figure is hovered or focused.
-    fireEvent.focus(pokeButton());
-    fireEvent.pointerEnter(pokeButton());
-    expect(FakeAudio.instances).toHaveLength(1);
-  });
-
-  it("plays the element loaded on the first poke when the fifth wakes the figure", () => {
-    renderScene();
-
-    poke(1);
-    expect(FakeAudio.instances).toHaveLength(1);
-    const [audio] = FakeAudio.instances;
-    expect(audio.preload).toBe("auto");
-    expect(audio.play).not.toHaveBeenCalled();
-
-    poke(POKES_TO_WAKE - 1);
-    expect(FakeAudio.instances).toHaveLength(1);
-    expect(audio.play).toHaveBeenCalledTimes(1);
-  });
-
   it("plays the line exactly once per awakening and never stops it before it ends", () => {
     const { container } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     // Pokes while awake, and the shortest awake time passing, neither
     // restart nor stop the line.
@@ -312,48 +300,44 @@ describe("Lich King figure", () => {
     }
     expect(2000 * 4).toBeGreaterThan(AWAKE_MS);
     expect(stateOf(container)).toBe("awake");
-    expect(audio.play).toHaveBeenCalledTimes(1);
-    expect(audio.pause).not.toHaveBeenCalled();
-    expect(audio.load).toHaveBeenCalledTimes(1);
-    expect(audio.removeAttribute).not.toHaveBeenCalled();
+    expect(audio.plays).toHaveLength(1);
+    expect(line.stop).not.toHaveBeenCalled();
 
-    act(() => audio.emit("ended"));
+    act(() => line.end());
     expect(stateOf(container)).toBe("rest");
 
-    // The next awakening plays the same, already loaded element from the start.
-    audio.currentTime = 6.67;
+    // The next awakening plays it again, from the start.
     poke(5);
     expect(stateOf(container)).toBe("awake");
-    expect(FakeAudio.instances).toHaveLength(1);
-    expect(audio.play).toHaveBeenCalledTimes(2);
-    expect(audio.currentTime).toBe(0);
+    expect(audio.plays).toHaveLength(2);
+    expect(audio.plays[1].url).toBe(RECORDING);
   });
 
   it("stops the line only when it gives up waiting, and does not hear its end afterwards", () => {
     const { container } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     advance(MAX_AWAKE_MS - 1);
-    expect(audio.pause).not.toHaveBeenCalled();
+    expect(line.stop).not.toHaveBeenCalled();
     advance(1);
     expect(stateOf(container)).toBe("rest");
-    expect(audio.pause).toHaveBeenCalledTimes(1);
+    expect(line.stop).toHaveBeenCalledTimes(1);
 
     // A late end of the stopped line does not affect the figure.
-    act(() => audio.emit("ended"));
+    act(() => line.options.onEnd?.());
     expect(stateOf(container)).toBe("rest");
   });
 
   it("clears its timers and stops the recording when unmounted while awake", () => {
     const { unmount } = renderScene();
     poke(5);
-    const [audio] = FakeAudio.instances;
+    const [line] = audio.plays;
 
     unmount();
 
     expect(vi.getTimerCount()).toBe(0);
-    expect(audio.pause).toHaveBeenCalled();
+    expect(line.stop).toHaveBeenCalled();
   });
 });
 

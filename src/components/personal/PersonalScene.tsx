@@ -15,7 +15,14 @@ import {
   PERSONAL_VIEW,
   type ArtBox,
 } from "@/components/illustrations/PersonalArt";
-import { HORN_SECONDS, playHordeHorn, playPurr } from "@/lib/sound";
+import {
+  HORN_SECONDS,
+  getAudioContext,
+  loadRecording,
+  playHordeHorn,
+  playPurr,
+  prefetchRecording,
+} from "@/lib/sound";
 import { CatPhotos } from "./CatPhotos";
 import { LICH_QUOTE, useLichKing } from "./useLichKing";
 import styles from "./PersonalScene.module.css";
@@ -192,10 +199,14 @@ type PersonalSceneProps = {
  * few real controls: grab a handful of popcorn, pet the cat (it purrs, and
  * enough petting shows photos of the cats when there are any), sound the
  * Horde war horn, poke the Lich King figure (five quick pokes and it stands
- * up, raises Frostmourne and speaks its line; hovering or focusing it loads
- * the recording beforehand), and the controller links to the
+ * up, raises Frostmourne and speaks its line), and the controller links to the
  * World of Warcraft character on Raider.IO. Until the page is hydrated only
  * the drawing renders.
+ *
+ * The two recordings are made ready before they are needed: pointing at or
+ * focusing the scene fetches their bytes, and the first press inside it (a
+ * user gesture, so the audio context may start) decodes them into memory, so
+ * a click plays them straight from there.
  */
 export function PersonalScene({
   children,
@@ -210,6 +221,7 @@ export function PersonalScene({
   const purrTimer = useRef<number | undefined>(undefined);
   const hornTimer = useRef<number | undefined>(undefined);
   const hornOn = useRef(false);
+  const alive = useRef(true);
   const lich = useLichKing();
 
   const [touched, setTouched] = useState(false);
@@ -224,7 +236,9 @@ export function PersonalScene({
 
   useEffect(() => {
     const pending = timers.current;
+    alive.current = true;
     return () => {
+      alive.current = false;
       for (const id of pending) window.clearTimeout(id);
       pending.clear();
       window.clearTimeout(purrTimer.current);
@@ -308,17 +322,42 @@ export function PersonalScene({
     petRef.current?.focus({ preventScroll: true });
   }
 
+  /** The recordings the scene can play. */
+  function recordings(): string[] {
+    return [hornSrc, sounds.lichKingQuote].filter((src): src is string => Boolean(src));
+  }
+
+  /** Fetches the recordings' bytes; needs no audio context, so hover and focus may. */
+  function prefetch() {
+    for (const src of recordings()) void prefetchRecording(src);
+  }
+
+  /**
+   * Starts (or resumes) the audio context inside a press, then decodes the
+   * recordings into memory. Every step happens once; later calls are cheap.
+   */
+  function warmUp() {
+    if (!getAudioContext()) return;
+    for (const src of recordings()) void loadRecording(src);
+  }
+
   function soundHorn() {
     setTouched(true);
     if (hornOn.current) return;
     hornOn.current = true;
-    playHordeHorn(hornSrc);
     setHorn(true);
     setStatus("The Horde war horn sounds.");
-    hornTimer.current = window.setTimeout(() => {
+    const done = () => {
+      window.clearTimeout(hornTimer.current);
+      if (!alive.current) return;
       hornOn.current = false;
       setHorn(false);
-    }, HORN_SECONDS * 1000);
+    };
+    // The cloth billows for as long as the horn sounds; with no sound at
+    // all it still billows for the synthesised horn's length.
+    if (!playHordeHorn(hornSrc, done)) {
+      hornTimer.current = window.setTimeout(done, HORN_SECONDS * 1000);
+    }
   }
 
   function pokeLichKing() {
@@ -344,6 +383,10 @@ export function PersonalScene({
       data-horn={horn ? "true" : undefined}
       data-lich={lich.state}
       data-lich-poke={lich.poke ?? undefined}
+      onPointerEnter={prefetch}
+      onFocus={prefetch}
+      onPointerDown={warmUp}
+      onKeyDown={warmUp}
     >
       {children}
 
@@ -412,8 +455,6 @@ export function PersonalScene({
         type="button"
         className={`${styles.hit} ${styles.lich}`}
         style={place(PERSONAL_BOXES.lich)}
-        onPointerEnter={lich.prepare}
-        onFocus={lich.prepare}
         onClick={pokeLichKing}
       >
         <span className="visually-hidden">Poke the Lich King figure</span>

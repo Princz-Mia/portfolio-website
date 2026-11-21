@@ -4,35 +4,19 @@
  * made with the Web Audio API. Every helper does nothing where its API is
  * missing, and each returns a function that stops what it started.
  *
- * The recording is loaded before it is needed (when the figure is hovered,
- * focused or first poked) into one audio element that every play reuses.
- * Starting a freshly created element straight away makes the browser begin
- * playback while the file is still arriving, which can stall and stutter at
- * the start.
+ * The recording plays from decoded memory through the page's shared audio
+ * context (see lib/sound), which the scene loads ahead of time, so the line
+ * never stalls or stutters while a file streams in.
  */
+
+import { audioOutput, getAudioContext, playRecording } from "@/lib/sound";
 
 type Stop = () => void;
 
 const noop: Stop = () => {};
 
-let context: AudioContext | null = null;
-
-/** The page's single AudioContext, created on first use; null where unsupported. */
-function audioContext(): AudioContext | null {
-  if (context) return context;
-  if (typeof window === "undefined") return null;
-  const Ctor =
-    window.AudioContext ??
-    (window as unknown as { webkitAudioContext?: typeof AudioContext })
-      .webkitAudioContext;
-  if (typeof Ctor !== "function") return null;
-  try {
-    context = new Ctor();
-  } catch {
-    return null;
-  }
-  return context;
-}
+/** The level the recorded line plays at. */
+export const LINE_GAIN = 0.6;
 
 /**
  * An English voice, preferring a deep-sounding British or American one and
@@ -98,10 +82,9 @@ export function hush(): void {
  * filter, with a few high glassy pings on top.
  */
 export function frostDrone(seconds = 4): Stop {
-  const ctx = audioContext();
+  const ctx = getAudioContext();
   if (!ctx) return noop;
   try {
-    if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
 
     const now = ctx.currentTime;
     const end = now + seconds;
@@ -113,7 +96,7 @@ export function frostDrone(seconds = 4): Stop {
     master.gain.exponentialRampToValueAtTime(0.16, now + 0.8);
     master.gain.setValueAtTime(0.16, end - 1.4);
     master.gain.exponentialRampToValueAtTime(0.0001, end);
-    master.connect(ctx.destination);
+    master.connect(audioOutput(ctx));
     nodes.push(master);
 
     const filter = ctx.createBiquadFilter();
@@ -154,7 +137,7 @@ export function frostDrone(seconds = 4): Stop {
       gain.gain.exponentialRampToValueAtTime(0.05, at + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.9);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioOutput(ctx));
       nodes.push(osc, gain);
       sources.push(osc);
     });
@@ -194,118 +177,46 @@ export function frostDrone(seconds = 4): Stop {
   }
 }
 
-/**
- * A recording loaded ahead of time, so that it plays from a full buffer
- * instead of starting while its first bytes are still arriving.
- */
-export type Recording = {
-  /** The file it plays. */
-  readonly src: string;
-  /**
-   * Plays the recording once from the start at a modest volume. `onEnd` is
-   * called once, when it finishes or cannot be played, and never after the
-   * returned stop function has been called. While a play is still running a
-   * second call does not restart it; it returns a function that does nothing.
-   */
-  play: (onEnd?: () => void) => Stop;
-  /** Stops it and lets the browser drop the loaded audio. */
-  dispose: () => void;
-};
-
-/**
- * Starts loading the audio file at `src` into one audio element that later
- * plays reuse. Returns null where the browser has no audio element.
- */
-export function loadRecording(src: string): Recording | null {
-  if (typeof window === "undefined" || typeof window.Audio !== "function") return null;
-  let audio: HTMLAudioElement;
-  try {
-    audio = new window.Audio(src);
-    audio.preload = "auto";
-    audio.volume = 0.6;
-    audio.load();
-  } catch {
-    return null;
-  }
-
-  /** Detaches the listeners of the play that is running, if any. */
-  let detach: (() => void) | null = null;
-
-  const halt = () => {
-    detach?.();
-    detach = null;
-    try {
-      audio.pause();
-    } catch {
-      // Nothing to pause.
-    }
-  };
-
-  return {
-    src,
-    play(onEnd) {
-      if (detach) return noop;
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        detach?.();
-        detach = null;
-        onEnd?.();
-      };
-      audio.addEventListener("ended", finish);
-      audio.addEventListener("error", finish);
-      detach = () => {
-        audio.removeEventListener("ended", finish);
-        audio.removeEventListener("error", finish);
-      };
-      try {
-        if (audio.currentTime > 0) audio.currentTime = 0;
-        const playing = audio.play();
-        if (playing && typeof playing.catch === "function") playing.catch(finish);
-      } catch {
-        finish();
-      }
-      return () => {
-        if (done) return;
-        done = true;
-        halt();
-        try {
-          audio.currentTime = 0;
-        } catch {
-          // Not seekable yet; the next play starts from the beginning anyway.
-        }
-      };
-    },
-    dispose() {
-      halt();
-      try {
-        audio.removeAttribute("src");
-        audio.load();
-      } catch {
-        // Already released.
-      }
-    },
-  };
-}
-
-/**
- * Says the Lich King's line: the loaded recording when there is one,
- * otherwise the speech synthesiser with a frosty drone underneath. `onEnd` is
- * called when the recording finishes or fails; the spoken fallback calls it
- * straight away. Call it only from a click, tap or key press.
- */
-export function sayLichKingLine(
-  text: string,
-  recording: Recording | null,
-  onEnd?: () => void,
-): Stop {
-  if (recording) return recording.play(onEnd);
+/** Speaks the line over the drone; `onEnd` is called straight away. */
+function speakOverDrone(text: string, onEnd?: () => void): Stop {
   const spoke = speak(text);
   const stopDrone = frostDrone();
   onEnd?.();
   return () => {
     stopDrone();
     if (spoke) hush();
+  };
+}
+
+/**
+ * Says the Lich King's line: the recording at `src` when there is one and it
+ * plays, otherwise the speech synthesiser with a frosty drone underneath.
+ * `onEnd` is called once: when the recording has played to the end, or as
+ * soon as the spoken fallback starts. It is never called after the returned
+ * stop function. Call it only from a click, tap or key press.
+ */
+export function sayLichKingLine(
+  text: string,
+  src: string | null,
+  onEnd?: () => void,
+): Stop {
+  if (!src) return speakOverDrone(text, onEnd);
+  let stopped = false;
+  let stopFallback: Stop | null = null;
+  const playback = playRecording(src, {
+    gain: LINE_GAIN,
+    onEnd: () => {
+      if (!stopped) onEnd?.();
+    },
+    onFail: () => {
+      if (!stopped) stopFallback = speakOverDrone(text, onEnd);
+    },
+  });
+  // The line is still playing from before: never start it twice.
+  if (!playback) return noop;
+  return () => {
+    stopped = true;
+    playback.stop();
+    stopFallback?.();
   };
 }
