@@ -41,6 +41,21 @@ npm run preview    # serve out/ on http://localhost:4173 with real 404 handling
 | `public/.htaccess` | Hosting rules copied into `out/` (404 page, caching, content type for the preview image). |
 | `scripts/preview.mjs` | Dependency-free static server that mimics the host for local checks. |
 
+### Theme
+
+The site has a light and a dark theme. A first visit follows the device setting;
+the sun/moon button in the header switches and remembers the choice. All colours
+are tokens in `src/app/globals.css` (light under `:root`, dark under
+`html[data-theme="dark"]`); the Off the clock drawing shows a sun and an awake cat
+by day and the moon and a sleeping cat by night.
+
+### CV and teaching links in the hero
+
+The hero shows LinkedIn and GitHub buttons. A CV button appears once `cvUrl` in
+`src/content/site.ts` points at a PDF in `public/` (for example
+`/cv/mia-princz-cv.pdf`), and a Teaching button once `teachingSiteUrl` is set. Both
+open in a new tab.
+
 ### The teaching site link
 
 `teachingSiteUrl` in `src/content/site.ts` is `null` until the separately hosted
