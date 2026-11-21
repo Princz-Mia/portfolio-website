@@ -169,19 +169,40 @@ const NEAR_SPEAKER = [
  */
 const FAR_NUDGE: Point = [4, 4];
 
+/** Where the near half of the band ends, inside the yoke, and its last handle. */
+const NEAR_END: Point = [601.6, 141];
+const NEAR_HANDLE: Point = [598, 118];
+
 /**
  * The band, traced too. The far half ends on top of the far speaker, following
  * it wherever it is nudged. The near half keeps the traced arc over the crown and
  * carries on down the side of the head the way a real band bends: it leaves the
- * arc without a kink, follows the same curve, drawing in a little as the head
- * narrows towards its side, and slips behind the near ear (drawn over it) to end
- * on top of the speaker's shell, just inside its outline, so the ear and the
- * speaker together cover the join with no gap and no overshoot.
+ * arc without a kink and follows the same curve, drawing in a little as the head
+ * narrows towards its side. It slips behind the lower corner of the near ear
+ * (drawn over it), comes out again below the ear and slots into the yoke on the
+ * speaker's upper shoulder, so the join stays in view as on the far side.
  */
 const BAND = [
   `M527,43.6c-15.9-4.6-57-14.1-104,2.3a166.9,166.9,0,0,0,${round(-60.9 + FAR_NUDGE[0])},${round(37.3 + FAR_NUDGE[1])}`,
-  "M616,141C607,117 593.4,82.5 563.6,62.4A155.5,155.5,0,0,0,515,40.6",
+  `M${NEAR_END.join(",")}C${NEAR_HANDLE.join(",")} 593.4,82.5 563.6,62.4A155.5,155.5,0,0,0,515,40.6`,
 ] as const;
+
+/**
+ * The near speaker's yoke: a short slider on the shell's upper shoulder that the
+ * band slots into. It lines up with the band's last stretch, its foot sits over
+ * the shell's outline, so it reads as fixed to the cup, and its top reaches up
+ * to the ear's outline just where the band goes behind the ear, so the band runs
+ * straight into it with no fur between them.
+ */
+const NEAR_YOKE = {
+  x: 601.1,
+  y: 137.9,
+  width: 8.4,
+  length: 18.8,
+  angle: round(
+    (Math.atan2(NEAR_END[1] - NEAR_HANDLE[1], NEAR_END[0] - NEAR_HANDLE[0]) * 180) / Math.PI - 90,
+  ),
+};
 
 /** The accent pad on the crown of the band, turned with it. */
 const PAD = { x: 486.7, y: 36.9, angle: 2.8 };
@@ -485,7 +506,7 @@ function Eyes({ mood }: { mood: Mood }) {
             transform={`rotate(${TILT} ${x} ${y})`}
             className={s.dark}
           />
-          <circle cx={x - 2} cy={y - 3.5} r="2.2" className={s.paper} />
+          <circle cx={x - 2} cy={y - 3.5} r="2.2" className={cx(s.paper, b.glint)} />
         </g>
       ))}
     </g>
@@ -635,7 +656,7 @@ export function BongoCat() {
               rx="36"
               ry="21"
               transform={`rotate(${TILT} 422 187)`}
-              className={s.paper}
+              className={cx(s.paper, b.muzzle)}
             />
             <ellipse
               cx="354"
@@ -643,7 +664,7 @@ export function BongoCat() {
               rx="9"
               ry="5"
               transform={`rotate(${TILT} 354 187)`}
-              className={s.tint}
+              className={cx(s.tint, b.cheek)}
             />
             <ellipse
               cx="496"
@@ -651,7 +672,7 @@ export function BongoCat() {
               rx="10"
               ry="5.5"
               transform={`rotate(${TILT} 496 202)`}
-              className={s.tint}
+              className={cx(s.tint, b.cheek)}
             />
             <Eyes mood={mood} />
             <path d="M414 170.5 Q421.5 166 429 171.5 L421.5 178.5 Z" className={s.accent} />
@@ -808,6 +829,23 @@ function Headset() {
       </g>
       <g data-part="speaker" data-side="near">
         <Speaker paths={NEAR_SPEAKER} />
+        <g
+          data-part="yoke"
+          transform={`rotate(${NEAR_YOKE.angle} ${NEAR_YOKE.x} ${NEAR_YOKE.y})`}
+        >
+          <rect
+            x={NEAR_YOKE.x - NEAR_YOKE.width / 2}
+            y={NEAR_YOKE.y - NEAR_YOKE.length / 2}
+            width={NEAR_YOKE.width}
+            height={NEAR_YOKE.length}
+            rx="2.6"
+            className={cx(strong, s.dark)}
+          />
+          <path
+            d={`M${NEAR_YOKE.x} ${round(NEAR_YOKE.y - NEAR_YOKE.length / 2 + 2.6)} V${round(NEAR_YOKE.y + 1.6)}`}
+            className={hair}
+          />
+        </g>
       </g>
     </g>
   );

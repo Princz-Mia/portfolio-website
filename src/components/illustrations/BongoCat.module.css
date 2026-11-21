@@ -44,6 +44,41 @@
   stroke-linejoin: round;
 }
 
+/*
+ * In the dark theme the paper is darker than the fur and the pupils, so the
+ * pale muzzle would turn into a dark patch and the catch light in each eye would
+ * vanish, and the tint is darker than the fur, so the blush on the cheeks would
+ * read as a smudge. There the muzzle takes a lighter shade of the fur, the catch
+ * light the light line colour and the cheeks the fur warmed with the accent, so
+ * the face reads the same in both themes.
+ */
+
+:global(html[data-theme="dark"]) .scene .muzzle {
+  fill: color-mix(in srgb, var(--art-fur) 76%, var(--art-ink-strong));
+}
+
+:global(html[data-theme="dark"]) .scene .glint {
+  fill: var(--art-ink-strong);
+}
+
+:global(html[data-theme="dark"]) .scene .cheek {
+  fill: color-mix(in srgb, var(--art-fur) 70%, var(--art-accent));
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .scene .muzzle {
+    fill: color-mix(in srgb, var(--art-fur) 76%, var(--art-ink-strong));
+  }
+
+  :global(html:not([data-theme])) .scene .glint {
+    fill: var(--art-ink-strong);
+  }
+
+  :global(html:not([data-theme])) .scene .cheek {
+    fill: color-mix(in srgb, var(--art-fur) 70%, var(--art-accent));
+  }
+}
+
 /* Code on the screen, placed in perspective by BongoCat.tsx. */
 
 .code {

@@ -39,6 +39,52 @@ const distanceToEdge =
 
 const slope = ([ax, ay]: Point, [bx, by]: Point) => (by - ay) / (bx - ax);
 
+/** A cubic Bézier from its eight coordinates, as a function of t. */
+const cubic = (p: number[]) => (t: number): Point => {
+  const k = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3];
+  return [0, 1].map((axis) => k.reduce((sum, w, i) => sum + w * p[i * 2 + axis], 0)) as Point;
+};
+
+/** Height at `x` of a polyline whose x values run one way, by straight interpolation. */
+const heightOn = (points: Point[]) => (x: number) => {
+  const sorted = [...points].sort((a, b) => a[0] - b[0]);
+  const i = Math.max(
+    0,
+    Math.min(sorted.length - 2, sorted.findIndex(([px]) => px > x) - 1),
+  );
+  const [[ax, ay], [bx, by]] = [sorted[i], sorted[i + 1]];
+  return ay + ((x - ax) / (bx - ax)) * (by - ay);
+};
+
+/** The straight line that closes the near ear's base, inside the head. */
+const earBaseAt = heightOn([
+  [585, 136.3],
+  [632.2, 146],
+]);
+
+/** The near ear's inner edge, the cubic from its tip down to where it meets the head. */
+const earInnerEdgeAt = heightOn(
+  Array.from({ length: 41 }, (_, i): Point => {
+    const t = i / 40;
+    const k = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3];
+    const p = [629.5, 118.8, 617.9, 116.9, 587.5, 133, 585, 136.3];
+    return [0, 1].map((axis) => k.reduce((sum, w, j) => sum + w * p[j * 2 + axis], 0)) as Point;
+  }),
+);
+
+/** The upper-left shoulder of the near speaker's shell, sampled along its outline. */
+const shellShoulderAt = heightOn([
+  [611.9, 136.7],
+  [609.5, 137.3],
+  [607.3, 138.4],
+  [605.3, 139.8],
+  [603.6, 141.5],
+  [602.1, 143.4],
+  [600.8, 145.4],
+  [599.6, 147.6],
+  [598.6, 149.8],
+]);
+
 const shown = (spots: TokenSpot[]) =>
   spots.filter((spot): spot is NonNullable<TokenSpot> => spot !== null);
 
@@ -318,10 +364,6 @@ describe("BongoCat", () => {
     // The drop to the speaker is one cubic, then the arc over the crown:
     // M p0 C p1 p2 p3 A r r rotation large sweep end.
     const n = near!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
-    const cubic = (p: number[]) => (t: number): Point => {
-      const k = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3];
-      return [0, 1].map((axis) => k.reduce((sum, w, i) => sum + w * p[i * 2 + axis], 0)) as Point;
-    };
     const drop = cubic(n.slice(0, 8));
     const samples = Array.from({ length: 201 }, (_, i) => drop(i / 200));
 
@@ -341,9 +383,12 @@ describe("BongoCat", () => {
       (Math.hypot(...handle) * Math.hypot(...radius));
     expect(Math.abs(cosine)).toBeLessThan(0.01);
 
-    // It follows the head's curve at a near constant offset instead of bulging out.
+    // It never bulges out past the crown's curve; it only draws in towards the
+    // head as it comes down to the speaker.
     samples.forEach(([x, y]) => {
-      expect(Math.abs(Math.hypot(x - centre[0], y - centre[1]) - r)).toBeLessThan(9);
+      const offset = Math.hypot(x - centre[0], y - centre[1]) - r;
+      expect(offset).toBeLessThan(0.5);
+      expect(offset).toBeGreaterThan(-24);
     });
 
     // It never gets out past the near ear, whose tip is the head's outermost point there.
@@ -358,12 +403,109 @@ describe("BongoCat", () => {
     );
     expect(gap).toBeLessThan(1);
 
-    // It ends on top of the near speaker's shell, below the base of the ear.
+    // It comes out again below the ear: its end is on the head side of the line
+    // that closes the ear's base.
     const [endX, endY] = samples[0];
-    expect(endX).toBeGreaterThan(605);
-    expect(endX).toBeLessThan(630);
-    expect(endY).toBeGreaterThan(136);
-    expect(endY).toBeLessThan(146);
+    expect(endY).toBeGreaterThan(earBaseAt(endX));
+  });
+
+  it("slots the near band into a yoke on top of the near speaker, in view below the ear", () => {
+    const { container } = render(<BongoCat />);
+    const headset = container.querySelector("[data-part='ear']")?.parentElement;
+    const near = Array.from(headset!.querySelectorAll(":scope > path"))
+      .map((band) => band.getAttribute("d") ?? "")
+      .find((d) => /^M6\d\d/.test(d));
+    const [endX, endY, handleX, handleY] = near!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+
+    const yoke = container.querySelector("[data-part='yoke']");
+    expect(yoke).toBeTruthy();
+    // It belongs to the near speaker and is painted over its shell and over both ears.
+    expect(yoke!.closest("[data-part='speaker']")?.getAttribute("data-side")).toBe("near");
+    const shell = yoke!.parentElement!.querySelector("path:not([transform])");
+    expect(shell!.compareDocumentPosition(yoke!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    container
+      .querySelectorAll("[data-part='ear']")
+      .forEach((ear) =>
+        expect(ear.compareDocumentPosition(yoke!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(),
+      );
+
+    // The yoke's frame: a rectangle turned about its centre.
+    const [angle, cx, cy] = yoke!
+      .getAttribute("transform")!
+      .match(/-?\d+(?:\.\d+)?/g)!
+      .map(Number);
+    const rect = yoke!.querySelector("rect")!;
+    const [x, y, width, height] = ["x", "y", "width", "height"].map((name) =>
+      Number(rect.getAttribute(name)),
+    );
+    expect(x + width / 2).toBeCloseTo(cx, 5);
+    expect(y + height / 2).toBeCloseTo(cy, 5);
+    const turn = (angle * Math.PI) / 180;
+    /** A point in the yoke's own frame: across from its axis, along it from the centre. */
+    const toYoke = ([px, py]: Point): Point => {
+      const [dx, dy] = [px - cx, py - cy];
+      return [
+        dx * Math.cos(turn) + dy * Math.sin(turn),
+        -dx * Math.sin(turn) + dy * Math.cos(turn),
+      ];
+    };
+    const toDrawing = ([across, along]: Point): Point => [
+      cx + across * Math.cos(turn) - along * Math.sin(turn),
+      cy + across * Math.sin(turn) + along * Math.cos(turn),
+    ];
+
+    // It is wider than the band and lines up with the band's last stretch.
+    const bandWidth = 4.4;
+    expect(width).toBeGreaterThan(bandWidth);
+    const [handleAcross, handleAlong] = toYoke([handleX, handleY]);
+    expect(Math.abs(handleAcross / handleAlong)).toBeLessThan(0.02);
+
+    // The band's end, round cap and all, lies inside the yoke.
+    const [across, along] = toYoke([endX, endY]);
+    expect(Math.abs(across) + bandWidth / 2).toBeLessThan(width / 2);
+    expect(Math.abs(along) + bandWidth / 2).toBeLessThan(height / 2);
+    // And that end is out from under the ear, below the line closing its base.
+    expect(endY).toBeGreaterThan(earBaseAt(endX));
+
+    // The yoke rises from the shell: its foot is inside the shell's upper-left
+    // shoulder and its top above it, reaching up to the ear's inner edge. The
+    // top's outline overlaps the ear's outline, so no fur shows between them.
+    const [footX, footY] = toDrawing([0, height / 2]);
+    const [topX, topY] = toDrawing([0, -height / 2]);
+    expect(footY).toBeGreaterThan(shellShoulderAt(footX) + 1);
+    expect(topY).toBeLessThan(shellShoulderAt(topX) - 6);
+    const outlineHalf = 1.2;
+    expect(topY).toBeGreaterThan(earInnerEdgeAt(topX));
+    expect(topY - outlineHalf).toBeLessThan(earInnerEdgeAt(topX));
+
+    // The band goes behind the ear right at the yoke's top, in line with it: the
+    // point where the band's centre line crosses the ear's inner edge lies on the
+    // yoke's axis and just above its top.
+    const bandAt = cubic(near!.match(/-?\d+(?:\.\d+)?/g)!.slice(0, 8).map(Number));
+    let t = 0;
+    while (bandAt(t)[1] > earInnerEdgeAt(bandAt(t)[0])) t += 0.001;
+    const [crossAcross, crossAlong] = toYoke(bandAt(t));
+    expect(Math.abs(crossAcross)).toBeLessThan(0.5);
+    expect(crossAlong).toBeLessThan(-height / 2);
+    expect(crossAlong).toBeGreaterThan(-height / 2 - outlineHalf - 0.5);
+  });
+
+  it("keeps the face readable in the dark theme", () => {
+    const rules = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const dark = (name: string) =>
+      new RegExp(`html\\[data-theme="dark"\\]\\)[^{]*\\.${name}\\s*\\{[^}]*fill:`).test(rules) &&
+      new RegExp(`html:not\\(\\[data-theme\\]\\)\\)[^{]*\\.${name}\\s*\\{[^}]*fill:`).test(rules);
+    expect(dark("muzzle")).toBe(true);
+    expect(dark("glint")).toBe(true);
+    expect(dark("cheek")).toBe(true);
+    // No colour is written into the stylesheet; every fill and stroke is a token.
+    expect(rules).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i);
+
+    const { container } = render(<BongoCat />);
+    expect(container.querySelector("ellipse[class*='muzzle']")).toBeTruthy();
+    expect(container.querySelectorAll("circle[class*='glint']")).toHaveLength(2);
+    expect(container.querySelectorAll("ellipse[class*='cheek']")).toHaveLength(2);
+    expect(container.innerHTML).not.toMatch(/(fill|stroke)="#|style="[^"]*(fill|stroke):/i);
   });
 
   it("can be petted again once it has calmed down", () => {
