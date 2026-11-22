@@ -1,0 +1,175 @@
+% Mia Princz's CV. Build with XeLaTeX (the class loads fonts with fontspec):
+%   xelatex mia-princz-cv.tex   or   tectonic mia-princz-cv.tex
+% The published copy lives at public/cv/mia-princz-cv.pdf.
+%
+% This file is public: it leaves out the phone number on purpose. For a copy
+% sent directly to a recruiter, add it to the header line below.
+\documentclass[]{deedy-resume-reversed}
+\usepackage{fancyhdr}
+\setlength{\voffset}{-0.3cm}
+\setlength{\headsep}{0.2cm}
+
+\fancyhf{}
+
+\begin{document}
+\pagenumbering{gobble}
+
+    \newcommand{\AND}{\unskip
+        \cleaders\copy\ANDbox\hskip\wd\ANDbox
+        \ignorespaces
+    }
+    \newsavebox\ANDbox
+    \sbox\ANDbox{$|$}
+
+% ========= HEADER =========
+\begin{header}
+\namesection{Mia Princz}{
+  \vspace{2 pt}\normalsize \fontspec[Path = fonts/raleway/]{Raleway-Medium}\selectfont
+  Software Engineer \,\textperiodcentered\, Java, Spring Boot \& Distributed Systems \,\textperiodcentered\, Budapest, Hungary \\[3pt]
+  \fontspec[Path = fonts/lato/]{Lato-Reg}\selectfont
+  \mbox{\hrefWithoutArrow{mailto:mia.princz.dev@gmail.com}{mia.princz.dev@gmail.com}}%
+  \kern 5.0 pt \AND \kern 5.0 pt
+  \mbox{\hrefWithoutArrow{https://mia-princz.com/}{mia-princz.com}}%
+  \kern 5.0 pt \AND \kern 5.0 pt
+  \mbox{\hrefWithoutArrow{https://www.linkedin.com/in/mia-princz-445602347/}{LinkedIn}}%
+  \kern 5.0 pt \AND \kern 5.0 pt
+  \mbox{\hrefWithoutArrow{https://github.com/Princz-Mia}{github.com/Princz-Mia}}%
+}
+\end{header}
+
+\vspace{2pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARY %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Summary}
+\vspace{0.05 cm}
+\begin{onecolentry}
+    Backend engineer at Ericsson, building Java and Spring Boot services, GraphQL APIs and the CI/CD around them for internal test infrastructure. Most recently merged two legacy microservices into one backward-compatible service, shipped with 650+ automated tests. M.Sc. student in Computer Engineering at BME, studying software architecture and distributed systems.
+\end{onecolentry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% EXPERIENCE %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Experience}
+\vspace{0.05 cm}
+    \begin{twocolentry}{
+       Apr 2025 -- Present
+    }
+        \runsubsection{Ericsson}\descript{| Software Engineer}\runsubsection{}\end{twocolentry}
+
+    \vspace{0.05 cm}
+    \begin{onecolentry}
+        \textit{Test Governance Framework} -- multi-site test scheduling and orchestration platform \hfill \textit{2026 -- Present}
+        \begin{highlights}
+            \item \textbf{Consolidated two legacy microservices into one data-access service} (Java 17, Spring Boot, GraphQL with Netflix DGS, JPA), owning it from design to release: 13 queries and 10 mutations, full backward compatibility, and \textbf{650+ automated tests} (537 unit, 116 integration).
+            \item Built a \textbf{backward-compatible client SDK} that lets consumers switch backends by configuration alone; \textbf{migrated 5 consumer services}, verified each against legacy responses and brought each to the 80\% new-code coverage gate.
+            \item \textbf{Cut SQL statements per job deletion by 44\%} with bulk deletes, and fixed pagination and transaction-handling slowdowns in the new service's heaviest read paths (an estimated 66--94\% fewer database round trips).
+            \item \textbf{Found and fixed 8 defects before release}, including null-pointer crashes that would have caused HTTP 500s and silent data loss in a converter, each with a regression test; also fixed a JUnit 5 setup that silently skipped 53 tests.
+            \item Designed the phased, zero-downtime retirement of the legacy modules across 9 repositories; once rolled out it removes about 6,800 lines of legacy service code and 1,800 lines of SDK workarounds, and up to 98\% of the data fetched on the most common calls.
+            \item Automated crontab deployment to a new data-centre site through Jenkins (tested end to end on staging, in code review), and removed hard-coded credentials from a database load-test suite while moving it into CI.
+        \end{highlights}
+        \vspace{0.12 cm}
+        \textit{Telco DataOps Platform} -- Ericsson's data collection and governance platform \hfill \textit{2025 -- 2026}
+        \begin{highlights}
+            \item Worked on the platform's Java services and \textbf{Kafka and Flink} pipelines with Avro and JSON schemas: fixed defects raised through support tickets and ran performance and functional test campaigns.
+            \item Contributed to the \textbf{Java 11 to 17 migration}, and took ownership of a simulator for a new schema-validation service that the team used on test clusters for testing and demos.
+        \end{highlights}
+    \end{onecolentry}
+
+    \vspace{0.25 cm}
+    \begin{twocolentry}{
+       Sept 2025 -- Present
+    }
+        \runsubsection{BME}\descript{| Teaching Assistant, Programming 3 (Java)}\runsubsection{}\end{twocolentry}
+
+    \vspace{0.05 cm}
+    \begin{onecolentry}
+        \begin{highlights}
+            \item Taught Java to \textbf{60+ undergraduates} in weekly labs and reviewed their code and assignments; also tutor privately.
+        \end{highlights}
+    \end{onecolentry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% EDUCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\needspace{10\baselineskip}
+\section{Education}
+\vspace{0.05 cm}
+    \begin{onecolentry}
+        \runsubsection{Budapest University of Technology and Economics (BME)}
+    \end{onecolentry}
+
+    \vspace{0.05 cm}
+    \begin{onecolentry}
+        \textit{M.Sc. in Computer Engineering} \hfill \textit{2026 -- Present}
+        \begin{highlights}
+            \item Major: \textbf{Software Engineering}; minor: \textbf{Cloud-Based Distributed Systems}; additional courses in Critical Systems.
+            \item Independent Laboratory at the Department of Measurement and Information Systems: SysML v2 modelling, formal methods and automated verification.
+        \end{highlights}
+        \vspace{0.12 cm}
+        \textit{B.Sc. in Computer Engineering} \hfill \textit{2021 -- 2026}
+        \begin{highlights}
+            \item Software Engineering specialization; thesis: GourmetGo, a full-stack food ordering platform (below).
+        \end{highlights}
+    \end{onecolentry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROJECTS %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Projects}
+\vspace{0.05 cm}
+
+ \begin{twocolentry}{
+     \href{https://github.com/Princz-Mia/mini-stock-exchange}{Source on GitHub}
+ }
+     \textbf{Mini Stock Exchange} \textit{-- in development}\end{twocolentry}
+
+ \vspace{0.05 cm}
+ \begin{onecolentry}
+     \begin{highlights}
+         \item Designing a simulated exchange around a price-time-priority order book, where matching, risk and settlement commit in one database transaction and Kafka sits downstream of the commit, so trading keeps running when the event pipeline is down.
+         \item Java 25, Spring Boot, PostgreSQL, Kafka, Flink, React, TypeScript, Python; Testcontainers and ArchUnit in CI.
+    \end{highlights}
+\end{onecolentry}
+
+ \vspace{0.15 cm}
+
+\begin{twocolentry}{
+    \href{https://github.com/Princz-Mia/viaual04-gourmetgo}{Source on GitHub}
+}
+    \textbf{GourmetGo} \textit{-- B.Sc. thesis}\end{twocolentry}
+
+\vspace{0.05 cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Food ordering platform for customers, restaurants and administrators: JWT with refresh tokens, Redis-backed sessions, role-based access, and WebSocket chat and order tracking.
+        \item Java 17, Spring Boot 3, Spring Security, PostgreSQL, Redis, React.
+    \end{highlights}
+\end{onecolentry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% SKILLS %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Skills}
+\vspace{0.05 cm}
+\begin{onecolentry}
+    \textbf{Languages:} Java, Python, TypeScript, JavaScript, SQL, Bash
+\end{onecolentry}
+\vspace{0.08 cm}
+\begin{onecolentry}
+    \textbf{Backend \& data:} Spring Boot, Spring Data JPA / Hibernate, GraphQL (Netflix DGS), REST, FastAPI, Kafka, Flink, MySQL, PostgreSQL, MongoDB
+\end{onecolentry}
+\vspace{0.08 cm}
+\begin{onecolentry}
+    \textbf{Delivery \& quality:} Docker, Kubernetes, Helm, Jenkins, Gerrit, Git, Maven, SonarQube, Grafana, JUnit 5, Mockito, Testcontainers
+\end{onecolentry}
+\vspace{0.08 cm}
+\begin{onecolentry}
+    \textbf{Frontend:} React, TypeScript
+\end{onecolentry}
+\vspace{0.08 cm}
+\begin{onecolentry}
+    \textbf{Ways of working:} Agile, Scrum, code review, spec-driven and AI-assisted development
+\end{onecolentry}
+\vspace{0.08 cm}
+\begin{onecolentry}
+    \textbf{Languages spoken:} Hungarian (native), English (fluent)
+\end{onecolentry}
+
+\end{document}

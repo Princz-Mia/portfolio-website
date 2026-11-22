@@ -1,0 +1,6 @@
+# LaTeX build output (the published PDF lives in public/cv/)
+*.aux
+*.log
+*.out
+*.xdv
+*.pdf

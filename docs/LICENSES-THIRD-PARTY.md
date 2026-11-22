@@ -82,3 +82,14 @@ style (dark head, red nose, white body).
   affiliated with Oracle.
 - The game credits Duke under the canvas ("Duke, the Java mascot (BSD
   licence), redrawn in line art").
+
+## CV template and fonts (`cv/`)
+
+- `cv/deedy-resume-reversed.cls` is a variant of the Deedy résumé class by
+  Debarghya Das (<https://github.com/deedy/Deedy-Resume>, Apache License 2.0),
+  with changes of its own. It was carried over from the earlier CV project; the
+  class header now loads the base class before any package so that it compiles
+  without errors.
+- Lato (Łukasz Dziedzic) and Raleway (Matt McInerney, Pablo Impallari, Rodrigo
+  Fuenzalida) in `cv/fonts/` are licensed under the SIL Open Font License 1.1
+  (<https://openfontlicense.org>), which allows bundling them with the CV source.
