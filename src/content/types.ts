@@ -42,10 +42,22 @@ export type Profile = {
   intro: string[];
 };
 
+/**
+ * One headline figure, e.g. { value: "−44%", label: "SQL statements per job deletion" }.
+ * Only measured or implemented results belong here; estimates stay in the highlights,
+ * labelled as estimates.
+ */
+export type ImpactFigure = {
+  value: string;
+  label: string;
+};
+
 /** A phase within one role, for example one platform or team. */
 export type RoleChapter = {
   name: string;
   summary: string;
+  /** Optional row of headline figures shown above the highlights. */
+  impact?: ImpactFigure[];
   highlights: string[];
 };
 

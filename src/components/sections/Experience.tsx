@@ -1,4 +1,4 @@
-import type { Role, Technical } from "@/content";
+import type { ImpactFigure, Role, Technical } from "@/content";
 import { Section } from "@/components/Section";
 import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
@@ -16,6 +16,26 @@ function shortName(name: string): string | undefined {
   return /\(([^)]+)\)\s*$/.exec(name)?.[1];
 }
 
+type ImpactFiguresProps = {
+  figures: ImpactFigure[] | undefined;
+  label: string;
+};
+
+/** Headline figures for one chapter; renders nothing when there are none. */
+export function ImpactFigures({ figures, label }: ImpactFiguresProps) {
+  if (!figures || figures.length === 0) return null;
+  return (
+    <dl className={styles.impact} aria-label={label}>
+      {figures.map((figure) => (
+        <div key={figure.label} className={styles.figure}>
+          <dt>{figure.label}</dt>
+          <dd>{figure.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function Experience({ roles, technical }: ExperienceProps) {
   const technologies = technical.groups.filter((g) => g.kind === "technology");
   const practices = technical.groups.filter((g) => g.kind === "practice");
@@ -26,7 +46,7 @@ export function Experience({ roles, technical }: ExperienceProps) {
       number="01"
       label="Work"
       title="Experience"
-      lede="Backend services, the pipelines that ship them, and the habits that keep them maintainable."
+      lede="Java services, GraphQL APIs and the pipelines that ship them, with the numbers behind the work."
       art={
         <LaptopScreen>
           <DeskScene>
@@ -57,6 +77,10 @@ export function Experience({ roles, technical }: ExperienceProps) {
                     </span>
                     <h4 className={styles.chapterName}>{chapter.name}</h4>
                     <p className={`measure ${styles.chapterSummary}`}>{chapter.summary}</p>
+                    <ImpactFigures
+                      figures={chapter.impact}
+                      label={`Impact at ${short ?? chapter.name}`}
+                    />
                     <Highlights
                       items={chapter.highlights}
                       visible={3}
