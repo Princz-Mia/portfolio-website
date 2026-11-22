@@ -56,6 +56,22 @@ The hero shows LinkedIn and GitHub buttons. A CV button appears once `cvUrl` in
 `/cv/mia-princz-cv.pdf`), and a Teaching button once `teachingSiteUrl` is set. Both
 open in a new tab.
 
+### Updating the CV
+
+The CV source is `cv/mia-princz-cv.tex`, built with XeLaTeX because the class loads
+Lato and Raleway from `cv/fonts/` through fontspec. With
+[Tectonic](https://tectonic-typesetting.github.io/) (a single executable that
+fetches the TeX packages it needs):
+
+```bash
+cd cv && tectonic -X compile --outdir ../public/cv mia-princz-cv.tex
+```
+
+Overleaf works too: upload the `cv/` folder and set the compiler to XeLaTeX. The
+site serves whatever is at `public/cv/mia-princz-cv.pdf`. The source leaves the
+phone number out because this repository is public; add it to a copy you send
+directly.
+
 ### The teaching site link
 
 `teachingSiteUrl` in `src/content/site.ts` is `null` until the separately hosted
