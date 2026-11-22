@@ -18,7 +18,7 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
       number={number}
       label="Teaching"
       title="Tutoring"
-      lede="Java for university students, and private tutoring."
+      lede="Teaching assistant for Java at BME, and private tutoring."
       art={<Chalkboard />}
       side="left"
     >

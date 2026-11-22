@@ -18,7 +18,7 @@ export function Academic({ academic, number }: AcademicProps) {
       number={number}
       label="Academic work"
       title="Education"
-      lede="Master's studies at BME: software engineering and distributed systems, with an eye on modeling and verification."
+      lede="M.Sc. studies at BME in software engineering and distributed systems."
       art={<AcademicArt />}
       side="right"
     >

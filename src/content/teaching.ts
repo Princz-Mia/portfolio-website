@@ -2,10 +2,10 @@ import type { Teaching } from "./types";
 
 export const teaching: Teaching = {
   paragraphs: [
-    "During my bachelor's I taught Java to more than 60 university students: explaining the ideas behind the code, reviewing their work and helping them get from a concept to something that compiles and makes sense.",
-    "I also work as a private tutor. Teaching is a thread I intend to keep. It forces me to understand things properly, and watching something click for someone else is one of the better parts of this field.",
+    "Since September 2025 I've been a teaching assistant at BME for Programming 3, the Java course, and have taught more than 60 students: explaining the ideas behind the code, reviewing their assignments and helping them get from a concept to something that compiles and makes sense.",
+    "I also tutor privately. Teaching makes me understand things properly, and seeing something click for someone else is one of the best parts of this field.",
   ],
   siteLinkLabel: "Visit my teaching site",
   contactPrompt:
-    "A separate teaching site is in the making. Until then, email is the way to reach me about teaching.",
+    "I'm building a separate teaching site. Until then, email me about teaching.",
 };

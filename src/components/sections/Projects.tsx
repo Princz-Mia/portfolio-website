@@ -22,7 +22,7 @@ export function Projects({ projects }: ProjectsProps) {
       number="02"
       label="Selected projects"
       title="Portfolio"
-      lede="Work with public source, described as it stands."
+      lede="Personal and thesis work with public source code, described as it stands today."
       art={<ProjectsArt />}
       side="left"
     >

@@ -1,7 +1,7 @@
 import type { Technical } from "./types";
 
 export const technical: Technical = {
-  note: "Java and the JVM side is where I have the most depth. Python and TypeScript are growing with my team's new domain, and the rest I use as the work needs it.",
+  note: "Java and the JVM ecosystem are where I have the most depth. Python and TypeScript are growing with my team's new domain, and the rest I use as the work needs it.",
   groups: [
     {
       name: "Languages",
@@ -11,7 +11,13 @@ export const technical: Technical = {
     {
       name: "Backend and APIs",
       kind: "technology",
-      items: ["Spring Boot", "FastAPI", "REST", "GraphQL"],
+      items: [
+        "Spring Boot",
+        "Spring Data JPA / Hibernate",
+        "GraphQL (Netflix DGS)",
+        "REST",
+        "FastAPI",
+      ],
     },
     {
       name: "Frontend",
@@ -21,7 +27,7 @@ export const technical: Technical = {
     {
       name: "Data",
       kind: "technology",
-      items: ["PostgreSQL", "MongoDB", "SQL and NoSQL design"],
+      items: ["MySQL", "PostgreSQL", "MongoDB", "Redis", "SQL and NoSQL design"],
     },
     {
       name: "Streaming",
@@ -29,17 +35,24 @@ export const technical: Technical = {
       items: ["Apache Kafka", "Apache Flink", "Avro and JSON schemas"],
     },
     {
+      name: "Testing and quality",
+      kind: "technology",
+      items: ["JUnit 5", "Mockito", "Testcontainers", "ArchUnit", "JMeter", "SonarQube"],
+    },
+    {
       name: "Infrastructure and delivery",
       kind: "technology",
       items: [
         "Docker",
         "Kubernetes",
+        "Helm",
         "Linux",
         "Jenkins",
         "Maven",
         "Git",
         "Gerrit",
         "GitHub",
+        "Grafana",
       ],
     },
     {
