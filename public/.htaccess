@@ -11,6 +11,15 @@ ErrorDocument 404 /404.html
 # while it streams (WebAssembly.instantiateStreaming).
 AddType application/wasm .wasm
 
+# The CV opens in the browser's PDF viewer (which has its own download button)
+# instead of downloading straight away; a saved copy takes its name from the URL.
+AddType application/pdf .pdf
+<IfModule mod_headers.c>
+  <FilesMatch "\.pdf$">
+    Header set Content-Disposition "inline"
+  </FilesMatch>
+</IfModule>
+
 # The social preview image is exported without a file extension.
 <Files "opengraph-image">
   ForceType image/png

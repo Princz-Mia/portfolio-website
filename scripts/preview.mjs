@@ -26,6 +26,7 @@ const types = {
   ".xml": "application/xml; charset=utf-8",
   ".webmanifest": "application/manifest+json",
   ".wasm": "application/wasm",
+  ".pdf": "application/pdf",
 };
 
 if (!existsSync(root)) {
@@ -40,7 +41,13 @@ function contentType(filePath) {
 }
 
 function send(res, status, filePath) {
-  res.writeHead(status, { "Content-Type": contentType(filePath) });
+  const headers = { "Content-Type": contentType(filePath) };
+  // Mirrors public/.htaccess: PDFs open in the browser's viewer, which has its
+  // own download button.
+  if (extname(filePath) === ".pdf") {
+    headers["Content-Disposition"] = "inline";
+  }
+  res.writeHead(status, headers);
   createReadStream(filePath).pipe(res);
 }
 
