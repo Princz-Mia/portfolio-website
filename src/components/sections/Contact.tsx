@@ -6,9 +6,11 @@ import styles from "./Contact.module.css";
 type ContactProps = {
   site: SiteConfig;
   number: string;
+  /** Illustration side; the page alternates it from section to section. */
+  side: "left" | "right";
 };
 
-export function Contact({ site, number }: ContactProps) {
+export function Contact({ site, number, side }: ContactProps) {
   return (
     <Section
       id="contact"
@@ -17,7 +19,7 @@ export function Contact({ site, number }: ContactProps) {
       title="Reach out"
       lede="Email is the most reliable way to reach me."
       art={<ContactArt />}
-      side="left"
+      side={side}
     >
       <p className={`${styles.emailLine} reveal`}>
         <a className={styles.email} href={`mailto:${site.email}`}>

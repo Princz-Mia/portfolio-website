@@ -4,7 +4,7 @@ import { buildNavItems } from "./nav";
 describe("buildNavItems", () => {
   it("includes the projects entry when there are projects", () => {
     const labels = buildNavItems({ hasProjects: true }).map((item) => item.label);
-    expect(labels).toEqual(["Work", "Projects", "Academic", "Teaching", "Hobbies", "Contact"]);
+    expect(labels).toEqual(["Work", "Academic", "Projects", "Teaching", "Hobbies", "Contact"]);
   });
 
   it("omits the projects entry when there are none", () => {

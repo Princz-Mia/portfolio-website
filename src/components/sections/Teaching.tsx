@@ -9,9 +9,11 @@ type TeachingProps = {
   teachingSiteUrl: string | null;
   email: string;
   number: string;
+  /** Illustration side; the page alternates it from section to section. */
+  side: "left" | "right";
 };
 
-export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingProps) {
+export function Teaching({ teaching, teachingSiteUrl, email, number, side }: TeachingProps) {
   return (
     <Section
       id="teaching"
@@ -20,7 +22,7 @@ export function Teaching({ teaching, teachingSiteUrl, email, number }: TeachingP
       title="Tutoring"
       lede="Teaching assistant for Java at BME, and private tutoring."
       art={<Chalkboard />}
-      side="left"
+      side={side}
     >
       <div className={`flow measure ${styles.text} reveal`}>
         {teaching.paragraphs.map((paragraph) => (

@@ -7,11 +7,13 @@ import styles from "./Academic.module.css";
 
 type AcademicProps = {
   academic: AcademicContent;
-  /** Section number depends on whether the projects section is shown. */
+  /** Section number, given by the page so the numbering stays consecutive. */
   number: string;
+  /** Illustration side; the page alternates it from section to section. */
+  side: "left" | "right";
 };
 
-export function Academic({ academic, number }: AcademicProps) {
+export function Academic({ academic, number, side }: AcademicProps) {
   return (
     <Section
       id="academic"
@@ -20,7 +22,7 @@ export function Academic({ academic, number }: AcademicProps) {
       title="Education"
       lede="M.Sc. studies at BME in software engineering and distributed systems."
       art={<AcademicArt />}
-      side="right"
+      side={side}
     >
       <div className={`flow measure ${styles.intro} reveal`}>
         {academic.intro.map((paragraph) => (

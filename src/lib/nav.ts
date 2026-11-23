@@ -12,10 +12,10 @@ export type NavItem = {
 export function buildNavItems(options: { hasProjects: boolean }): NavItem[] {
   return [
     { label: "Work", href: "#work" },
+    { label: "Academic", href: "#academic" },
     ...(options.hasProjects
       ? [{ label: "Projects", href: "#projects" } as NavItem]
       : []),
-    { label: "Academic", href: "#academic" },
     { label: "Teaching", href: "#teaching" },
     { label: "Hobbies", href: "#off-the-clock" },
     { label: "Contact", href: "#contact" },

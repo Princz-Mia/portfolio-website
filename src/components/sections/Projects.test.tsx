@@ -17,12 +17,12 @@ const project: Project = {
 
 describe("Projects", () => {
   it("renders nothing when there are no projects", () => {
-    const { container } = render(<Projects projects={[]} />);
+    const { container } = render(<Projects projects={[]} number="03" side="right" />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("renders each project with its status and link", () => {
-    render(<Projects projects={[project]} />);
+    render(<Projects projects={[project]} number="03" side="right" />);
 
     expect(screen.getByRole("heading", { level: 2, name: "Portfolio" })).toBeInTheDocument();
     expect(screen.getByText("Selected projects")).toBeInTheDocument();

@@ -8,9 +8,11 @@ import styles from "./Personal.module.css";
 type PersonalProps = {
   personal: PersonalContent;
   number: string;
+  /** Illustration side; the page alternates it from section to section. */
+  side: "left" | "right";
 };
 
-export function Personal({ personal, number }: PersonalProps) {
+export function Personal({ personal, number, side }: PersonalProps) {
   return (
     <Section
       id="off-the-clock"
@@ -23,7 +25,7 @@ export function Personal({ personal, number }: PersonalProps) {
           <PersonalArt />
         </PersonalScene>
       }
-      side="right"
+      side={side}
     >
       <div className={`flow measure ${styles.text} reveal`}>
         {personal.paragraphs.map((paragraph) => (

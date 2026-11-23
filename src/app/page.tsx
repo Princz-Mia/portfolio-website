@@ -25,14 +25,28 @@ export default function HomePage() {
   const hasProjects = projects.length > 0;
   const navItems = buildNavItems({ hasProjects });
 
-  // Section numbers stay consecutive whether or not the projects section is shown.
-  let counter = 1;
-  const next = () => String(++counter).padStart(2, "0");
-  const projectsNumber = hasProjects ? next() : null;
-  const academicNumber = next();
-  const teachingNumber = next();
-  const personalNumber = next();
-  const contactNumber = next();
+  // Work is section 01 with its drawing on the right. Every later section takes
+  // the next number and the opposite side, so both stay consistent whether or
+  // not the projects section is shown.
+  const later = [
+    "academic",
+    ...(hasProjects ? ["projects"] : []),
+    "teaching",
+    "personal",
+    "contact",
+  ];
+  const slot = (key: string) => {
+    const position = later.indexOf(key) + 1;
+    return {
+      number: String(position + 1).padStart(2, "0"),
+      side: position % 2 === 1 ? ("left" as const) : ("right" as const),
+    };
+  };
+  const academicSlot = slot("academic");
+  const projectsSlot = hasProjects ? slot("projects") : null;
+  const teachingSlot = slot("teaching");
+  const personalSlot = slot("personal");
+  const contactSlot = slot("contact");
 
   const person = {
     "@context": "https://schema.org",
@@ -57,16 +71,16 @@ export default function HomePage() {
       <main id="main">
         <Intro site={site} profile={profile} hasProjects={hasProjects} />
         <Experience roles={roles} technical={technical} />
-        {projectsNumber ? <Projects projects={projects} /> : null}
-        <Academic academic={academic} number={academicNumber} />
+        <Academic academic={academic} {...academicSlot} />
+        {projectsSlot ? <Projects projects={projects} {...projectsSlot} /> : null}
         <Teaching
           teaching={teaching}
           teachingSiteUrl={site.teachingSiteUrl}
           email={site.email}
-          number={teachingNumber}
+          {...teachingSlot}
         />
-        <Personal personal={personal} number={personalNumber} />
-        <Contact site={site} number={contactNumber} />
+        <Personal personal={personal} {...personalSlot} />
+        <Contact site={site} {...contactSlot} />
       </main>
       <SiteFooter site={site} />
       <RevealObserver />

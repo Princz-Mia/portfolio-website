@@ -5,13 +5,17 @@ import styles from "./Projects.module.css";
 
 type ProjectsProps = {
   projects: Project[];
+  /** Section number, given by the page so the numbering stays consecutive. */
+  number: string;
+  /** Illustration side; the page alternates it from section to section. */
+  side: "left" | "right";
 };
 
 /**
  * Selected engineering work. Renders nothing when there are no projects, so the
  * section never shows an empty state or a placeholder.
  */
-export function Projects({ projects }: ProjectsProps) {
+export function Projects({ projects, number, side }: ProjectsProps) {
   if (projects.length === 0) {
     return null;
   }
@@ -19,12 +23,12 @@ export function Projects({ projects }: ProjectsProps) {
   return (
     <Section
       id="projects"
-      number="02"
+      number={number}
       label="Selected projects"
       title="Portfolio"
       lede="Personal and thesis work with public source code, described as it stands today."
       art={<ProjectsArt />}
-      side="left"
+      side={side}
     >
       <div className={styles.list}>
         {projects.map((project) => (
