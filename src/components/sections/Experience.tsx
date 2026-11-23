@@ -1,4 +1,4 @@
-import type { ImpactFigure, Role, Technical } from "@/content";
+import type { Role, Technical } from "@/content";
 import { Section } from "@/components/Section";
 import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
@@ -14,26 +14,6 @@ type ExperienceProps = {
 /** The short name in parentheses, e.g. "TGF" from "Test Governance Framework (TGF)". */
 function shortName(name: string): string | undefined {
   return /\(([^)]+)\)\s*$/.exec(name)?.[1];
-}
-
-type ImpactFiguresProps = {
-  figures: ImpactFigure[] | undefined;
-  label: string;
-};
-
-/** Headline figures for one chapter; renders nothing when there are none. */
-export function ImpactFigures({ figures, label }: ImpactFiguresProps) {
-  if (!figures || figures.length === 0) return null;
-  return (
-    <dl className={styles.impact} aria-label={label}>
-      {figures.map((figure) => (
-        <div key={figure.label} className={styles.figure}>
-          <dt>{figure.label}</dt>
-          <dd>{figure.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
 }
 
 export function Experience({ roles, technical }: ExperienceProps) {
@@ -77,10 +57,6 @@ export function Experience({ roles, technical }: ExperienceProps) {
                     </span>
                     <h4 className={styles.chapterName}>{chapter.name}</h4>
                     <p className={`measure ${styles.chapterSummary}`}>{chapter.summary}</p>
-                    <ImpactFigures
-                      figures={chapter.impact}
-                      label={`Impact at ${short ?? chapter.name}`}
-                    />
                     <Highlights
                       items={chapter.highlights}
                       visible={3}

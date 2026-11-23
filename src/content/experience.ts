@@ -20,12 +20,6 @@ export const roles: Role[] = [
         name: "Test Governance Framework (TGF)",
         summary:
           "A distributed, multi-site test scheduling and orchestration platform: Java microservices on Kubernetes across geo-redundant sites, built so shared test hardware stays busy and test runs survive trouble at a site.",
-        impact: [
-          { value: "650+", label: "automated tests shipped with the new service" },
-          { value: "−44%", label: "SQL statements per job deletion" },
-          { value: "5", label: "consumer services migrated to the new API" },
-          { value: "8", label: "defects caught and fixed before release" },
-        ],
         highlights: [
           "Owned the merge of two legacy microservices into one data-access service (Spring Boot, GraphQL with Netflix DGS, JPA) from design to release: 13 queries and 10 mutations, fully backward compatible, shipped with 537 unit and 116 integration tests.",
           "Built a client SDK that lets consuming services switch to the new backend through configuration alone, then migrated 5 of them, verified each against the legacy responses and brought each to the 80% coverage gate on new code.",
