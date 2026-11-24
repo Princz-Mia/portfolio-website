@@ -38,11 +38,12 @@ export const metadata: Metadata = {
 
 // Runs before the first paint. Sets the theme (the visitor's stored choice, or
 // the system preference) so the page never flashes the other palette, and shows
-// the intro curtain only on the first page view of a visit. Each part has its
+// the intro curtain only on the first front-page view of a visit. Each part has its
 // own try so blocked storage cannot stop the other.
 const headScript = [
   `try{var t=null;try{t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)}catch(e){}`,
-  `try{if(sessionStorage.getItem("intro-seen")){document.documentElement.classList.add("intro-seen")}else{sessionStorage.setItem("intro-seen","1")}}catch(e){}`,
+  // The CV page skips the curtain and leaves it unused for the front page.
+  `try{if(sessionStorage.getItem("intro-seen")||location.pathname.indexOf("/cv")===0){document.documentElement.classList.add("intro-seen")}else{sessionStorage.setItem("intro-seen","1")}}catch(e){}`,
 ].join("");
 
 export default function RootLayout({ children }: { children: ReactNode }) {

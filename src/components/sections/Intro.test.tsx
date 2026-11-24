@@ -70,8 +70,8 @@ describe("Intro", () => {
     expect(teaching).toHaveAttribute("href", "https://teaching.example.com");
     expect(teaching).toHaveAttribute("target", "_blank");
 
-    const cv = screen.getByRole("link", { name: "CV (PDF, opens in a new tab)" });
-    expect(cv).toHaveAttribute("href", "/cv/cv.pdf");
+    const cv = screen.getByRole("link", { name: "CV (opens in a new tab)" });
+    expect(cv).toHaveAttribute("href", "/cv/");
     expect(cv).toHaveAttribute("target", "_blank");
     expect(cv).not.toHaveAttribute("download");
   });

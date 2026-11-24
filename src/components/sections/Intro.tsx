@@ -16,6 +16,9 @@ type HeroLinkKey = "linkedin" | "github" | "teaching" | "cv";
 
 type HeroLink = { key: HeroLinkKey; label: string; href: string };
 
+/** The CV page, which shows the PDF in any browser and offers it for download. */
+export const CV_PAGE = "/cv/";
+
 /**
  * The hero's links, in order. The teaching site and the CV appear only once
  * their addresses are set, so the hero never shows a dead link.
@@ -29,7 +32,7 @@ export function buildHeroLinks(site: SiteConfig): HeroLink[] {
     links.push({ key: "teaching", label: "Teaching site", href: site.teachingSiteUrl });
   }
   if (site.cvUrl) {
-    links.push({ key: "cv", label: "CV", href: site.cvUrl });
+    links.push({ key: "cv", label: "CV", href: CV_PAGE });
   }
   return links;
 }
@@ -122,7 +125,7 @@ export function Intro({ site, profile }: IntroProps) {
                   <HeroIcon name={link.key} />
                   {link.label}{" "}
                   <span className="visually-hidden">
-                    {link.key === "cv" ? "(PDF, opens in a new tab)" : "(opens in a new tab)"}
+                    (opens in a new tab)
                   </span>
                 </a>
               </li>

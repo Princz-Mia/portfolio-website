@@ -11,6 +11,10 @@ ErrorDocument 404 /404.html
 # while it streams (WebAssembly.instantiateStreaming).
 AddType application/wasm .wasm
 
+# The CV page's PDF renderer runs its worker from an .mjs file. Module workers
+# only start when the file is served as JavaScript, and older hosts don't map .mjs.
+AddType text/javascript .mjs
+
 # The CV opens in the browser's PDF viewer (which has its own download button)
 # instead of downloading straight away; a saved copy takes its name from the URL.
 AddType application/pdf .pdf
