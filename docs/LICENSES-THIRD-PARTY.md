@@ -93,3 +93,9 @@ style (dark head, red nose, white body).
 - Lato (Łukasz Dziedzic) and Raleway (Matt McInerney, Pablo Impallari, Rodrigo
   Fuenzalida) in `cv/fonts/` are licensed under the SIL Open Font License 1.1
   (<https://openfontlicense.org>), which allows bundling them with the CV source.
+
+## PDF.js (the CV page)
+
+The `/cv/` page draws the CV with PDF.js (`pdfjs-dist`, Mozilla, Apache License
+2.0, <https://github.com/mozilla/pdf.js>). Its legacy build and worker are
+bundled into the exported site unchanged.

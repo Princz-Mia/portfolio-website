@@ -56,6 +56,11 @@ The hero shows LinkedIn and GitHub buttons. A CV button appears once `cvUrl` in
 `/cv/mia-princz-cv.pdf`), and a Teaching button once `teachingSiteUrl` is set. Both
 open in a new tab.
 
+The CV button opens `/cv/`, a page that draws the PDF with pdf.js and has a
+Download PDF button. Linking straight to the PDF is not enough: browsers without a
+PDF viewer (Chrome on Android, in-app and embedded browsers) download it at once.
+The page keeps the PDF's links clickable and gives screen readers its text.
+
 ### Updating the CV
 
 The CV source is `cv/mia-princz-cv.tex`, built with XeLaTeX because the class loads
