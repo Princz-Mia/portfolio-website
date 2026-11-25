@@ -20,7 +20,7 @@ export function Teaching({ teaching, teachingSiteUrl, email, number, side }: Tea
       number={number}
       label="Teaching"
       title="Tutoring"
-      lede="Teaching assistant for Java at BME, and private tutoring."
+      lede="Java at BME as a teaching assistant, and private tutoring."
       art={<Chalkboard />}
       side={side}
     >
