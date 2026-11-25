@@ -14,7 +14,7 @@ export const technical: Technical = {
       items: [
         "Spring Boot",
         "Spring Data JPA / Hibernate",
-        "GraphQL (Netflix DGS)",
+        "GraphQL",
         "REST",
         "FastAPI",
       ],

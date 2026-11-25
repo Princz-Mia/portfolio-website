@@ -26,7 +26,7 @@ export function Experience({ roles, technical }: ExperienceProps) {
       number="01"
       label="Work"
       title="Experience"
-      lede="Java services, GraphQL APIs and the pipelines that ship them, with the numbers behind the work."
+      lede="Backend services, the APIs they expose and the pipelines that ship them."
       art={
         <LaptopScreen>
           <DeskScene>

@@ -14,20 +14,19 @@ export const roles: Role[] = [
     title: "Software Engineer",
     period: "2025 – present",
     summary:
-      "Backend engineer on Ericsson's internal test infrastructure. I build Java services and GraphQL APIs and the CI/CD that ships them. My team is now moving into a new domain, which adds networking, Python with FastAPI and React with TypeScript to the day-to-day work.",
+      "Backend engineer on Ericsson's internal test infrastructure. I build Java services and their APIs, and the CI/CD that ships them. My team is now moving into a new domain, which adds networking, Python with FastAPI and React with TypeScript to the day-to-day work.",
     chapters: [
       {
         name: "Test Governance Framework (TGF)",
         summary:
-          "A distributed, multi-site test scheduling and orchestration platform: Java microservices on Kubernetes across geo-redundant sites, built so shared test hardware stays busy and test runs survive trouble at a site.",
+          "A distributed, multi-site test scheduling and orchestration platform: Java microservices on Kubernetes across geo-redundant sites.",
         highlights: [
-          "Owned the merge of two legacy microservices into one data-access service (Spring Boot, GraphQL with Netflix DGS, JPA) from design to release: 13 queries and 10 mutations, fully backward compatible, shipped with 537 unit and 116 integration tests.",
+          "Owned the merge of two legacy microservices into one data-access service (Spring Boot, JPA) from design to release: an API that covers everything both legacy services did, fully backward compatible, shipped with 537 unit and 116 integration tests.",
           "Built a client SDK that lets consuming services switch to the new backend through configuration alone, then migrated 5 of them, verified each against the legacy responses and brought each to the 80% coverage gate on new code.",
           "Cut the SQL statements per job deletion by 44% with bulk deletes, and fixed pagination and transaction-handling slowdowns in the new service's heaviest read paths, an estimated 66–94% fewer database round trips.",
-          "Found and fixed 8 defects before release, from null-pointer crashes that would have surfaced as HTTP 500s to a converter that silently dropped fields when jobs were archived. Each fix came with a regression test.",
-          "Designed the phased, zero-downtime retirement of the legacy modules across 9 repositories. Once rolled out, it removes about 6,800 lines of legacy service code and 1,800 lines of SDK workarounds, and cuts the data fetched on the most common calls by up to 98%.",
+          "Found and fixed 8 defects before release, from null-pointer crashes that would have surfaced as HTTP 500s to a converter that silently dropped fields when records were archived. Each fix came with a regression test.",
           "Automated the crontab deployment to a new data-centre site through Jenkins, with the script in version control, direct SSH and per-site error handling. It is tested end to end on staging and in code review.",
-          "Moving the database load-test suite into the CI repository: removed its hard-coded credentials and made its test plans schema-valid.",
+          "Moving the database load-test suite into the CI repository: fixed security risks in its setup and made its test plans schema-valid.",
           "Migrated legacy KornShell scripts into Java microservices, so their logic is tested, reviewed and deployed like the rest of the platform.",
           "Automated logging and log clean-up for the microservices across the geo-redundant Kubernetes clusters.",
           "Found and fixed a JUnit 5 misconfiguration that had been silently skipping 53 tests.",
