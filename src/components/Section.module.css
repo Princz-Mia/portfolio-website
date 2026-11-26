@@ -109,4 +109,13 @@
     grid-column: 1 / span 5;
     justify-content: flex-start;
   }
+
+  /* Compact drawings sit in the five columns beside the text, never over it. */
+  .section[data-art-size="compact"] .art {
+    max-width: 26rem;
+  }
+
+  .section[data-art-size="compact"][data-side="right"] .artCol {
+    grid-column: 8 / span 5;
+  }
 }

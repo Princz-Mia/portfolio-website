@@ -27,4 +27,20 @@ describe("Section", () => {
 
     expect(screen.getByRole("region", { name: "Reach out" })).toHaveAttribute("id", "contact");
   });
+
+  it("marks the illustration size so compact drawings can stay clear of the text", () => {
+    const { rerender } = render(
+      <Section id="projects" number="03" label="Projects" title="Portfolio" art={<svg />}>
+        <p>Body</p>
+      </Section>,
+    );
+    expect(screen.getByRole("region", { name: "Portfolio" })).toHaveAttribute("data-art-size", "default");
+
+    rerender(
+      <Section id="projects" number="03" label="Projects" title="Portfolio" art={<svg />} artSize="compact">
+        <p>Body</p>
+      </Section>,
+    );
+    expect(screen.getByRole("region", { name: "Portfolio" })).toHaveAttribute("data-art-size", "compact");
+  });
 });

@@ -28,6 +28,7 @@ export function Projects({ projects, number, side }: ProjectsProps) {
       title="Portfolio"
       lede="Personal and thesis work with public source code, described as it stands today."
       art={<ProjectsArt />}
+      artSize="compact"
       side={side}
     >
       <div className={styles.list}>

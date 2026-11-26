@@ -14,6 +14,11 @@ type SectionProps = {
   art?: ReactNode;
   /** Which side the illustration sits on; alternate between sections. */
   side?: "left" | "right";
+  /**
+   * "compact" draws the illustration smaller and keeps it clear of the text,
+   * for drawings with detail that would otherwise sit over the content.
+   */
+  artSize?: "default" | "compact";
   children: ReactNode;
 };
 
@@ -31,6 +36,7 @@ export function Section({
   lede,
   art,
   side = "right",
+  artSize = "default",
   children,
 }: SectionProps) {
   const headingId = `${id}-title`;
@@ -39,6 +45,7 @@ export function Section({
       id={id}
       className={styles.section}
       data-side={side}
+      data-art-size={artSize}
       aria-labelledby={headingId}
     >
       <div className={`container ${styles.grid}`}>
