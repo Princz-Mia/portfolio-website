@@ -1,0 +1,14 @@
+.badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--paper);
+}
+
+.badge svg {
+  display: block;
+}

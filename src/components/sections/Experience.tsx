@@ -4,6 +4,7 @@ import { Highlights } from "@/components/Highlights";
 import { WorkArt } from "@/components/illustrations/WorkArt";
 import { LaptopScreen } from "@/components/laptop/LaptopScreen";
 import { DeskScene } from "@/components/work/DeskScene";
+import { OrgLogo } from "@/components/work/OrgLogo";
 import styles from "./Experience.module.css";
 
 type ExperienceProps = {
@@ -40,6 +41,7 @@ export function Experience({ roles, technical }: ExperienceProps) {
         {roles.map((role) => (
           <article key={`${role.organisation}-${role.title}`} className={styles.role}>
             <header className={`${styles.roleHead} reveal`}>
+              {role.logo ? <OrgLogo name={role.logo} /> : null}
               <div>
                 <h3 className={styles.org}>{role.organisation}</h3>
                 <p className={styles.roleTitle}>{role.title}</p>

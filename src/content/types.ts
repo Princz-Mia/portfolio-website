@@ -49,8 +49,13 @@ export type RoleChapter = {
   highlights: string[];
 };
 
+/** Employers with a mark in `src/components/work/OrgLogo.tsx`. */
+export type OrgLogoKey = "ericsson";
+
 export type Role = {
   organisation: string;
+  /** Optional employer mark shown beside the name. */
+  logo?: OrgLogoKey;
   title: string;
   /**
    * Human readable period, e.g. "2024 – present". Leave `null` to omit it rather

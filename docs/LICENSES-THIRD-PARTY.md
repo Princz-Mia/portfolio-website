@@ -99,3 +99,11 @@ style (dark head, red nose, white body).
 The `/cv/` page draws the CV with PDF.js (`pdfjs-dist`, Mozilla, Apache License
 2.0, <https://github.com/mozilla/pdf.js>). Its legacy build and worker are
 bundled into the exported site unchanged.
+
+## Ericsson logo (work section)
+
+The Ericsson mark beside the role in the work section is drawn inline from the
+path data in Simple Icons (<https://simpleicons.org>, CC0 1.0), which takes it
+from Ericsson's media kit. The mark is a trademark of Telefonaktiebolaget LM
+Ericsson; it is shown only to identify the employer, and this site is not
+affiliated with or endorsed by Ericsson.
