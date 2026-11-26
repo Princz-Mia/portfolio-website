@@ -11,6 +11,7 @@ import type { Role } from "./types";
 export const roles: Role[] = [
   {
     organisation: "Ericsson",
+    logo: "ericsson",
     title: "Software Engineer",
     period: "2025 – present",
     summary:
@@ -19,7 +20,7 @@ export const roles: Role[] = [
       {
         name: "Test Governance Framework (TGF)",
         summary:
-          "A distributed, multi-site test scheduling and orchestration platform: Java microservices on Kubernetes across geo-redundant sites.",
+          "A distributed, multi-site test scheduling and orchestration platform across geo-redundant sites. It is a mix of Spring Boot microservices, older standalone Java services and KornShell tooling, running on Docker and Kubernetes.",
         highlights: [
           "Owned the merge of two legacy microservices into one data-access service (Spring Boot, JPA) from design to release: an API that covers everything both legacy services did, fully backward compatible, shipped with 537 unit and 116 integration tests.",
           "Built a client SDK that lets consuming services switch to the new backend through configuration alone, then migrated 5 of them, verified each against the legacy responses and brought each to the 80% coverage gate on new code.",
